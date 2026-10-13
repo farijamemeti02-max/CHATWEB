@@ -24,7 +24,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use('/uploads/videos', express.static(videoDir, { maxAge: '1h' }));
 app.use('/uploads/avatars', express.static(avatarDir, { maxAge: '1h' }));
-const publicDir = path.join(__dirname, 'public');
+const publicDir = __dirname;
 // Explicitly serve the homepage so GET / works even if static index resolution differs.
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 app.use(express.static(publicDir));
