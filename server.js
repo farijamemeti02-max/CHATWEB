@@ -24,7 +24,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use('/uploads/videos', express.static(videoDir, { maxAge: '1h' }));
 app.use('/uploads/avatars', express.static(avatarDir, { maxAge: '1h' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 const sessions = new Map();
 const videos = [];
