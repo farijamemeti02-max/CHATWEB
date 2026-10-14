@@ -53,11 +53,13 @@
   // GameTik social discovery, following, followers and friend requests.
   let socialTab = 'friends';
   const socialTabs = { friends: 'friends', followers: 'followers', following: 'following', requests: 'requests' };
+  const socialUserCache = new Map();
   function socialAvatar(user){
     const src=mediaUrl(user.avatar_url||'');
     return src ? `<img class="social-user-avatar" src="${esc(src)}" alt="Profilbild von @${esc(user.username)}" loading="lazy">` : `<span class="social-user-avatar" aria-hidden="true">${esc((user.username||'?').slice(0,1).toUpperCase())}</span>`;
   }
   function socialUserCard(user, mode='search', requestId=''){
+    socialUserCache.set(String(user.id), user);
     const id=esc(user.id), username=esc(user.username);
     let actions='';
     if(mode==='search'){
@@ -71,8 +73,25 @@
     } else if(mode==='following'){
       actions += `<button type="button" class="secondary" data-social-action="follow" data-user-id="${id}">Nicht mehr folgen</button>`;
     }
-    return `<article class="social-user-card">${socialAvatar(user)}<div class="social-user-info"><b>@${username}</b><small>${user.followers_count||0} Follower · ${user.following_count||0} folgt</small>${user.bio?`<small>${esc(user.bio)}</small>`:''}</div><div class="social-user-actions">${actions}</div></article>`;
+    return `<article class="social-user-card"><button type="button" class="social-profile-open" data-open-user-profile="${id}" aria-label="Profil von @${username} öffnen">${socialAvatar(user)}<span class="social-user-info"><b>@${username}</b><small>${user.followers_count||0} Follower · ${user.following_count||0} folgt</small>${user.bio?`<small>${esc(user.bio)}</small>`:''}<small class="social-profile-hint">Profil ansehen ›</small></span></button><div class="social-user-actions">${actions}</div></article>`;
   }
+  function openSocialProfile(userId){
+    const user=socialUserCache.get(String(userId));
+    if(!user)return;
+    let modal=document.getElementById('socialProfileModal');
+    if(!modal){
+      modal=document.createElement('div');modal.id='socialProfileModal';modal.className='social-profile-modal';modal.innerHTML='<div class="social-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle"><button type="button" class="social-profile-close" aria-label="Profil schließen">×</button><div id="socialProfileContent"></div></div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('.social-profile-close'))modal.classList.remove('open');});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('open');});
+    }
+    const avatar=socialAvatar(user);
+    const following=!!user.following, friend=!!user.friend;
+    $('socialProfileContent').innerHTML=`<div class="social-profile-hero">${avatar}<div><span class="muted tiny">GAMETIK COMMUNITY</span><h2 id="socialProfileTitle">@${esc(user.username)}</h2><p>${esc(user.bio||'Noch keine Biografie hinterlegt.')}</p></div></div><div class="social-profile-stats"><div><b>${Number(user.followers_count)||0}</b><span>Follower</span></div><div><b>${Number(user.following_count)||0}</b><span>Folgt</span></div></div><div class="social-profile-actions"><button type="button" data-social-action="follow" data-user-id="${esc(user.id)}">${following?'✓ Folge ich':'＋ Folgen'}</button><button type="button" class="secondary" data-social-action="request" data-user-id="${esc(user.id)}">${friend?'✓ Freunde':'＋ Freundschaft'}</button><button type="button" class="secondary" data-social-action="message" data-user-id="${esc(user.id)}">✉ Nachricht</button></div>`;
+    modal.classList.add('open');
+  }
+  document.addEventListener('click',e=>{const trigger=e.target.closest('[data-open-user-profile]');if(trigger){e.preventDefault();openSocialProfile(trigger.dataset.openUserProfile);}});
+
   async function searchSocialUsers(){
     const q=$('userSearchInput')?.value.trim()||'';
     if(!token){$('userSearchStatus').textContent='Bitte zuerst anmelden, um Nutzer zu suchen.';$('authModal').classList.remove('hidden');return;}
@@ -97,6 +116,8 @@
   $('userSearchInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchSocialUsers();}});
   $('socialRefreshBtn')?.addEventListener('click',()=>loadSocialList());
   document.querySelectorAll('[data-social-tab]').forEach(b=>b.addEventListener('click',()=>loadSocialList(b.dataset.socialTab)));
+  $('openProfileFollowers')?.addEventListener('click',()=>{showView('explore');loadSocialList('followers');document.querySelector('[data-social-tab=followers]')?.scrollIntoView({behavior:'smooth',block:'center'});});
+  $('openProfileFollowing')?.addEventListener('click',()=>{showView('explore');loadSocialList('following');document.querySelector('[data-social-tab=following]')?.scrollIntoView({behavior:'smooth',block:'center'});});
   document.addEventListener('click',async e=>{
     const btn=e.target.closest('[data-social-action]');if(!btn)return;
     if(!token){$('authModal').classList.remove('hidden');return;}
@@ -106,11 +127,14 @@
       if(action==='follow'){
         const d=await api('/api/users/'+encodeURIComponent(userId)+'/follow',{method:'POST'});
         btn.textContent=d.following?'✓ Folge ich':'＋ Folgen';
+        const cached=socialUserCache.get(String(userId));if(cached)cached.following=!!d.following;
         await loadSocialList();
+        if(document.getElementById('socialProfileModal')?.classList.contains('open'))openSocialProfile(userId);
       } else if(action==='request'){
         const d=await api('/api/users/'+encodeURIComponent(userId)+'/friend-request',{method:'POST'});
         btn.textContent='✓ Anfrage gesendet';btn.disabled=true;
         if($('userSearchStatus'))$('userSearchStatus').textContent='Freundschaftsanfrage wurde gesendet.';
+        if(document.getElementById('socialProfileModal')?.classList.contains('open')){const c=socialUserCache.get(String(userId));if(c)c.requestPending=true;}
       } else if(action==='accept'){
         await api('/api/friend-requests/'+encodeURIComponent(requestId)+'/accept',{method:'POST'});await loadSocialList('requests');
       } else if(action==='reject'){
@@ -304,12 +328,12 @@
       $('profileBioDisplay').textContent=me.bio||'Noch keine Biografie hinterlegt. Klicke auf „Profil bearbeiten“. 💜';
       $('profileMeta').innerHTML=[me.gender?`<span>⚧ ${esc(me.gender)}</span>`:'',me.relationship_status?`<span>♡ ${esc(me.relationship_status)}</span>`:'',me.location?`<span>⌖ ${esc(me.location)}</span>`:''].filter(Boolean).join('');
       $('statPosts').textContent=me.posts_count||0; $('statFollowers').textContent=me.followers_count||0; $('statFollowing').textContent=me.following_count||0; $('statLikes').textContent=me.likes_count||0;
-      $('profileGender').value=me.gender||''; $('profileRelationship').value=me.relationship_status||''; $('profileLocation').value=me.location||''; $('profileBioInput').value=me.bio||''; updateAuthUI();
+      $('profileGender').value=me.gender||''; $('profileRelationship').value=me.relationship_status||''; $('profileLocation').value=me.location||''; $('profileBioInput').value=me.bio||''; if($('profileSocialVisibility'))$('profileSocialVisibility').value=me.social_visibility||((me.social_private===false)?'public':'private'); updateAuthUI();
     }catch(e){$('profileDetails').textContent=e.message;}
   }
   $('profileEdit').addEventListener('click',()=>{$('profileEditForm').classList.toggle('hidden');if(!$('profileEditForm').classList.contains('hidden'))$('profileEditForm').scrollIntoView({behavior:'smooth',block:'center'});});
   $('profileEditCancel').addEventListener('click',()=>{$('profileEditForm').classList.add('hidden');});
-  $('profileEditForm').addEventListener('submit',async e=>{e.preventDefault();const out=$('profileEditStatus');out.textContent='Profil wird gespeichert …';try{const d=await api('/api/me/profile',{method:'PATCH',body:JSON.stringify({gender:$('profileGender').value,relationship_status:$('profileRelationship').value,location:$('profileLocation').value,bio:$('profileBioInput').value})});me=d.user;out.textContent='Profil erfolgreich gespeichert.';await loadProfile();$('profileEditForm').classList.add('hidden');}catch(err){out.textContent='Fehler: '+err.message;}});
+  $('profileEditForm').addEventListener('submit',async e=>{e.preventDefault();const out=$('profileEditStatus');out.textContent='Profil wird gespeichert …';try{const d=await api('/api/me/profile',{method:'PATCH',body:JSON.stringify({gender:$('profileGender').value,relationship_status:$('profileRelationship').value,location:$('profileLocation').value,bio:$('profileBioInput').value,social_visibility:$('profileSocialVisibility')?.value||'private'})});me=d.user;out.textContent='Profil erfolgreich gespeichert.';await loadProfile();$('profileEditForm').classList.add('hidden');}catch(err){out.textContent='Fehler: '+err.message;}});
   $('avatarForm').onsubmit=async e=>{e.preventDefault();const f=$('avatarFile').files[0];if(!f)return;if(f.size>3*1024*1024){status('avatarStatus','Das Bild darf höchstens 3 MB groß sein.');return;}const fd=new FormData();fd.append('avatar',f);try{const d=await api('/api/me/avatar',{method:'POST',body:fd});me=d.user;status('avatarStatus','Profilbild gespeichert.',true);renderAvatar(me);loadProfile();}catch(err){status('avatarStatus',err.message);}};
   async function loadExplore(){
     const out=$('exploreResults'); if(!out)return;

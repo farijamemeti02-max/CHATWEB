@@ -255,7 +255,7 @@ app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
 
 function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next); }
 function publicUser(user) {
-  return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
+  return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
 app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: 'memory-only', database: 'not-used', secretKey: 'not-required' }));
 app.get('/api/config', (_req,res) => res.json({
@@ -269,7 +269,7 @@ app.post('/api/guest', (req,res) => {
   const nickname = String(req.body.nickname || '').trim();
   if (!/^[A-Za-z0-9_]{2,24}$/.test(nickname)) return res.status(400).json({ error: 'Nickname: 2–24 Zeichen, nur Buchstaben, Zahlen und _.' });
   const token = crypto.randomUUID();
-  const user = { id: token, username: nickname, avatar_url: null, created_at: new Date().toISOString(), gender: '', bio: '', relationship_status: '', location: '', likes: new Set(), following: new Set(), blockedUsers: new Set() };
+  const user = { id: token, username: nickname, avatar_url: null, created_at: new Date().toISOString(), gender: '', bio: '', relationship_status: '', location: '', social_private: true, social_visibility: 'private', likes: new Set(), following: new Set(), blockedUsers: new Set() };
   friendships.set(token, new Set()); friendRequests.set(token, []);
   sessions.set(token, user);
   res.status(201).json({ token, user: publicUser(user) });
@@ -284,6 +284,7 @@ app.patch('/api/me/profile', auth, (req, res) => {
   if (!['', 'Mann', 'Frau', 'Divers'].includes(gender)) return res.status(400).json({ error: 'Bitte eine gültige Geschlechtsoption wählen.' });
   if (!['', 'Single', 'In einer Beziehung', 'Verheiratet', 'Es ist kompliziert', 'Keine Angabe'].includes(relationship)) return res.status(400).json({ error: 'Bitte einen gültigen Beziehungsstatus wählen.' });
   req.user.gender = gender; req.user.relationship_status = relationship; req.user.bio = bio.slice(0, 300); req.user.location = location.slice(0, 80);
+  if (['public','friends','private'].includes(req.body.social_visibility)) { req.user.social_visibility = req.body.social_visibility; req.user.social_private = req.body.social_visibility !== 'public'; } else if (typeof req.body.social_private === 'boolean') { req.user.social_private = req.body.social_private; req.user.social_visibility = req.body.social_private ? 'private' : 'public'; }
   res.json({ user: publicUser(req.user) });
 });
 app.get('/api/members', auth, (req,res) => {
@@ -309,6 +310,19 @@ app.get('/api/me/social', auth, (req, res) => {
   const friends = [...(friendships.get(meId) || new Set())].map(id => sessions.get(String(id))).filter(user => user && !isBlockedBetween(req.user, user.id)).map(publicUser);
   const requests = (friendRequests.get(meId) || []).map(r => ({ ...r, user: sessions.get(String(r.fromId)) })).filter(r => r.user && !isBlockedBetween(req.user, r.fromId)).map(r => ({ id: r.id, created_at: r.created_at, user: publicUser(r.user) }));
   res.json({ followers, following, friends, requests, request_count: requests.length });
+});
+app.get('/api/users/:id/social', auth, (req, res) => {
+  const targetId = String(req.params.id), target = sessions.get(targetId);
+  if (!target) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
+  if (isBlockedBetween(req.user, targetId)) return res.status(403).json({ error: 'Dieser Bereich ist nicht verfügbar.' });
+  const isSelf = String(req.user.id) === targetId;
+  const isFriend = friendships.get(targetId)?.has(String(req.user.id)) || false;
+  const visibility = ['public','friends','private'].includes(target.social_visibility) ? target.social_visibility : (target.social_private === false ? 'public' : 'private');
+  if (!isSelf && (visibility === 'private' || (visibility === 'friends' && !isFriend))) return res.status(403).json({ error: visibility === 'private' ? 'Dieser Nutzer hat seine Freundes- und Folgenlisten für alle verborgen.' : 'Diese Listen sind nur für bestätigte Freunde sichtbar.' });
+  const followers = [...sessions.values()].filter(u => u.id !== targetId && u.following?.has(targetId) && !isBlockedBetween(req.user, u.id)).map(publicUser);
+  const following = [...(target.following || new Set())].map(id => sessions.get(String(id))).filter(u => u && !isBlockedBetween(req.user, u.id)).map(publicUser);
+  const friends = [...(friendships.get(targetId) || new Set())].map(id => sessions.get(String(id))).filter(u => u && !isBlockedBetween(req.user, u.id)).map(publicUser);
+  res.json({ followers, following, friends, private: visibility !== 'public', visibility });
 });
 app.post('/api/users/:id/friend-request', auth, (req, res) => {
   const targetId = String(req.params.id), meId = String(req.user.id);

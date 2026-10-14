@@ -700,6 +700,12 @@ input,select,textarea{
 @media(max-width:600px){.social-hub{padding:11px}.social-user-card{gap:8px}.social-user-actions{width:100%}.social-user-actions button{flex:1}}
 </style>
 
+
+<style id="social-profile-modal-styles">
+.social-user-card{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.social-profile-open{display:flex;align-items:center;gap:12px;flex:1;min-width:180px;text-align:left;border:0;background:transparent;color:inherit;padding:0;cursor:pointer}.social-profile-open:focus-visible{outline:2px solid #54dcff;outline-offset:4px;border-radius:12px}.social-user-info{display:flex;flex-direction:column;gap:4px}.social-profile-hint{color:#72dcff;font-size:.82rem}.social-profile-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:#050711c9;backdrop-filter:blur(12px)}.social-profile-modal.open{display:flex}.social-profile-dialog{position:relative;width:min(100%,480px);padding:24px;border:1px solid #b15dff;border-radius:26px;background:linear-gradient(145deg,#11172af5,#21102df5);box-shadow:0 0 36px #a23bff35,0 0 16px #36dfff20;color:#f7f8ff}.social-profile-close{position:absolute;right:14px;top:12px;width:40px;height:40px;border:1px solid #675a91;border-radius:50%;background:#171a2b;color:#fff;font-size:26px;cursor:pointer}.social-profile-hero{display:flex;align-items:center;gap:16px;padding:16px 28px 18px 0}.social-profile-hero .social-user-avatar{width:82px;height:82px;flex:0 0 82px;border-radius:50%;object-fit:cover;font-size:2rem}.social-profile-hero h2{margin:5px 0;font-size:1.35rem;overflow-wrap:anywhere}.social-profile-hero p{margin:0;color:#bdc4d8;overflow-wrap:anywhere}.social-profile-stats{display:flex;gap:12px;margin:10px 0 20px}.social-profile-stats div{flex:1;display:flex;flex-direction:column;gap:4px;padding:14px;border:1px solid #574a79;border-radius:16px;background:#111629}.social-profile-stats b{font-size:1.35rem}.social-profile-stats span{color:#b7bfd4;font-size:.88rem}.social-profile-actions{display:flex;flex-wrap:wrap;gap:8px}.social-profile-actions button{flex:1;min-width:120px}.social-profile-modal .social-user-avatar{display:grid;place-items:center;background:linear-gradient(135deg,#f02ec8,#7756ff,#16cfff);color:white;font-weight:800}
+@media(max-width:420px){.social-profile-dialog{padding:18px}.social-profile-hero{gap:10px}.social-profile-hero .social-user-avatar{width:64px;height:64px;flex-basis:64px}.social-profile-actions button{min-width:100%}}
+</style>
+
 </head>
 <body>
 <header class="top">
@@ -806,8 +812,8 @@ input,select,textarea{
       </div>
       <div class="profile-stats" aria-label="Profilstatistiken">
         <div class="stat-card"><span class="stat-icon pink">▣</span><strong id="statPosts">0</strong><span>Beiträge</span></div>
-        <div class="stat-card"><span class="stat-icon blue">♟</span><strong id="statFollowers">0</strong><span>Follower</span></div>
-        <div class="stat-card"><span class="stat-icon white">♙+</span><strong id="statFollowing">0</strong><span>Folge ich</span></div>
+        <button type="button" class="stat-card profile-stat-click" id="openProfileFollowers"><span class="stat-icon blue">♟</span><strong id="statFollowers">0</strong><span>Follower</span></button>
+        <button type="button" class="stat-card profile-stat-click" id="openProfileFollowing"><span class="stat-icon white">♙+</span><strong id="statFollowing">0</strong><span>Folge ich</span></button>
         <div class="stat-card"><span class="stat-icon pink">♥</span><strong id="statLikes">0</strong><span>Likes gesamt</span></div>
         <div class="stat-card"><span class="stat-icon gold">★</span><strong id="statRating">—</strong><span>Gesamtbewertung</span><small>Bewertungen folgen</small></div>
       </div>
@@ -816,6 +822,7 @@ input,select,textarea{
         <label for="profileGender">Geschlecht</label><select id="profileGender"><option value="">Keine Angabe</option><option value="Mann">Mann</option><option value="Frau">Frau</option><option value="Divers">Divers</option></select>
         <label for="profileRelationship">Beziehungsstatus</label><select id="profileRelationship"><option value="">Keine Angabe</option><option value="Single">Single</option><option value="In einer Beziehung">In einer Beziehung</option><option value="Verheiratet">Verheiratet</option><option value="Es ist kompliziert">Es ist kompliziert</option><option value="Keine Angabe">Möchte ich nicht sagen</option></select>
         <label for="profileLocation">Ort / Land</label><input id="profileLocation" maxlength="80" placeholder="z. B. Bar, Montenegro">
+        <div class="privacy-setting" style="margin:12px 0;padding:14px;border:1px solid #514276;border-radius:16px;background:linear-gradient(135deg,rgba(255,40,210,.08),rgba(36,223,255,.07))"><label for="profileSocialVisibility" style="display:block;margin-bottom:8px"><strong>🔒 Wer darf deine Freundschaften und Folgen sehen?</strong></label><select id="profileSocialVisibility" style="width:100%;margin:0 0 8px"><option value="public">🌐 Alle Nutzer</option><option value="friends">👥 Nur bestätigte Freunde</option><option value="private">🔐 Niemand – auch keine Freunde</option></select><small class="muted" style="display:block">Freundschaftsanfragen bleiben immer nur für dich sichtbar. „Niemand“ versteckt deine Freundes-, Follower- und Folgen-Listen auch vor bestätigten Freunden. Deine Profilseite und öffentlichen Beiträge bleiben davon unberührt.</small></div>
         <label for="profileBioInput">Biografie / Beschreibung</label><textarea id="profileBioInput" maxlength="300" rows="3" placeholder="Erzähl der Community etwas über dich …"></textarea>
         <div class="row"><button type="submit">Änderungen speichern</button><button id="profileEditCancel" type="button" class="secondary">Abbrechen</button></div><div id="profileEditStatus" class="tiny muted" aria-live="polite"></div>
       </form>
