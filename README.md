@@ -156,3 +156,8 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die Freundesliste zeigt bestätigte Freundschaften; eigene Follower und gefolgte Nutzer sind getrennt aufrufbar.
 - Ein eigener Anfragen-Button zeigt die Anzahl offener eingehender Freundschaftsanfragen.
 - Hinweis: Diese Demo verwaltet Nutzer, Follows und Freundschaftsanfragen derzeit im Arbeitsspeicher. Daten gehen bei einem Render-Neustart verloren. Für dauerhafte Accounts und Kontakte muss eine Datenbank angebunden werden.
+
+## Fehlerbehebung DATA_DIR (Prüfung 14.10.2026)
+- Wenn `DATA_DIR=/var/data` nicht beschreibbar ist, versucht der Server einen beschreibbaren lokalen Ordner und danach einen Ordner im temporären Systemverzeichnis.
+- In diesem Ausweichmodus kann der Server starten, aber Dateien sind auf Render nicht dauerhaft. Der Endpunkt `/api/health` zeigt `mode`, `storagePath` und `persistentStorage` an.
+- Für dauerhafte Speicherung muss bei Render eine Persistent Disk tatsächlich an `/var/data` gemountet sein und `DATA_DIR=/var/data` gesetzt sein. Nur die Environment-Variable allein erzeugt keine Disk und keine Schreibrechte.

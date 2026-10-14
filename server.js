@@ -14,29 +14,39 @@ const io = new Server(httpServer, { cors: { origin: true } });
 const PORT = Number(process.env.PORT || 10000);
 const MAX_VIDEO_BYTES = 35 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
-// Prefer the configured persistent disk, but do not crash the service when
-// DATA_DIR points to an unmounted/unwritable path (e.g. /var/data without a
-// Render Persistent Disk). In that case use a writable local fallback and warn
-// clearly that data may be lost on redeploy/restart.
+// Prefer the configured persistent disk. If the mount is missing or not writable,
+// try a writable local directory so the service can still start. Local fallbacks
+// are ephemeral on Render and do NOT guarantee data persistence across deploys.
 const requestedDataRoot = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
 let dataRoot = requestedDataRoot;
 function ensureDataDirectories(root) {
   fs.mkdirSync(path.join(root, 'uploads', 'videos'), { recursive: true });
   fs.mkdirSync(path.join(root, 'uploads', 'avatars'), { recursive: true });
-  // Confirm the selected directory is writable before the server starts.
   const probe = path.join(root, `.gametik-write-test-${process.pid}`);
   fs.writeFileSync(probe, 'ok');
   fs.unlinkSync(probe);
 }
+const fallbackCandidates = [
+  path.resolve(__dirname, 'data'),
+  path.join(require('os').tmpdir(), 'gametik-data')
+].filter((candidate, index, all) => candidate !== requestedDataRoot && all.indexOf(candidate) === index);
 try {
   ensureDataDirectories(dataRoot);
-} catch (error) {
-  const fallbackRoot = path.resolve(__dirname, 'data');
-  if (fallbackRoot === dataRoot) throw error;
-  console.error(`WARN: DATA_DIR '${requestedDataRoot}' is not writable (${error.code || error.message}). ` +
-    `Falling back to '${fallbackRoot}'. Configure a Render Persistent Disk mounted at '${requestedDataRoot}' to keep data across deploys.`);
-  dataRoot = fallbackRoot;
-  ensureDataDirectories(dataRoot);
+} catch (initialError) {
+  let selected = false;
+  for (const fallbackRoot of fallbackCandidates) {
+    try {
+      ensureDataDirectories(fallbackRoot);
+      console.error(`WARN: DATA_DIR '${requestedDataRoot}' is not writable (${initialError.code || initialError.message}). ` +
+        `Using temporary/local storage '${fallbackRoot}'. Data may be lost after restart or redeploy; configure a writable Render Persistent Disk.`);
+      dataRoot = fallbackRoot;
+      selected = true;
+      break;
+    } catch (fallbackError) {
+      console.error(`WARN: GameTik storage fallback '${fallbackRoot}' failed: ${fallbackError.code || fallbackError.message}`);
+    }
+  }
+  if (!selected) throw initialError;
 }
 const uploadRoot = path.join(dataRoot, 'uploads');
 const stateFile = path.join(dataRoot, 'gametik-state.json');
@@ -339,13 +349,14 @@ function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,ne
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: 'persistent-file-store', database: 'file-backed', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
   paypalMode: String(process.env.PAYPAL_MODE || 'sandbox').toLowerCase(),
   currency: (process.env.PAYPAL_CURRENCY || 'EUR').toUpperCase(),
-  mode: 'persistent-file-store'
+  mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store',
+  persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR)
 }));
 app.post('/api/auth/register', (req,res) => {
   const username=String(req.body.username||'').trim();
@@ -1062,4 +1073,4 @@ app.use((err,_req,res,_next) => {
   const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : (err.status || (err instanceof multer.MulterError ? 400 : 500));
   res.status(status).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Datei zu groß. Videos maximal 35 MB, Profilbilder maximal 3 MB.' : (err.message || 'Interner Fehler.') });
 });
-httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Demo-Daten werden im Arbeitsspeicher gehalten.`));
+httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Speicher: ${dataRoot}${dataRoot === requestedDataRoot ? '' : ' (AUSWEICHORDNER – nicht dauerhaft auf Render)'}.`));
