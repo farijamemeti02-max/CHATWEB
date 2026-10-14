@@ -16,18 +16,8 @@ Node.js 20 oder neuer installieren, dann `npm install`, `npm run check` und `npm
 - Reaktionen: Herz, Gefällt mir, I Love You und Dislike.
 - Bewertungen von 1 bis 10; Durchschnitt und Anzahl werden angezeigt.
 
-## Registrierung, Anmeldung und dauerhafte Speicherung
-- Nutzer können ein Konto mit Benutzername, E-Mail und Passwort registrieren und sich später anmelden.
-- Passwörter werden mit `scrypt` plus individuellem Salt gehasht; Klartextpasswörter werden nicht gespeichert.
-- Konten, aktive Sitzungen, Profile, Social-Beziehungen, Beiträge und Upload-Metadaten werden in `DATA_DIR/gametik-state.json` gespeichert.
-- Uploads (Videos, Storys, Profilbilder) werden unter `DATA_DIR/uploads/` gespeichert.
-- Der Server schreibt Zustände regelmäßig und beim Herunterfahren. Bei Stromausfall kann maximal der letzte Speicherintervall verloren gehen.
-
-### Render dauerhaft konfigurieren (wichtig)
-Render-Dateisysteme sind ohne Persistent Disk nicht dauerhaft. Im Render-Web-Service unter **Disks** einen Persistent Disk hinzufügen, z. B. Mount Path `/var/data`, und in **Environment** `DATA_DIR=/var/data` setzen. Danach den Service neu deployen. Ohne diese Disk können Daten bei Deploys/Neustarts weiterhin verloren gehen.
-
-### Grenzen
-Diese dateibasierte Speicherung ist für einen kleinen Testbetrieb gedacht und nicht für mehrere gleichzeitig laufende Serverinstanzen. Für einen großen öffentlichen Dienst sollten PostgreSQL und ein dauerhafter Objektspeicher verwendet werden. Vorhandene Gastkonten werden nicht automatisch in registrierte Konten umgewandelt. Ein echter Live-Test gegen Render/Netlify wurde nicht durchgeführt.
+## Wichtig
+Dies ist weiterhin eine Demo ohne Datenbank. Nutzer, Beiträge, Reaktionen und Bewertungen liegen im Arbeitsspeicher und können nach Server-Neustarts verloren gehen. Upload-Dateien liegen lokal im Render-Service; für dauerhafte Speicherung wird persistenter Speicher oder Objektspeicher benötigt. Ein echter Live-Test gegen Render/Netlify wurde nicht durchgeführt.
 
 ## Follow-Button-Update
 - Follow/Unfollow ist im Feed bei Video- und Fotobeiträgen sichtbar.
@@ -39,11 +29,8 @@ Diese dateibasierte Speicherung ist für einen kleinen Testbetrieb gedacht und n
 ## Blockieren und Admin-Kontrolle
 - Nutzer können andere Nutzer in Storys, Feed und Entdecken blockieren. Inhalte zwischen blockierenden Nutzern werden aus Feed/Storys/Mitgliederliste gefiltert.
 - Der Administrator kann unter `/admin.html` Nutzer sperren/entsperren, Nutzer löschen sowie Beiträge und Storys entfernen. Admin-Anmeldung benötigt `ADMIN_USERNAME` und `ADMIN_PASSWORD` (mindestens 12 Zeichen) in Render.
-- Konten und ein Teil der Inhalte werden dateibasiert in `DATA_DIR/gametik-state.json` gespeichert. Für dauerhafte Speicherung auf Render muss `DATA_DIR` auf eine tatsächlich gemountete, beschreibbare Persistent Disk zeigen.
+- Aktueller Speicher ist weiterhin RAM-basiert. Sperren, Konten und Inhalte sind nach Serverneustart nicht dauerhaft; für Produktion eine Datenbank ergänzen.
 
-
-## Geschenk-Icons
-- Die vier gelieferten SVG-Dateien `gift-heart.svg`, `gift-star.svg`, `gift-fire.svg` und `gift-crown.svg` werden in der Hauptseite, im LIVE-Bereich und auf `paypal.html` als lokale Dateien verwendet.
 
 ## Eigene Musik zu Beiträgen
 - Beim Hochladen eines Fotos oder Videos kann optional eine Musik-/Audiodatei hinzugefügt werden.
@@ -159,8 +146,3 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die Freundesliste zeigt bestätigte Freundschaften; eigene Follower und gefolgte Nutzer sind getrennt aufrufbar.
 - Ein eigener Anfragen-Button zeigt die Anzahl offener eingehender Freundschaftsanfragen.
 - Hinweis: Diese Demo verwaltet Nutzer, Follows und Freundschaftsanfragen derzeit im Arbeitsspeicher. Daten gehen bei einem Render-Neustart verloren. Für dauerhafte Accounts und Kontakte muss eine Datenbank angebunden werden.
-
-## Fehlerbehebung DATA_DIR (Prüfung 14.10.2026)
-- Wenn `DATA_DIR=/var/data` nicht beschreibbar ist, versucht der Server einen beschreibbaren lokalen Ordner und danach einen Ordner im temporären Systemverzeichnis.
-- In diesem Ausweichmodus kann der Server starten, aber Dateien sind auf Render nicht dauerhaft. Der Endpunkt `/api/health` zeigt `mode`, `storagePath` und `persistentStorage` an.
-- Für dauerhafte Speicherung muss bei Render eine Persistent Disk tatsächlich an `/var/data` gemountet sein und `DATA_DIR=/var/data` gesetzt sein. Nur die Environment-Variable allein erzeugt keine Disk und keine Schreibrechte.

@@ -14,44 +14,11 @@ const io = new Server(httpServer, { cors: { origin: true } });
 const PORT = Number(process.env.PORT || 10000);
 const MAX_VIDEO_BYTES = 35 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
-// Prefer the configured persistent disk. If the mount is missing or not writable,
-// try a writable local directory so the service can still start. Local fallbacks
-// are ephemeral on Render and do NOT guarantee data persistence across deploys.
-const requestedDataRoot = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
-let dataRoot = requestedDataRoot;
-function ensureDataDirectories(root) {
-  fs.mkdirSync(path.join(root, 'uploads', 'videos'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'uploads', 'avatars'), { recursive: true });
-  const probe = path.join(root, `.gametik-write-test-${process.pid}`);
-  fs.writeFileSync(probe, 'ok');
-  fs.unlinkSync(probe);
-}
-const fallbackCandidates = [
-  path.resolve(__dirname, 'data'),
-  path.join(require('os').tmpdir(), 'gametik-data')
-].filter((candidate, index, all) => candidate !== requestedDataRoot && all.indexOf(candidate) === index);
-try {
-  ensureDataDirectories(dataRoot);
-} catch (initialError) {
-  let selected = false;
-  for (const fallbackRoot of fallbackCandidates) {
-    try {
-      ensureDataDirectories(fallbackRoot);
-      console.error(`WARN: DATA_DIR '${requestedDataRoot}' is not writable (${initialError.code || initialError.message}). ` +
-        `Using temporary/local storage '${fallbackRoot}'. Data may be lost after restart or redeploy; configure a writable Render Persistent Disk.`);
-      dataRoot = fallbackRoot;
-      selected = true;
-      break;
-    } catch (fallbackError) {
-      console.error(`WARN: GameTik storage fallback '${fallbackRoot}' failed: ${fallbackError.code || fallbackError.message}`);
-    }
-  }
-  if (!selected) throw initialError;
-}
-const uploadRoot = path.join(dataRoot, 'uploads');
-const stateFile = path.join(dataRoot, 'gametik-state.json');
+const uploadRoot = path.join(__dirname, 'uploads');
 const videoDir = path.join(uploadRoot, 'videos');
 const avatarDir = path.join(uploadRoot, 'avatars');
+fs.mkdirSync(videoDir, { recursive: true });
+fs.mkdirSync(avatarDir, { recursive: true });
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -92,7 +59,6 @@ app.use((req, res, next) => {
 app.use(express.static(publicDir, { dotfiles: 'deny', index: false }));
 
 const sessions = new Map();
-const accounts = new Map(); // normalized username -> persistent account data
 const adminSessions = new Map();
 const adminLoginAttempts = new Map();
 const videos = [];
@@ -112,58 +78,6 @@ const paypalOrders = new Map();
 const liveRooms = new Map();
 let nextVideoId = 1;
 let nextCommentId = 1;
-function serializeMapOfSets(map) { return [...map.entries()].map(([k,v]) => [k, v instanceof Set ? [...v] : v]); }
-function savePersistentState() {
-  try {
-    const data = {
-      accounts: [...accounts.entries()],
-      sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
-      videos, chatMessages, privateMessages, gifts, stories,
-      candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
-      friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
-      nextStoryId, nextVideoId, nextCommentId
-    };
-    const tmp = stateFile + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data));
-    fs.renameSync(tmp, stateFile);
-  } catch (e) { console.error('GameTik state could not be saved:', e.message); }
-}
-function loadPersistentState() {
-  try {
-    if (!fs.existsSync(stateFile)) return;
-    const d = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-    for (const [k,v] of d.accounts || []) accounts.set(k,v);
-    for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
-    for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) { v.push(...(d[k]||[])); }
-    for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
-    for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
-    for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
-    for (const [k,v] of d.friendRequests||[]) friendRequests.set(k,v);
-    for (const [k,v] of d.friendships||[]) friendships.set(k,new Set(v||[]));
-    for (const id of d.adminBlockedUsers||[]) adminBlockedUsers.add(id);
-    nextStoryId=d.nextStoryId||1; nextVideoId=d.nextVideoId||1; nextCommentId=d.nextCommentId||1;
-  } catch (e) { console.error('GameTik state could not be loaded:', e.message); }
-}
-loadPersistentState();
-const persistTimer = setInterval(savePersistentState, 2000);
-if (persistTimer.unref) persistTimer.unref();
-process.on('SIGTERM', savePersistentState);
-process.on('SIGINT', savePersistentState);
-function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
-  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-  return { salt, hash };
-}
-function verifyPassword(password, salt, expected) {
-  const actual = crypto.scryptSync(password, salt, 64);
-  const expectedBuf = Buffer.from(expected || '', 'hex');
-  return expectedBuf.length === actual.length && crypto.timingSafeEqual(actual, expectedBuf);
-}
-function createUser(username, accountId = crypto.randomUUID()) {
-  const id = String(accountId), token = crypto.randomUUID();
-  const user = { id, username, avatar_url:null, created_at:new Date().toISOString(), gender:'', bio:'', relationship_status:'', location:'', social_private:true, social_visibility:'private', likes:new Set(), following:new Set(), blockedUsers:new Set() };
-  sessions.set(token,user); friendships.set(id,new Set()); friendRequests.set(id,[]);
-  return {token,user};
-}
 const videoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, videoDir),
   filename: (_req, file, cb) => cb(null, crypto.randomUUID() + safeExtension(file.mimetype, file.originalname))
@@ -321,27 +235,21 @@ app.delete('/api/admin/stories/:id', adminAuth, (req, res) => {
 });
 app.patch('/api/admin/users/:id/block', adminAuth, (req, res) => {
   const id = String(req.params.id);
-  const userExists = [...sessions.values()].some(user => String(user.id) === id);
-  if (!userExists) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
+  if (!sessions.has(id)) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
   const blocked = req.body.blocked === true;
   if (blocked) adminBlockedUsers.add(id); else adminBlockedUsers.delete(id);
-  savePersistentState();
   res.json({ ok: true, blocked });
 });
 app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   const id = String(req.params.id);
-  const account = [...accounts.entries()].find(([, value]) => String(value.id) === id);
-  const matchingTokens = [...sessions.entries()].filter(([, user]) => String(user.id) === id).map(([token]) => token);
-  if (!matchingTokens.length && !account) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
-  for (const token of matchingTokens) sessions.delete(token);
-  if (account) accounts.delete(account[0]);
-  adminBlockedUsers.delete(id); friendRequests.delete(id); friendships.delete(id);
+  const user = sessions.get(id);
+  if (!user) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
+  sessions.delete(id); adminBlockedUsers.delete(id); friendRequests.delete(id); friendships.delete(id);
   for (const [recipient, list] of friendRequests) friendRequests.set(recipient, list.filter(r => String(r.fromId) !== id));
   for (const set of friendships.values()) set.delete(id);
-  for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); }
+  for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); other.likes = other.likes || new Set(); }
   for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
   for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
-  savePersistentState();
   res.json({ ok: true });
 });
 
@@ -349,53 +257,24 @@ function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,ne
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: 'memory-only', database: 'not-used', secretKey: 'not-required' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
   paypalMode: String(process.env.PAYPAL_MODE || 'sandbox').toLowerCase(),
   currency: (process.env.PAYPAL_CURRENCY || 'EUR').toUpperCase(),
-  mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store',
-  persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR)
+  mode: 'memory-only'
 }));
-app.post('/api/auth/register', (req,res) => {
-  const username=String(req.body.username||'').trim();
-  const email=String(req.body.email||'').trim().toLowerCase();
-  const password=String(req.body.password||'');
-  if (!/^[A-Za-z0-9_]{3,24}$/.test(username)) return res.status(400).json({error:'Benutzername: 3–24 Zeichen, nur Buchstaben, Zahlen und _. '});
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:'Bitte eine gültige E-Mail-Adresse eingeben.'});
-  if (password.length < 10 || password.length > 128) return res.status(400).json({error:'Das Passwort muss 10–128 Zeichen lang sein.'});
-  const key=username.toLowerCase();
-  if (accounts.has(key)) return res.status(409).json({error:'Dieser Benutzername ist bereits vergeben.'});
-  if ([...accounts.values()].some(a=>a.email===email)) return res.status(409).json({error:'Diese E-Mail-Adresse ist bereits registriert.'});
-  const credentials=hashPassword(password), id=crypto.randomUUID();
-  accounts.set(key,{id,username,email,passwordSalt:credentials.salt,passwordHash:credentials.hash,created_at:new Date().toISOString()});
-  const created=createUser(username,id); savePersistentState();
-  res.status(201).json({token:created.token,user:publicUser(created.user)});
-});
-app.post('/api/auth/login', (req,res) => {
-  const identity=String(req.body.identity||req.body.username||'').trim();
-  const password=String(req.body.password||'');
-  const account=[...accounts.values()].find(a=>a.username.toLowerCase()===identity.replace(/^@/,'').toLowerCase() || a.email===identity.toLowerCase());
-  if (!account || !verifyPassword(password,account.passwordSalt,account.passwordHash)) return res.status(401).json({error:'Benutzername/E-Mail oder Passwort ist falsch.'});
-  let existing=[...sessions.entries()].find(([,u])=>String(u.id)===String(account.id));
-  let token,user;
-  if(existing){ token=existing[0]; user=existing[1]; }
-  else ({token,user}=createUser(account.username,account.id));
-  savePersistentState(); res.json({token,user:publicUser(user)});
-});
 app.post('/api/guest', (req,res) => {
   const nickname = String(req.body.nickname || '').trim();
   if (!/^[A-Za-z0-9_]{2,24}$/.test(nickname)) return res.status(400).json({ error: 'Nickname: 2–24 Zeichen, nur Buchstaben, Zahlen und _.' });
-  if ([...sessions.values()].some(u => u.username.toLowerCase() === nickname.toLowerCase())) return res.status(409).json({ error: 'Dieser Nickname ist bereits vergeben. Bitte registriere dich oder melde dich an.' });
   const token = crypto.randomUUID();
   const user = { id: token, username: nickname, avatar_url: null, created_at: new Date().toISOString(), gender: '', bio: '', relationship_status: '', location: '', social_private: true, social_visibility: 'private', likes: new Set(), following: new Set(), blockedUsers: new Set() };
   friendships.set(token, new Set()); friendRequests.set(token, []);
   sessions.set(token, user);
-  savePersistentState();
   res.status(201).json({ token, user: publicUser(user) });
 });
-app.post('/api/auth/logout', auth, (req,res) => { const token=String(req.headers.authorization||'').replace(/^Bearer /,''); sessions.delete(token); savePersistentState(); res.json({ ok: true }); });
+app.post('/api/auth/logout', auth, (req,res) => { sessions.delete(String(req.user.id)); res.json({ ok: true }); });
 app.get('/api/me', auth, (req,res) => res.json({ user: publicUser(req.user) }));
 app.patch('/api/me/profile', auth, (req, res) => {
   const gender = String(req.body.gender || '').trim();
@@ -406,7 +285,6 @@ app.patch('/api/me/profile', auth, (req, res) => {
   if (!['', 'Single', 'In einer Beziehung', 'Verheiratet', 'Es ist kompliziert', 'Keine Angabe'].includes(relationship)) return res.status(400).json({ error: 'Bitte einen gültigen Beziehungsstatus wählen.' });
   req.user.gender = gender; req.user.relationship_status = relationship; req.user.bio = bio.slice(0, 300); req.user.location = location.slice(0, 80);
   if (['public','friends','private'].includes(req.body.social_visibility)) { req.user.social_visibility = req.body.social_visibility; req.user.social_private = req.body.social_visibility !== 'public'; } else if (typeof req.body.social_private === 'boolean') { req.user.social_private = req.body.social_private; req.user.social_visibility = req.body.social_private ? 'private' : 'public'; }
-  savePersistentState();
   res.json({ user: publicUser(req.user) });
 });
 app.get('/api/members', auth, (req,res) => {
@@ -1073,4 +951,4 @@ app.use((err,_req,res,_next) => {
   const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : (err.status || (err instanceof multer.MulterError ? 400 : 500));
   res.status(status).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Datei zu groß. Videos maximal 35 MB, Profilbilder maximal 3 MB.' : (err.message || 'Interner Fehler.') });
 });
-httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Speicher: ${dataRoot}${dataRoot === requestedDataRoot ? '' : ' (AUSWEICHORDNER – nicht dauerhaft auf Render)'}.`));
+httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Demo-Daten werden im Arbeitsspeicher gehalten.`));
