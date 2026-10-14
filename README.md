@@ -1,87 +1,87 @@
-# GameTik – Story-Update
+# GameTik – Foto/Video, Storys, Reaktionen und Bewertungen
 
 ## Dateien
-- `index.html` – Oberfläche und neonfarbene GameTik-Story-Buttons
-- `app.js` – Frontend, Story-Erstellung und Anzeige
-- `server.js` – Express-API, Uploads und Ablauf von Storys nach 24 Stunden
-- `package.json` – Start- und Syntaxprüfungsbefehle
+- `index.html` – Frontend
+- `app.js` – Frontend-Logik
+- `server.js` – Express API
+- `package.json` – Start und Syntaxprüfung
 
 ## Lokal prüfen
-Node.js 20 oder neuer installieren, danach im Projektordner:
+Node.js 20 oder neuer installieren, dann `npm install`, `npm run check` und `npm start`.
 
-```bash
-npm install
-npm run check
-npm start
-```
+## Neue Funktionen
+- Feed akzeptiert Foto (JPG/PNG/WebP) oder Video (MP4/WebM/MOV), maximal 35 MB je Datei.
+- Eigene Feed-Beiträge können gelöscht werden; der Server prüft die Eigentümerschaft.
+- Eigene Storys können gelöscht werden und laufen nach 24 Stunden ab.
+- Reaktionen: Herz, Gefällt mir, I Love You und Dislike.
+- Bewertungen von 1 bis 10; Durchschnitt und Anzahl werden angezeigt.
 
-## Render / Netlify
-- Render Start Command: `npm start`
-- Auf Render wird die API unter `https://chatweb-iajl.onrender.com` erwartet, wenn die Webseite auf einer `*.netlify.app`-Adresse läuft.
-- Wenn sich die Render-Adresse ändert, muss `API_BASE` oben in `app.js` aktualisiert werden. Alternativ kann vor `app.js` eine Einstellung `window.GAMETIK_API_BASE = 'https://DEIN-RENDER-SERVICE.onrender.com';` gesetzt werden.
-- Netlify muss die Frontend-Datei `index.html` und `app.js` veröffentlichen; der Node-Server läuft separat auf Render.
+## Wichtig
+Dies ist weiterhin eine Demo ohne Datenbank. Nutzer, Beiträge, Reaktionen und Bewertungen liegen im Arbeitsspeicher und können nach Server-Neustarts verloren gehen. Upload-Dateien liegen lokal im Render-Service; für dauerhafte Speicherung wird persistenter Speicher oder Objektspeicher benötigt. Ein echter Live-Test gegen Render/Netlify wurde nicht durchgeführt.
 
-## Wichtige Einschränkungen
-Dies ist eine Demo-Version. Nutzer-Sitzungen, Story-Metadaten, Likes, Kommentare und Chat liegen teilweise nur im Arbeitsspeicher und können nach einem Neustart verloren gehen. Upload-Dateien liegen lokal auf dem Render-Service und benötigen für dauerhafte Speicherung einen persistenten Speicher oder einen Objektspeicher. Die 24-Stunden-Ablaufzeit wird serverseitig berechnet; bei Neustart gehen Story-Metadaten verloren.
+## Follow-Button-Update
+- Follow/Unfollow ist im Feed bei Video- und Fotobeiträgen sichtbar.
+- Follow/Unfollow ist auch bei Beiträgen im Entdecken-Bereich sichtbar.
+- Beim Anzeigen einer Story anderer Nutzer wird ebenfalls ein Folgen-Button angezeigt.
+- Der Button benötigt eine angemeldete Sitzung. Eigene Inhalte zeigen keinen Folgen-Button.
+- Die öffentliche Profilansicht anderer Nutzer ist in dieser Demo noch keine separate Profilseite; der Folgen-Button erscheint dort, wo fremde Nutzerinhalte dargestellt werden.
 
-`npm run check` prüft JavaScript-Syntax, aber ersetzt keinen echten Live-Test mit den Render-Umgebungsvariablen und PayPal-Sandbox-Zugangsdaten.
-
-
-## Korrektur- und Prüfhinweise (14.10.2026)
-- Das GameTik-Logo und das Hamburger-Highlight sind zusätzlich direkt in `index.html` eingebettet. Dadurch erscheinen sie auch dann, wenn nur `index.html` einzeln geöffnet oder hochgeladen wird.
-- `npm run check` prüft die Syntax von `server.js` und `app.js`.
-- Die Gastprofile, Storys, Chat-Nachrichten, Likes und Videos werden weiterhin nur im Arbeitsspeicher gespeichert; sie sind keine dauerhafte Produktionsdatenbank.
-- Ein echter End-to-End-Test gegen die veröffentlichte Render-/Netlify-Instanz wurde nicht ausgeführt.
+## Blockieren und Admin-Kontrolle
+- Nutzer können andere Nutzer in Storys, Feed und Entdecken blockieren. Inhalte zwischen blockierenden Nutzern werden aus Feed/Storys/Mitgliederliste gefiltert.
+- Der Administrator kann unter `/admin.html` Nutzer sperren/entsperren, Nutzer löschen sowie Beiträge und Storys entfernen. Admin-Anmeldung benötigt `ADMIN_USERNAME` und `ADMIN_PASSWORD` (mindestens 12 Zeichen) in Render.
+- Aktueller Speicher ist weiterhin RAM-basiert. Sperren, Konten und Inhalte sind nach Serverneustart nicht dauerhaft; für Produktion eine Datenbank ergänzen.
 
 
-Logo-Update: Das professionelle GameTik-Logo mit transparenter Krone ist in index.html eingebettet. Die separate Datei gametik-logo-professionell.png liegt zusätzlich im Projekt.
+## Eigene Musik zu Beiträgen
+- Beim Hochladen eines Fotos oder Videos kann optional eine Musik-/Audiodatei hinzugefügt werden.
+- Unterstützte Formate: MP3, M4A/MP4, AAC, WAV, OGG, WebM und FLAC.
+- Die Medien- und Musikdatei dürfen jeweils maximal 35 MB groß sein.
+- Die Musik wird im Feed als eigener Audio-Player unter dem Beitrag angezeigt.
+- Syntaxprüfung: `node --check server.js` und `node --check app.js`.
+- Hinweis: Die Demo speichert Metadaten im Arbeitsspeicher und Uploads auf dem lokalen Service-Dateisystem; für dauerhafte Produktion ist persistenter Speicher erforderlich.
 
 
-Navigation aktualisiert: Home, Für dich, Freunde, Posteingang und Profil. „Für dich“ und „Freunde“ öffnen derzeit den gemeinsamen Feed mit passender Überschrift; ein eigener Freundeslisten-/Empfehlungsalgorithmus ist in diesem Update nicht enthalten.
+## Kamera und MP3-Upload
+- Beim Beitrag und in der Story-Erstellung gibt es Kamera-Buttons für Foto und Video. Auf Mobilgeräten öffnet der Browser die native Kamera; der Nutzer muss den Zugriff erlauben. Die Galerie-/Dateiauswahl bleibt ebenfalls verfügbar.
+- Eigene Musik akzeptiert ausschließlich MP3 (`audio/mpeg` / `.mp3`), serverseitig validiert.
+- Kamera-Capture ist abhängig von Browser und Gerät; die Seite muss über HTTPS geöffnet werden, damit Browserfunktionen zuverlässig verfügbar sind.
+
+## Dokument-Anhänge (14.10.2026)
+- Beiträge unterstützen optional einen Dokument-Anhang: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, RTF oder ZIP.
+- Ein Dokument kann allein oder zusammen mit einem Foto/Video veröffentlicht werden.
+- Serverseitige MIME-Filter und Dateigrößenlimit von 35 MB pro Datei gelten auch für Dokumente.
+- Dokumente werden im Feed als Anhang mit Öffnen-/Download-Link angezeigt.
+- Syntaxprüfung: `npm run check`.
 
 
-Korrektur: Der schwarze Hintergrund der Edelsteinkrone wurde transparent gemacht. Die Krone ist in index.html eingebettet; die separate PNG liegt zusätzlich als gametik-neon-edelsteinkrone-transparent.png bei.
+## Navigation, Kontakte und Chat-Werkzeuge
+- Storys lassen sich im Story-Viewer per Wischgeste nach links/rechts wechseln; Pfeiltasten bleiben verfügbar.
+- Im privaten Chat gibt es lokale Aktionen zum Archivieren, Leeren der aktuellen Ansicht und Stummschalten für 1 Stunde, 8 Stunden, 24 Stunden, 7 Tage oder dauerhaft. Diese Einstellungen liegen im Browser und löschen keine Serverdaten.
+- Der Live-Chat nutzt Socket.IO.
+- Sprach-/Videoanruf-Schaltflächen sind als UI vorhanden; echte Anrufe sind noch nicht implementiert. Dafür muss eine WebRTC-Signalisierung mit Offer/Answer/ICE und Berechtigungsablauf ergänzt und live getestet werden.
+- Kontakte und Chats werden in dieser Demo nicht dauerhaft in einer Datenbank gespeichert.
 
 
-## Deployment / CORS
-
-- Set `ALLOWED_ORIGINS` on the backend to a comma-separated list of exact custom frontend origins if you use a custom domain, for example `https://example.com,https://www.example.com`. Netlify subdomains are allowed by default.
-- Set `GAMETIK_API_BASE` in the frontend before `app.js` only if the API uses a different URL. By default the frontend uses the configured Render API URL when hosted elsewhere.
-- The demo stores members, posts, stories, chat messages and gifts in memory. They can be lost when the server restarts. Uploaded files require persistent disk storage in production.
-- `npm run check` checks the syntax of `server.js` and `app.js`; it does not replace a live integration test.
+## Navigation-Update: fünf Hauptseiten
+Die Hauptnavigation ist auf fünf übersichtliche Bereiche reduziert: Home, Entdecken, Erstellen, Nachrichten und Profil. Die Feed-Unterbereiche Home, Für dich und Freunde liegen als dezente Unterauswahl auf der Home-Seite.
 
 
-## PayPal-Einrichtung (Render)
-
-Auf Render unter **Environment** setzen:
-- `PAYPAL_MODE=sandbox` zum Testen (später `live`)
-- `PAYPAL_CLIENT_ID` = Client ID der passenden PayPal-App
-- `PAYPAL_CLIENT_SECRET` = Secret derselben App
-- `PAYPAL_CURRENCY=EUR`
-- `APP_BASE_URL=https://DEINE-NETLIFY-DOMAIN.netlify.app` (die Seite, auf der `index.html` und `app.js` laufen; ohne abschließenden Schrägstrich)
-- Optional `PAYPAL_DONATION_URL=https://www.paypal.com/donate/...` für den externen Spendenlink. Wenn die PayPal-API-Zugangsdaten noch fehlen, öffnet der Spendenbutton diesen HTTPS-Link als Fallback; virtuelle Geschenke benötigen weiterhin die API-Zugangsdaten.
-
-Geschenke: Herz 0,99 €, Stern 1,99 €, Feuer 2,99 €, Krone 4,99 €. Der integrierte Spenden-Checkout erstellt eine freiwillige Spende über 5,00 € mit PayPal. Der Server bestätigt Geschenke/Spenden erst nach erfolgreicher PayPal-Capture-Bestätigung. Bei getrenntem Netlify-Frontend und Render-Backend muss `APP_BASE_URL` auf die Netlify-Frontend-Adresse zeigen, damit PayPal nach der Freigabe zur Seite mit dem Rückkehr-Handler zurückkehrt. Der Handler ruft den Capture-Endpunkt über die Render-API auf.
-
-**Wichtig:** Diese Version speichert Benutzer, Nachrichten, Videos, Story-Metadaten und Zahlungen weiterhin im Arbeitsspeicher. Render-Neustarts können Metadaten verlieren; lokale Uploads brauchen persistenten Speicher. Die neue Sichtbarkeit schützt private Videos nur im Video-API-Feed, nicht durch ein dauerhaftes Kontensystem. Vor öffentlichem Produktivbetrieb sind Datenbank, dauerhafte Dateispeicherung, echte Registrierung/Passwort-Login, Moderation und ein Live-PayPal-Test nötig.
+## Fünf-Seiten-Navigation (14.10.2026)
+- Die fünf Hauptbereiche sind Home, Entdecken, Erstellen, Nachrichten und Profil. Es wird jeweils nur der ausgewählte Bereich angezeigt.
+- Touch-Gesten: nach links/rechts zwischen den Hauptbereichen wechseln; vertikale Wischgesten können ebenfalls zum vorherigen/nächsten Bereich wechseln.
+- Desktop: Navigationsbuttons bleiben verfügbar; vertikales Mausrad auf dem Seitenhintergrund kann zwischen Bereichen wechseln. Innerhalb interaktiver/scrollbarer Inhalte bleibt normales Scrollen erhalten.
+- Die Ansicht springt beim Seitenwechsel an den Seitenanfang. Der aktive Bereich wird in der Navigation markiert.
+- JavaScript-Syntax mit `node --check` geprüft; kein vollständiger Live-/Gerätetest durchgeführt.
 
 
-## Administrator-Anmeldung
-- Admin-Seite: `https://DEIN-RENDER-SERVICE.onrender.com/admin.html` (oder gleiche Domain wie das Backend).
-- In Render unter **Environment** `ADMIN_USERNAME` und `ADMIN_PASSWORD` setzen. Das Passwort muss mindestens 12 Zeichen lang sein. Beispiel: `ADMIN_USERNAME=TheGameTika`; verwende für `ADMIN_PASSWORD` ein eigenes, langes Passwort.
-- Keine Admin-Zugangsdaten in GitHub, HTML oder Chat schreiben. Nach dem Speichern den Render-Service neu deployen/restarten.
-- Das Admin-Dashboard zeigt aktuelle Demo-Sitzungen, Videos und verbuchte Geschenke; Videos können gelöscht werden. Da die Demo-Daten im Arbeitsspeicher liegen, ist dies noch keine dauerhafte Produktionsverwaltung.
-- API-Routen für Admins sind durch einen separaten, acht Stunden gültigen Admin-Token geschützt.
+## Live-Streams mit WebRTC / SFU (LiveKit)
+- Das Feed-Panel enthält einen Live-Bereich: Streams starten/ansehen, Kamera/Mikrofon beim Host, Teilnehmerzahl, Live-Chat und PayPal-Geschenke.
+- Medien laufen über LiveKit (SFU); der Browser-SDK wird aus dem jsDelivr-CDN geladen. Die Backend-API erzeugt getrennte Host-/Viewer-Tokens. API-Secrets bleiben ausschließlich in Render-Umgebungsvariablen.
+- In Render müssen `LIVEKIT_URL` (LiveKit-WebSocket-URL, üblicherweise `wss://...`), `LIVEKIT_API_KEY` und `LIVEKIT_API_SECRET` gesetzt sein. Ohne diese Angaben bleibt Live deaktiviert.
+- Für PayPal müssen `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE=sandbox` (zuerst testen), `PAYPAL_CURRENCY=EUR` und `APP_BASE_URL` auf die öffentlich erreichbare GameTik-Webseite (HTTPS) gesetzt sein. Erst nach erfolgreich bestätigter PayPal-Capture-API-Antwort wird das Geschenk gespeichert. Keine Client-seitige Zahlungsbestätigung wird vertraut.
+- Testmünzen sind nicht implementiert; die Geschenkbuttons starten echte PayPal-Checkout-Bestellungen mit den Preisen aus `giftCatalog`. Erst mit PayPal-Sandbox-Konten testen, dann bewusst auf `PAYPAL_MODE=live` wechseln.
+- Live-Räume, Chat-/Geschenk-Metadaten und Benutzer-Sessions liegen weiterhin im Arbeitsspeicher und gehen bei Neustarts verloren. Für dauerhafte Produktion braucht GameTik eine Datenbank, Rate Limits, Moderations-/Meldesystem und dauerhaften Dateispeicher.
+- `npm run check` prüft die JavaScript-Syntax. Das ersetzt keinen Ende-zu-Ende-Test mit echten LiveKit- und PayPal-Zugangsdaten.
 
-## Sicherheits- und Funktionskorrekturen (14.10.2026)
-- Admin-Anmeldung begrenzt fehlgeschlagene Versuche pro IP (maximal 10 innerhalb des Zeitfensters); erfolgreiche Anmeldung setzt den Zähler zurück.
-- Zusätzliche Sicherheits-Header für MIME-Sniffing, Referrer, Framing und Browser-Berechtigungen.
-- Admin-Dashboard zeigt nun auch Storys an und ermöglicht deren Löschung.
-- Syntaxprüfung für `server.js`, `app.js`, Inline-JavaScript und JSON von `package.json` wurde lokal erfolgreich ausgeführt.
-- ZIP-Integrität wurde geprüft.
-
-## Noch nicht live verifiziert
-- PayPal-Transaktionen wurden nicht mit echten Sandbox-Zugangsdaten ausgeführt.
-- Ein vollständiger Laufzeittest mit installierten npm-Abhängigkeiten und Verbindung zu Render/Netlify war in dieser Umgebung nicht möglich.
-- Nutzer, Beiträge, Story-Metadaten, Chats, Geschenke und Bestellstatus liegen derzeit teilweise im Arbeitsspeicher. Neustarts können diese Daten verlieren. Vor einem produktiven Einsatz müssen PostgreSQL/Neon und persistenter Objektspeicher (z. B. Cloudflare R2) integriert werden; Backups sind ebenfalls noch nicht automatisiert.
-- Admin-Anmeldung und Dashboard sind ein grundlegender Moderationsbereich, kein vollständiges Rollen-/Meldesystem.
+## Render-Umgebungsvariablen
+Kopiere `.env.example` als Vorlage (nicht als echte `.env` hochladen) und trage die geheimen Werte ausschließlich in Render unter Environment ein. Niemals Secrets in GitHub committen.

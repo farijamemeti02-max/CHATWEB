@@ -119,7 +119,12 @@ body{background-image:radial-gradient(ellipse at 52% 0%,#34104c 0,transparent 35
 }
 
 
-.paypal-mobile-panel{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px auto 0;padding:12px 16px;max-width:1240px;border:1px solid #245a79;border-radius:16px;background:linear-gradient(110deg,#101c32,#17102a);box-shadow:0 0 18px #24caff18}.paypal-mobile-copy{display:flex;flex-direction:column;gap:2px;margin-right:auto}.paypal-mobile-copy strong{font-size:16px;color:#fff}.paypal-mobile-copy span{font-size:12px;color:#aebbd2}.paypal-link{display:block;text-decoration:none;min-width:210px}.paypal-prominent{display:block;width:100%;min-height:46px;padding:12px 18px;border:1px solid #5aa8ff;border-radius:12px;background:linear-gradient(110deg,#0070ba,#1546a0);color:#fff;font-weight:900;box-shadow:0 0 15px #1687e855}.paypal-mobile-gifts{display:flex;gap:7px;flex-wrap:wrap}.paypal-mobile-gifts .gift{padding:9px 11px;border:1px solid #393b59;background:#151526;color:#fff}.paypal-mobile-panel #giftStatus{width:100%;min-height:0}.right .paypal-prominent{width:100%}@media(max-width:700px){.paypal-mobile-panel{margin:8px;padding:10px;gap:9px;border-radius:12px}.paypal-mobile-copy{width:100%}.paypal-link{width:100%;min-width:0}.paypal-mobile-gifts{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.paypal-mobile-gifts .gift{width:100%;font-size:12px;padding:9px 5px}.right{display:none!important}}
+/* Five real views: only the selected page is visible; gesture navigation works between them. */
+.page-nav-status{font-size:11px;line-height:1.35;color:#9ca8c7;padding:10px 9px;margin-top:12px;border-top:1px solid #292b40}
+.main>section[id$="View"]:not(.hidden){min-height:calc(100dvh - 150px);animation:pageIn .18s ease-out}
+@keyframes pageIn{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){.page-nav-status{display:none}.main>section[id$="View"]:not(.hidden){min-height:calc(100dvh - 150px)}}
+@media(prefers-reduced-motion:reduce){.main>section[id$="View"]:not(.hidden){animation:none}}
 </style>
 </head>
 <body>
@@ -128,45 +133,53 @@ body{background-image:radial-gradient(ellipse at 52% 0%,#34104c 0,transparent 35
   <div class="tagline muted">Deine Welt. Dein Feed.</div>
   <div class="row"><span id="userLabel" class="tiny muted">Als Gast</span><button id="authOpen">Nickname wählen</button></div>
 </header>
-
 <div class="layout">
   <aside class="side" aria-label="Hauptnavigation">
-    <button class="navbtn" data-view="feed" data-nav="home">⌂ Home</button>
-    <button class="navbtn" data-view="feed" data-nav="foryou">✦ Für dich</button>
+    <button class="navbtn active" data-view="feed" data-nav="home">⌂ Home</button>
     <button class="navbtn" data-view="explore" data-nav="explore">⌕ Entdecken</button>
-    <button class="navbtn" data-view="feed" data-nav="friends">♧ Freunde</button>
-    <button class="navbtn" data-view="chat" data-nav="inbox">✉ Posteingang</button>
-    <button class="navbtn active" data-view="profile" data-nav="profile">♙ Profil</button>
-    <button class="navbtn create-neon" type="button" data-view="upload" data-nav="upload" aria-label="Erstellen: Video hochladen"><span aria-hidden="true">＋</span> Erstellen</button>
+    <button class="navbtn create-neon" type="button" data-view="upload" data-nav="upload" aria-label="Erstellen: Foto, Video oder Beitrag hochladen"><span aria-hidden="true">＋</span> Erstellen</button>
+    <button class="navbtn" data-view="chat" data-nav="inbox">✉ Nachrichten</button>
+    <button class="navbtn" data-view="profile" data-nav="profile">♙ Profil</button>
+    <div id="pageNavStatus" class="page-nav-status" aria-live="polite">1 / 5 · Home — wische nach links/rechts oder nutze die Navigation</div>
   </aside>
   <main class="main">
     <section id="exploreView" class="panel hidden">
       <h2 class="section-title">⌕ Entdecken</h2>
-      <p class="muted tiny">Finde Creator, Videos und Hashtags in der GameTik-Community.</p>
-      <label for="exploreSearch">Nutzer, Videos oder Hashtags suchen</label>
-      <input id="exploreSearch" type="search" placeholder="z. B. Gaming, Musik oder #montenegro">
-      <div class="row" id="exploreCategories" style="flex-wrap:wrap;margin:8px 0">
-        <button type="button" class="secondary explore-category active" data-category="Alle">✨ Alle</button>
-        <button type="button" class="secondary explore-category" data-category="Gaming">🎮 Gaming</button>
-        <button type="button" class="secondary explore-category" data-category="Musik">🎵 Musik</button>
-        <button type="button" class="secondary explore-category" data-category="Comedy">😂 Comedy</button>
-        <button type="button" class="secondary explore-category" data-category="Sport">⚽ Sport</button>
+      <p class="muted tiny">Suche in den aktuell geladenen GameTik-Videos nach Nutzern, Beschreibungen und Hashtags.</p>
+      <input id="exploreSearch" type="search" placeholder="Nutzer, Video oder #Hashtag suchen …" aria-label="GameTik durchsuchen">
+      <div class="row" style="flex-wrap:wrap;margin:10px 0">
+        <button type="button" class="secondary explore-tag" data-query="#gametik">#gametik</button>
+        <button type="button" class="secondary explore-tag" data-query="#gaming">#gaming</button>
+        <button type="button" class="secondary explore-tag" data-query="#musik">#musik</button>
+        <button type="button" class="secondary explore-tag" data-query="#comedy">#comedy</button>
+        <button type="button" class="secondary explore-tag" data-query="">Alle anzeigen</button>
       </div>
-      <h3 class="section-title">🔥 Beliebte Hashtags</h3>
-      <div id="exploreHashtags" class="row" style="flex-wrap:wrap"><button class="secondary hashtag-chip" type="button" data-query="#gametik">#gametik</button><button class="secondary hashtag-chip" type="button" data-query="#gaming">#gaming</button><button class="secondary hashtag-chip" type="button" data-query="#musik">#musik</button><button class="secondary hashtag-chip" type="button" data-query="#comedy">#comedy</button><button class="secondary hashtag-chip" type="button" data-query="#sport">#sport</button></div>
-      <h3 class="section-title" style="margin-top:18px">⭐ Videos & Creator</h3>
-      <div id="exploreResults" class="feed"><div class="empty">Lade Videos und Creator …</div></div>
-      <div id="exploreStatus" class="muted tiny" aria-live="polite"></div>
+      <div id="exploreResults" class="feed"><div class="empty">Videos werden gesucht …</div></div>
     </section>
     <section id="feedView" class="hidden">
-      <div class="panel row" style="justify-content:space-between;background:linear-gradient(120deg,#101a2b,#26132c);border-color:#4b365b"><div><b id="feedHeading" style="font-size:1.05rem">Deine Welt. Dein Feed. ✦</b><div class="muted tiny">Clips entdecken · vertikal scrollen · bis 35 MB</div></div><button id="refreshFeed" class="secondary">↻</button></div>
+      <div class="panel row" style="justify-content:space-between;background:linear-gradient(120deg,#101a2b,#26132c);border-color:#4b365b"><div><b id="feedHeading" style="font-size:1.05rem">Deine Welt. Dein Feed. ✦</b><div class="muted tiny">Clips entdecken · vertikal scrollen · bis 35 MB</div></div><button id="refreshFeed" class="secondary" aria-label="Feed aktualisieren">↻</button></div>
+      <div class="row feed-subnav" aria-label="Feed-Bereiche" style="gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button type="button" class="secondary" data-feed-mode="home">⌂ Home</button><button type="button" class="secondary" data-feed-mode="foryou">✦ Für dich</button><button type="button" class="secondary" data-feed-mode="friends">♧ Freunde</button></div>
       <section class="panel feed-stories" aria-label="Storys" style="padding:12px"><div class="row" style="justify-content:space-between"><h2 class="section-title" style="margin:0">Storys</h2><span class="muted tiny">Nach 24 Stunden weg</span></div><div class="story-list" id="feedStoryList" aria-label="Aktive Storys"><button id="feedStoryLaunch" class="story-item" type="button"><span class="story-ring"><span class="story-ring-inner"><span class="story-plus">＋</span></span></span><span class="tiny">Deine Story</span></button></div><div class="story-status" id="feedStoryStatus" aria-live="polite"></div></section>
+      <section class="panel" id="livePanel" style="border-color:#e52ac9;background:linear-gradient(130deg,#151526,#24132c);margin:12px 0">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 class="section-title" style="margin:0">🔴 GameTik LIVE</h2><p class="muted tiny">Echte WebRTC-Übertragung über LiveKit · Kamera, Zuschauer, Live-Chat und Geschenke</p></div><span id="liveConfigStatus" class="muted tiny">Live-Dienst wird geprüft …</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin:10px 0"><input id="liveTitle" maxlength="100" placeholder="Titel deines Live-Streams" style="flex:1;min-width:180px"><button id="liveStartBtn" type="button">🔴 Live starten</button><button id="liveRefreshBtn" type="button" class="secondary">Streams aktualisieren</button></div>
+        <div id="liveStreams" class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"><div class="muted tiny">Aktive Streams werden geladen …</div></div>
+        <div id="liveStage" class="hidden" style="margin-top:14px">
+          <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap"><div><b id="liveStageTitle">Live-Stream</b><div id="liveStageStatus" class="muted tiny" aria-live="polite">Verbindung wird vorbereitet …</div></div><span class="badge" id="liveViewerCount">👁 0 Zuschauer</span></div>
+          <div id="liveVideoGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px"></div>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin:10px 0"><button type="button" class="secondary live-gift" data-gift="Herz">❤️ Herz · 0,99 €</button><button type="button" class="secondary live-gift" data-gift="Stern">⭐ Stern · 1,99 €</button><button type="button" class="secondary live-gift" data-gift="Feuer">🔥 Feuer · 2,99 €</button><button type="button" class="secondary live-gift" data-gift="Krone">👑 Krone · 4,99 €</button><button id="liveEndBtn" type="button" class="danger hidden">Live beenden</button><button id="liveLeaveBtn" type="button" class="secondary">Stream verlassen</button></div>
+          <div class="panel" style="padding:10px;background:#0b0b14"><b>Live-Chat</b><div id="liveChatMessages" style="height:150px;overflow:auto;margin:8px 0" aria-live="polite"></div><form id="liveChatForm" class="row" style="gap:8px"><input id="liveChatInput" maxlength="300" placeholder="Nachricht an den Live-Chat …" required style="flex:1;min-width:100px"><button>Senden</button></form><div id="liveGiftStatus" class="muted tiny" aria-live="polite"></div></div>
+        </div>
+      </section>
       <div id="feed" class="feed"><div class="empty">Videos werden geladen …</div></div>
     </section>
     <section id="uploadView" class="panel hidden">
-      <h2 class="section-title">Video hochladen</h2>
-      <p class="muted tiny">MP4, WebM oder MOV · maximal 35 MB pro Video</p>
-      <form id="uploadForm"><label>Video auswählen</label><input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime" required><label>Beschreibung</label><textarea id="videoCaption" maxlength="500" rows="3" placeholder="Was möchtest du teilen?"></textarea><label for="videoHashtags">Hashtags</label><input id="videoHashtags" maxlength="250" placeholder="#gaming #musik"><label for="videoCover">Titelbild (optional)</label><input id="videoCover" type="file" accept="image/jpeg,image/png,image/webp"><label for="videoVisibility">Sichtbarkeit</label><select id="videoVisibility" style="width:100%;background:#0b0b13;border:1px solid #39394f;color:white;border-radius:10px;padding:12px;margin:5px 0 12px"><option value="public">Öffentlich</option><option value="private">Privat – nur ich</option></select><p class="muted tiny">Video maximal 35 MB. Titelbild und Sichtbarkeit werden angezeigt; die dauerhafte serverseitige Speicherung dieser Zusatzfelder muss im Backend abgesichert werden.</p><button type="submit">Video veröffentlichen</button></form><div id="uploadStatus"></div>
+      <h2 class="section-title">Foto oder Video hochladen</h2>
+      <p class="muted tiny">Foto: JPG, PNG oder WebP · Video: MP4, WebM oder MOV · Musik ausschließlich MP3 · maximal 35 MB je Datei</p>
+      <form id="uploadForm"><label>Foto oder Video auswählen (optional, wenn du ein Dokument anhängst)</label><input id="videoFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"><div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0 14px"><button type="button" class="secondary" id="cameraPhotoBtn">📷 Foto mit Kamera aufnehmen</button><button type="button" class="secondary" id="cameraVideoBtn">🎥 Video mit Kamera aufnehmen</button></div><input id="cameraPhotoInput" type="file" accept="image/*" capture="environment" hidden><input id="cameraVideoInput" type="file" accept="video/*" capture="environment" hidden><p class="muted tiny">Mit den Kamera-Buttons fragt dein Gerät bei Bedarf nach Kamerazugriff. Du kannst auch weiterhin vorhandene Fotos oder Videos auswählen.</p><label>Dokument anhängen (optional; PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, RTF, ZIP; max. 35 MB)</label><input id="documentFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,application/pdf,text/plain,text/csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/rtf,application/zip"><p class="muted tiny">Du kannst ein Dokument zusammen mit einem Foto/Video oder als eigenen Beitrag hochladen.</p><label>Eigene Musik hinzufügen (optional, nur MP3)</label><input id="musicFile" type="file" accept="audio/mpeg,.mp3"><p class="muted tiny">Nur MP3-Dateien sind erlaubt. Die Musik wird unter deinem Foto oder Video als Audio-Player angezeigt.</p><label>Beschreibung</label><textarea id="videoCaption" maxlength="500" rows="3" placeholder="Was möchtest du teilen?"></textarea>
+      <label>Hashtags (optional)</label><input id="videoHashtags" maxlength="200" placeholder="#gaming #musik">
+      <label>Sichtbarkeit</label><select id="videoVisibility"><option value="public">Öffentlich</option><option value="private">Privat (nur du)</option></select>
+      <button type="submit">Foto oder Video veröffentlichen</button></form><div id="uploadStatus"></div>
     </section>
     <section id="chatView" class="panel hidden">
       <h2 class="section-title">Nachrichten</h2><p class="muted tiny">Öffentlicher Community-Chat oder private Unterhaltung mit einem ausgewählten Mitglied.</p>
@@ -174,7 +187,15 @@ body{background-image:radial-gradient(ellipse at 52% 0%,#34104c 0,transparent 35
       <div id="privateChatLayout" class="hidden">
         <label for="privateRecipient">Mitglied auswählen</label>
         <select id="privateRecipient" style="width:100%;background:#0b0b13;border:1px solid #39394f;color:white;border-radius:10px;padding:12px;margin:5px 0 12px"><option value="">Mitglieder werden geladen …</option></select>
-        <button type="button" id="refreshMembers" class="secondary">↻ Mitglieder aktualisieren</button>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0">
+          <button type="button" id="refreshMembers" class="secondary">↻ Kontakte aktualisieren</button>
+          <button type="button" id="archiveChatBtn" class="secondary">🗃️ Chat archivieren</button>
+          <button type="button" id="clearChatBtn" class="secondary">🗑️ Chatliste aufräumen</button>
+          <button type="button" id="muteChatBtn" class="secondary">🔔 Benachrichtigungen stummschalten</button>
+        </div>
+        <label for="muteDuration">Stummschalten für</label><select id="muteDuration"><option value="3600000">1 Stunde</option><option value="28800000">8 Stunden</option><option value="86400000">24 Stunden</option><option value="604800000">7 Tage</option><option value="0">Dauerhaft</option></select>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button type="button" id="voiceCallBtn" class="secondary">📞 Sprachanruf</button><button type="button" id="videoCallBtn" class="secondary">📹 Videoanruf</button></div>
+        <div id="chatToolsStatus" class="muted tiny" aria-live="polite"></div>
         <p id="privateChatHint" class="muted tiny">Wähle einen Nutzer, um die private Unterhaltung zu öffnen.</p>
       </div>
       <div id="chatMessages" class="chat-box" aria-live="polite"></div>
@@ -224,7 +245,7 @@ body{background-image:radial-gradient(ellipse at 52% 0%,#34104c 0,transparent 35
         <div id="storyList" class="story-list" aria-label="Aktive Storys"><span class="muted tiny">Storys werden geladen …</span></div>
         <form id="storyForm" class="hidden story-form-grid">
           <label for="storyType">Story-Typ</label><select id="storyType" style="width:100%;background:#0b0b13;border:1px solid #39394f;color:white;border-radius:10px;padding:12px;margin:5px 0 12px"><option value="photo">Foto</option><option value="video">Video</option><option value="text">Text</option></select>
-          <label for="storyMedia">Foto oder Video (max. 35 MB)</label><input type="file" id="storyMedia" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime">
+          <label for="storyMedia">Foto oder Video (max. 35 MB)</label><input type="file" id="storyMedia" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"><div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0 12px"><button type="button" class="secondary" id="storyCameraPhotoBtn">📷 Story-Foto aufnehmen</button><button type="button" class="secondary" id="storyCameraVideoBtn">🎥 Story-Video aufnehmen</button></div><input id="storyCameraPhotoInput" type="file" accept="image/*" capture="environment" hidden><input id="storyCameraVideoInput" type="file" accept="video/*" capture="environment" hidden>
           <label for="storyCaption">Beschreibung oder Story-Text</label><textarea id="storyCaption" maxlength="300" rows="3" placeholder="Was möchtest du teilen?"></textarea>
           <div class="row"><button type="submit">＋ Story veröffentlichen</button><button id="storyCancel" class="secondary" type="button">Abbrechen</button></div>
         </form>
@@ -233,11 +254,13 @@ body{background-image:radial-gradient(ellipse at 52% 0%,#34104c 0,transparent 35
       <button id="logoutBtn" class="secondary hidden" style="margin-top:12px">Ausloggen</button>
     </section>
   </main>
-  <aside class="right" aria-label="PayPal und Community">
+  <aside class="right">
+    <section class="panel"><h2 class="section-title">Unterstütze GAMETIK</h2><p class="muted tiny">Wenn du die Community unterstützen möchtest, kannst du freiwillig spenden.</p><button id="paypalBtn" class="secondary" data-gift="Spende" style="width:100%">♥ 5 € mit PayPal spenden</button><p class="muted tiny">PayPal-Spendenlink muss vom Betreiber eingerichtet werden.</p></section>
+    <section class="panel"><h2 class="section-title">Virtuelle Geschenke</h2><p class="muted tiny">Wähle ein virtuelles Geschenk. Die Zahlung wird erst nach erfolgreicher Bestätigung durch PayPal verbucht.</p><div class="gift-grid"><button class="gift" data-gift="Herz">💚 Herz · 0,99 €</button><button class="gift" data-gift="Stern">⭐ Stern · 1,99 €</button><button class="gift" data-gift="Feuer">🔥 Feuer · 2,99 €</button><button class="gift" data-gift="Krone">👑 Krone · 4,99 €</button></div><div id="giftStatus" class="tiny muted" style="margin-top:8px"></div><p class="muted tiny">Hinweis: Video-, Chat- und Geschenk-Daten werden in dieser Version im Arbeitsspeicher gehalten und können bei einem Serverneustart verloren gehen.</p></section>
     <section class="panel"><h2 class="section-title">Community-Regeln</h2><p class="tiny muted">Respektvoll bleiben. Keine illegalen Inhalte, Belästigung oder fremden privaten Daten. Melde problematische Inhalte dem Betreiber.</p></section>
   </aside>
 </div>
-<footer>GAMETIK · Deine Welt. Dein Feed. · Bitte teile keine privaten Daten.<div style="margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><a href="/paypal.html" style="display:inline-block;text-decoration:none"><button type="button" class="paypal-prominent" style="width:auto;min-width:220px">♥ PayPal & Geschenke</button></a><a href="https://chatweb-iajl.onrender.com/admin.html" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none"><button type="button" class="paypal-prominent" style="width:auto;min-width:220px;background:linear-gradient(110deg,#24dfff,#ff28d2)">♛ Administrator-Anmeldung</button></a></div></footer>
+<footer>GAMETIK · Deine Welt. Dein Feed. · Bitte teile keine privaten Daten.</footer>
 <div id="storyModal" class="story-modal hidden" role="dialog" aria-modal="true" aria-label="Story ansehen">
   <div class="story-viewer"><div class="story-viewer-head"><div id="storyViewerTitle">GameTik Story</div><button id="storyViewerClose" class="secondary" type="button" aria-label="Story schließen">✕</button></div><div id="storyViewerMedia" class="story-viewer-media"></div><div id="storyViewerFoot" class="story-viewer-foot"></div><div class="row" style="padding:0 12px 12px"><button id="storyPrev" class="secondary" type="button">← Zurück</button><button id="storyNext" type="button" style="margin-left:auto">Weiter →</button></div></div>
 </div>
@@ -256,70 +279,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
 <script src="/app.js" defer></script>
-<style>
-/* Explore / upload enhancements */
-.explore-category.active{border-color:#ff28d2;box-shadow:0 0 12px #ff28d244;color:#fff}
-.hashtag-chip{border:1px solid #263d59;color:#24dfff;background:#0b1120}
-#exploreResults .video-card{max-width:100%}
-#exploreResults .empty{border:1px dashed #28344e;border-radius:14px}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
- const exploreView=document.getElementById('exploreView');
- const feedView=document.getElementById('feedView');
- const uploadView=document.getElementById('uploadView');
- const chatView=document.getElementById('chatView');
- const profileView=document.getElementById('profileView');
- const allViews=[exploreView,feedView,uploadView,chatView,profileView].filter(Boolean);
- const navs=[...document.querySelectorAll('.navbtn[data-view]')];
- function showView(name){
-   const ids={explore:exploreView,feed:feedView,upload:uploadView,chat:chatView,profile:profileView};
-   if(!ids[name]) return;
-   allViews.forEach(v=>v.classList.add('hidden'));
-   ids[name].classList.remove('hidden');
-   navs.forEach(n=>n.classList.toggle('active',n.dataset.view===name));
-   if(name==='explore') renderExplore();
- }
- const exploreNav=document.querySelector('[data-nav="explore"]');
- exploreNav?.addEventListener('click',e=>{e.preventDefault();showView('explore');});
- // Mirror existing rendered feed cards into Explore; search/category filtering is local to currently loaded videos.
- let selectedCategory='Alle';
- function renderExplore(){
-   const results=document.getElementById('exploreResults'); if(!results)return;
-   const cards=[...document.querySelectorAll('#feedView .video-card')];
-   const query=(document.getElementById('exploreSearch')?.value||'').trim().toLowerCase();
-   const filtered=cards.filter(card=>{
-     const text=(card.innerText||card.textContent||'').toLowerCase();
-     const categoryOk=selectedCategory==='Alle'||text.includes(selectedCategory.toLowerCase())||
-       (selectedCategory==='Musik'&&/#musik|music|song|audio/.test(text))||
-       (selectedCategory==='Gaming'&&/#gaming|game|gamer/.test(text))||
-       (selectedCategory==='Comedy'&&/#comedy|lustig|funny/.test(text))||
-       (selectedCategory==='Sport'&&/#sport|fußball|football/.test(text));
-     return categoryOk&&(!query||text.includes(query)||text.includes(query.replace(/^#/,'#')));
-   });
-   results.replaceChildren();
-   if(!filtered.length){
-     const empty=document.createElement('div');empty.className='empty';
-     empty.textContent=cards.length?'Keine passenden Videos unter den aktuell geladenen Clips gefunden.':'Noch keine Videos geladen. Melde dich an und lade Clips hoch, damit sie hier entdeckt werden können.';
-     results.appendChild(empty);
-   }else filtered.forEach(card=>results.appendChild(card.cloneNode(true)));
-   const status=document.getElementById('exploreStatus');
-   if(status)status.textContent=filtered.length+' passende Videos aus dem aktuell geladenen Feed';
- }
- document.getElementById('exploreSearch')?.addEventListener('input',renderExplore);
- document.querySelectorAll('.explore-category').forEach(btn=>btn.addEventListener('click',()=>{
-   selectedCategory=btn.dataset.category||'Alle';
-   document.querySelectorAll('.explore-category').forEach(b=>b.classList.toggle('active',b===btn));
-   renderExplore();
- }));
- document.querySelectorAll('.hashtag-chip').forEach(btn=>btn.addEventListener('click',()=>{
-   const input=document.getElementById('exploreSearch');if(input){input.value=btn.dataset.query||'';renderExplore();}
- }));
- // Update Explore when feed refresh completes/DOM changes.
- const feed=document.getElementById('feedView');
- if(feed&&window.MutationObserver)new MutationObserver(()=>{if(!exploreView?.classList.contains('hidden'))renderExplore();}).observe(feed,{childList:true,subtree:true});
-});
-</script>
+<script src="/live.js" defer></script>
 </body>
 </html>

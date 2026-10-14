@@ -1,12 +1,12 @@
 {
   "name": "gametik",
-  "version": "1.0.1",
-  "description": "GAMETIK short-video social platform starter",
+  "version": "1.1.0",
+  "description": "GAMETIK social platform with LiveKit WebRTC live streaming and server-confirmed PayPal gifts",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node scripts/check-inline.js"
+    "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
   },
   "engines": {
     "node": ">=20"
@@ -15,6 +15,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "multer": "^2.0.2",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "livekit-server-sdk": "^2.19.1"
   }
 }
