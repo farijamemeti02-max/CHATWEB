@@ -45,35 +45,7 @@
     if(name==='explore') loadExplore();
     if(name==='upload') $('videoCaption')?.focus({preventScroll:true});
   }
-  function movePage(direction) {
-    const active = pageOrder.findIndex(p=>!$(p.view+'View')?.classList.contains('hidden'));
-    const next = Math.max(0,Math.min(pageOrder.length-1,(active<0?0:active)+direction));
-    if(next!==active) { showView(pageOrder[next].view,pageOrder[next].nav); window.scrollTo({top:0,behavior:'smooth'}); }
-  }
-  // Touch navigation: horizontal or vertical swipe switches the five real views.
-  let navTouchStart=null;
-  const ignoreSwipe = el => !!el.closest('input,textarea,select,button,a,[contenteditable="true"],video,audio,.chat-box,.story-list,.profile-tabs,.story-modal,.modal');
-  document.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1 || ignoreSwipe(e.target)) { navTouchStart=null; return; }
-    const t=e.touches[0]; navTouchStart={x:t.clientX,y:t.clientY};
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(!navTouchStart || !e.changedTouches.length) return;
-    const t=e.changedTouches[0], dx=t.clientX-navTouchStart.x, dy=t.clientY-navTouchStart.y;
-    navTouchStart=null;
-    if(Math.max(Math.abs(dx),Math.abs(dy))<75) return;
-    if(Math.abs(dx)>Math.abs(dy)) movePage(dx<0?1:-1);
-    else if(Math.abs(dy)>Math.abs(dx)*1.25) movePage(dy<0?1:-1);
-  },{passive:true});
-  // Desktop wheel navigation on non-scrollable page background; inner lists keep normal scrolling.
-  let wheelLock=false;
-  document.addEventListener('wheel',e=>{
-    if(wheelLock || ignoreSwipe(e.target) || Math.abs(e.deltaY)<55 || Math.abs(e.deltaY)<Math.abs(e.deltaX)) return;
-    const main=e.target.closest('.main'); if(!main) return;
-    const target=e.target;
-    if(target.closest('.panel') && target.closest('.panel').scrollHeight>target.closest('.panel').clientHeight+12) return;
-    wheelLock=true; movePage(e.deltaY>0?1:-1); setTimeout(()=>wheelLock=false,650);
-  },{passive:true});
+  // Click-only navigation: no swipe or wheel gesture switches pages.
   document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view,b.dataset.nav)));
   document.querySelectorAll('[data-feed-mode]').forEach(b=>b.addEventListener('click',()=>{showView('feed',b.dataset.feedMode);document.querySelectorAll('[data-feed-mode]').forEach(x=>x.classList.toggle('active',x===b));}));
   $('refreshFeed').onclick=loadFeed;
@@ -92,6 +64,50 @@
   $('authClose').onclick=()=> $('authModal').classList.add('hidden');
   $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const d=await api('/api/guest',{method:'POST',body:JSON.stringify({nickname:$('authUsername').value.trim()})});token=d.token;localStorage.setItem('gametik_token',token);me=d.user;updateAuthUI();$('authModal').classList.add('hidden');if(socket){socket.disconnect();socket=null;}connectChat();showView('feed');}catch(err){status('authStatus',err.message);}finally{$('authSubmit').disabled=false;}};
   $('logoutBtn').onclick=async()=>{try{if(token)await api('/api/auth/logout',{method:'POST'});}catch(e){}finally{token='';me=null;localStorage.removeItem('gametik_token');if(socket){socket.disconnect();socket=null;}privateRecipientId='';updateAuthUI();loadProfile();showView('feed');$('authModal').classList.remove('hidden');}};
+
+  // Real camera preview and capture using the browser camera API.
+  const cameraState={stream:null,mode:'photo',facing:'environment',recorder:null,chunks:[],recordedBlob:null};
+  const cameraEl=id=>document.getElementById(id);
+  async function stopCamera(){
+    if(cameraState.recorder && cameraState.recorder.state!=='inactive'){try{cameraState.recorder.stop();}catch(e){}}
+    if(cameraState.stream){cameraState.stream.getTracks().forEach(t=>t.stop());cameraState.stream=null;}
+    const preview=cameraEl('cameraPreview'); if(preview)preview.srcObject=null;
+  }
+  async function openCamera(mode){
+    cameraState.mode=mode;cameraState.recordedBlob=null;cameraState.chunks=[];
+    cameraEl('cameraModal').classList.remove('hidden');cameraEl('cameraTitle').textContent=mode==='photo'?'Foto aufnehmen':'Video aufnehmen';
+    cameraEl('cameraCapture').classList.toggle('hidden',mode!=='photo');cameraEl('cameraRecord').classList.toggle('hidden',mode!=='video');cameraEl('cameraUse').classList.add('hidden');
+    cameraEl('cameraStatus').textContent='Bitte Kamerazugriff erlauben …';
+    try{
+      if(!navigator.mediaDevices?.getUserMedia)throw Error('Kamera benötigt HTTPS und einen kompatiblen Browser.');
+      cameraState.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:cameraState.facing,width:{ideal:1080},height:{ideal:1920}},audio:mode==='video'});
+      const v=cameraEl('cameraPreview');v.srcObject=cameraState.stream;await v.play();cameraEl('cameraStatus').textContent='Kamera bereit. '+(mode==='video'?'Starte die Aufnahme, wenn du bereit bist.':'Tippe auf den Auslöser.');
+    }catch(err){cameraEl('cameraStatus').textContent='Kamera nicht verfügbar: '+err.message;}
+  }
+  function assignCapturedFile(inputId,blob,name){
+    const input=cameraEl(inputId);const file=new File([blob],name,{type:blob.type||'application/octet-stream'});const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  cameraEl('cameraPhotoBtn')?.addEventListener('click',()=>openCamera('photo'));
+  cameraEl('cameraVideoBtn')?.addEventListener('click',()=>openCamera('video'));
+  cameraEl('cameraClose')?.addEventListener('click',async()=>{cameraEl('cameraModal').classList.add('hidden');await stopCamera();});
+  cameraEl('cameraSwitch')?.addEventListener('click',async()=>{cameraState.facing=cameraState.facing==='environment'?'user':'environment';await stopCamera();await openCamera(cameraState.mode);});
+  cameraEl('cameraCapture')?.addEventListener('click',()=>{
+    const v=cameraEl('cameraPreview'),c=cameraEl('cameraCanvas');if(!v.videoWidth){cameraEl('cameraStatus').textContent='Kamera ist noch nicht bereit.';return;}
+    c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    c.toBlob(async blob=>{if(!blob)return;assignCapturedFile('videoFile',blob,'gametik-foto-'+Date.now()+'.jpg');cameraEl('cameraStatus').textContent='Foto aufgenommen. Es wurde im Upload-Formular ausgewählt.';await stopCamera();setTimeout(()=>cameraEl('cameraModal').classList.add('hidden'),500);},'image/jpeg',.92);
+  });
+  cameraEl('cameraRecord')?.addEventListener('click',()=>{
+    if(!cameraState.stream)return;
+    if(cameraState.recorder && cameraState.recorder.state==='recording'){cameraState.recorder.stop();cameraEl('cameraRecord').textContent='● Aufnahme starten';return;}
+    const mime=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(t=>window.MediaRecorder?.isTypeSupported(t));
+    if(!window.MediaRecorder){cameraEl('cameraStatus').textContent='Videoaufnahme wird von diesem Browser nicht unterstützt.';return;}
+    cameraState.chunks=[];cameraState.recorder=new MediaRecorder(cameraState.stream,mime?{mimeType:mime}:undefined);
+    cameraState.recorder.ondataavailable=e=>{if(e.data?.size)cameraState.chunks.push(e.data);};
+    cameraState.recorder.onstop=()=>{cameraState.recordedBlob=new Blob(cameraState.chunks,{type:cameraState.recorder.mimeType||'video/webm'});cameraEl('cameraUse').classList.remove('hidden');cameraEl('cameraStatus').textContent='Aufnahme beendet. Du kannst sie jetzt verwenden.';cameraEl('cameraRecord').textContent='● Erneut aufnehmen';};
+    cameraState.recorder.start();cameraEl('cameraRecord').textContent='■ Aufnahme stoppen';cameraEl('cameraStatus').textContent='Aufnahme läuft …';
+  });
+  cameraEl('cameraUse')?.addEventListener('click',async()=>{if(!cameraState.recordedBlob)return;assignCapturedFile('videoFile',cameraState.recordedBlob,'gametik-video-'+Date.now()+'.webm');cameraEl('cameraStatus').textContent='Video wurde im Upload-Formular ausgewählt.';await stopCamera();cameraEl('cameraModal').classList.add('hidden');});
+  cameraEl('cameraModal')?.addEventListener('click',e=>{if(e.target===cameraEl('cameraModal')){cameraEl('cameraModal').classList.add('hidden');stopCamera();}});
 
   let activeStories = [], activeStoryIndex = 0;
   const storyTypeEl = $('storyType');

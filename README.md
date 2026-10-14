@@ -85,3 +85,10 @@ Die Hauptnavigation ist auf fünf übersichtliche Bereiche reduziert: Home, Entd
 
 ## Render-Umgebungsvariablen
 Kopiere `.env.example` als Vorlage (nicht als echte `.env` hochladen) und trage die geheimen Werte ausschließlich in Render unter Environment ein. Niemals Secrets in GitHub committen.
+
+
+## Navigation, Kamera und Zahlungen (aktualisiert)
+- Seitenwechsel erfolgt über sichtbare Klick-Navigation; Swipe-/Wheel-Seitenwechsel wurde entfernt. Normales Scrollen innerhalb langer Inhalte bleibt aktiv, damit Formulare und Beiträge erreichbar sind.
+- Die Kamera öffnet eine echte Browser-Vorschau via `getUserMedia`; Fotos werden per Canvas aufgenommen und Videos per MediaRecorder aufgezeichnet. Funktioniert nur über HTTPS/localhost und mit Geräteberechtigung.
+- `paypal.html` ist eine separate PayPal-/Geschenke-Seite und verwendet die vorhandene serverseitige Bestellroute.
+- Admin Login ist über `admin.html` verlinkt. Admin-Zugangsdaten bleiben serverseitig zu konfigurieren.
