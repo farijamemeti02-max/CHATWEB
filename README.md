@@ -134,15 +134,3 @@ Die Verbindung verwendet aktuell einen öffentlichen STUN-Server als Minimal-Kon
 Im LIVE-Host-Bereich gibt es einen optionalen Web-Audio-Mixer mit Mikrofon-Lautstärke, Hall (Reverb), Delay, Kompressor sowie Radio-/Roboter-Klangfärbung. Der Mixer verarbeitet den Mikrofon-Ton im Browser und veröffentlicht den bearbeiteten Ton über LiveKit. Er benötigt eine HTTPS-Seite und die Mikrofonfreigabe des Browsers. Bei Mobilgeräten können Bluetooth-Headsets, Energiesparmodi oder Browserbeschränkungen die Audioverarbeitung beeinflussen.
 
 **Hinweis zu AutoTune:** Die Auswahl „AutoTune-Stil“ in dieser Version ist eine klangliche Färbung und keine echte Tonhöhenkorrektur wie bei professioneller Auto-Tune-Software. Für echte Tonhöhenkorrektur ist ein separater Pitch-Correction-DSP erforderlich.
-
-
-## GameTik LIVE v1.8 additions
-
-- LIVE-Chat appears directly beneath the video; studio mixer and LIVE settings are below it.
-- Host end button remains available while hosting. A `pagehide`/`beforeunload` request also attempts to end the stream when the host leaves the page. Browsers may cancel background requests, so use the explicit **Live beenden** button whenever possible.
-- 3-minute optional LIVE duel overlay, candy points, victory/round jingle, and a restart action labelled Ehrenrunde.
-- Free virtual candy wallet: one daily claim of 10 candies, free spin with an 8-second cooldown, and gifting 1–20 candies to an active LIVE. Candy is not money, cannot be purchased through this mini-game, and cannot be cashed out.
-- IMPORTANT: candy balances, daily claims and spin cooldowns currently live in server memory and reset when the Render process restarts. Add a persistent database before public launch.
-- Added common image/video MIME types (JPG, PNG, WebP, GIF, AVIF, BMP; MP4, WebM, MOV, OGV, M4V) and audio types (MP3, M4A, AAC, OGG, WAV, WebM, FLAC), subject to browser playback support. Upload limit remains 35 MB per file.
-- PayPal gift checkout remains a separate real-money flow and only counts a paid gift after the server confirms a completed PayPal capture. Free candy spins never use PayPal or real money.
-- Verification performed: `node --check` on server.js, app.js, live.js and `node scripts/check-project.js`. Real browser, Render, LiveKit and PayPal end-to-end tests were not performed.

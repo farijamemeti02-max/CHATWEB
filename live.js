@@ -175,7 +175,7 @@
     currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
-    $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; $('liveStartBtn').classList.toggle('hidden', role === 'host');
+    $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; if ($('liveEndTopBtn')) { $('liveEndTopBtn').classList.toggle('hidden', role !== 'host'); $('liveEndTopBtn').disabled = role !== 'host'; } $('liveStartBtn').classList.toggle('hidden', role === 'host');
     $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
     refreshCandyBalance(); liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
     room = new window.LivekitClient.Room({adaptiveStream: true, dynacast: true});
@@ -289,12 +289,21 @@
     try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/stop`, {method:'POST', body:'{}'}); renderGame(data.game); }
     catch (error) { $('liveGiftStatus').textContent = error.message; }
   });
-  $('liveEndBtn').addEventListener('click', async () => {
+  async function endCurrentLive() {
     if (!currentStream || currentRole !== 'host') return;
-    const button = $('liveEndBtn'); button.disabled = true;
-    try { await api(`/api/live/${encodeURIComponent(currentStream.id)}/end`, {method:'POST', body:'{}'}); liveStatus('LIVE wurde beendet.'); await leaveStream(); await refreshStreams(); }
-    catch (error) { alert(error.message); button.disabled = false; }
-  });
+    const streamId = currentStream.id;
+    const buttons = [$('liveEndBtn'), $('liveEndTopBtn')].filter(Boolean);
+    buttons.forEach(button => { button.disabled = true; button.textContent = '⏳ LIVE wird beendet …'; });
+    try {
+      await api(`/api/live/${encodeURIComponent(streamId)}/end`, {method:'POST', body:'{}'});
+      liveStatus('LIVE wurde beendet.'); await leaveStream(); await refreshStreams();
+    } catch (error) {
+      $('liveGiftStatus').textContent = 'Stream konnte nicht beendet werden: ' + error.message;
+      buttons.forEach(button => { button.disabled = false; button.textContent = '⏹ LIVE BEENDEN'; });
+    }
+  }
+  $('liveEndBtn')?.addEventListener('click', endCurrentLive);
+  $('liveEndTopBtn')?.addEventListener('click', endCurrentLive);
   $('liveLeaveBtn').addEventListener('click', async () => { await leaveStream(); await refreshStreams(); });
   $('liveChatForm').addEventListener('submit', event => {
     event.preventDefault(); const body = $('liveChatInput').value.trim();
@@ -316,7 +325,39 @@
   $('liveCandyGift')?.addEventListener('click', async () => { if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; } if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } const amount=Number(prompt('Wie viele kostenlose Süßigkeiten möchtest du verschenken? (1–20)', '1')); if (!Number.isInteger(amount)||amount<1||amount>20) return; try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeiten verschenkt. Dein Guthaben: ${d.balance}`; await refreshCandyBalance(); } catch(e) { $('liveGiftStatus').textContent=e.message; } });
   $('liveCasinoOpen')?.addEventListener('click', async () => { if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } $('liveCasinoModal')?.classList.remove('hidden'); await refreshCandyBalance(); });
   $('liveCasinoClose')?.addEventListener('click', () => $('liveCasinoModal')?.classList.add('hidden'));
-  $('liveCasinoSpin')?.addEventListener('click', async () => { const button=$('liveCasinoSpin'); button.disabled=true; try { const d=await api('/api/candy/spin',{method:'POST',body:'{}'}); $('liveCasinoReels').textContent=(d.symbols||['🍬','🍭','🍬']).join(' '); $('liveCasinoResult').textContent=d.reward ? `🎉 Du gewinnst ${d.reward} kostenlose Süßigkeit(en)!` : 'Diesmal kein Gewinn. Versuche es später erneut.'; candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward) playGameJingle('gift'); } catch(e) { $('liveCasinoResult').textContent=e.message; } finally { setTimeout(()=>{button.disabled=false;},8000); } });
+  $('liveCasinoSpin')?.addEventListener('click', async () => {
+    const button=$('liveCasinoSpin'), reels=$('liveCasinoReels');
+    if (button.disabled) return;
+    button.disabled=true; button.textContent='🎰 AUTOMAT DREHT …';
+    const symbols=['🍒','🍋','🍇','🍉','🍬','🍭','🍫','🧁','⭐'];
+    const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    try {
+      // Visual reel spin first; the server remains the source of truth for the reward.
+      for(let i=0;i<24;i++) {
+        reels.textContent=[0,1,2].map(()=>symbols[Math.floor(Math.random()*symbols.length)]).join('　');
+        reels.style.transform=`translateY(${i%2 ? 3 : -3}px)`;
+        reels.style.filter=`blur(${i<18 ? 1.4 : 0}px)`;
+        await wait(65 + Math.min(i,18)*5);
+      }
+      reels.style.transform='translateY(0)'; reels.style.filter='none';
+      const d=await api('/api/candy/spin',{method:'POST',body:'{}'});
+      const finalSymbols=d.symbols||['🍬','🍭','🍬'];
+      reels.textContent=finalSymbols.join('　'); reels.classList.remove('gametik-reel-win');
+      if(d.reward) { void reels.offsetWidth; reels.classList.add('gametik-reel-win'); }
+      $('liveCasinoResult').textContent=d.reward ? `🎉 GEWONNEN! +${d.reward} kostenlose Süßigkeit(en)!` : 'Diesmal kein Gewinn. Probiere es später erneut.';
+      candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward) playGameJingle('win');
+    } catch(e) { $('liveCasinoResult').textContent=e.message; }
+    finally { reels.style.transform='translateY(0)'; reels.style.filter='none'; setTimeout(()=>{button.disabled=false;button.textContent='🎰 DREHEN';},1600); }
+  });
+  document.querySelectorAll('.live-candy-send').forEach(button => button.addEventListener('click', async () => {
+    if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; }
+    if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
+    const amount=Math.max(1,Math.min(20,Number(button.dataset.amount)||1));
+    button.disabled=true;
+    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; await refreshCandyBalance(); playGameJingle('gift'); }
+    catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); }
+    finally { setTimeout(()=>{button.disabled=false;},500); }
+  }));
   refreshCandyBalance();
   async function sendLiveLike() {
     if (!currentStream) return;
