@@ -134,3 +134,7 @@ Die Verbindung verwendet aktuell einen öffentlichen STUN-Server als Minimal-Kon
 Im LIVE-Host-Bereich gibt es einen optionalen Web-Audio-Mixer mit Mikrofon-Lautstärke, Hall (Reverb), Delay, Kompressor sowie Radio-/Roboter-Klangfärbung. Der Mixer verarbeitet den Mikrofon-Ton im Browser und veröffentlicht den bearbeiteten Ton über LiveKit. Er benötigt eine HTTPS-Seite und die Mikrofonfreigabe des Browsers. Bei Mobilgeräten können Bluetooth-Headsets, Energiesparmodi oder Browserbeschränkungen die Audioverarbeitung beeinflussen.
 
 **Hinweis zu AutoTune:** Die Auswahl „AutoTune-Stil“ in dieser Version ist eine klangliche Färbung und keine echte Tonhöhenkorrektur wie bei professioneller Auto-Tune-Software. Für echte Tonhöhenkorrektur ist ein separater Pitch-Correction-DSP erforderlich.
+
+
+## Fix v3.7: virtuelle Geschenk-Icons
+Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `index.html` eingebettet. Dadurch werden sie auch angezeigt, wenn der Hosting-Deploy den Ordner `assets/` nicht korrekt ausliefert. Die Original-SVG-Dateien bleiben zusätzlich im Ordner `assets/`.
