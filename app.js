@@ -42,13 +42,86 @@
     if(name==='chat' && !socket && token) connectChat();
     if(name==='profile') loadProfile();
     if(name==='feed') loadFeed();
-    if(name==='explore') loadExplore();
+    if(name==='explore'){ loadExplore(); loadSocialList(); }
     if(name==='upload') $('videoCaption')?.focus({preventScroll:true});
   }
   // Click-only navigation: no swipe or wheel gesture switches pages.
   document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view,b.dataset.nav)));
   document.querySelectorAll('[data-feed-mode]').forEach(b=>b.addEventListener('click',()=>{showView('feed',b.dataset.feedMode);document.querySelectorAll('[data-feed-mode]').forEach(x=>x.classList.toggle('active',x===b));}));
   $('refreshFeed').onclick=loadFeed;
+
+  // GameTik social discovery, following, followers and friend requests.
+  let socialTab = 'friends';
+  const socialTabs = { friends: 'friends', followers: 'followers', following: 'following', requests: 'requests' };
+  function socialAvatar(user){
+    const src=mediaUrl(user.avatar_url||'');
+    return src ? `<img class="social-user-avatar" src="${esc(src)}" alt="Profilbild von @${esc(user.username)}" loading="lazy">` : `<span class="social-user-avatar" aria-hidden="true">${esc((user.username||'?').slice(0,1).toUpperCase())}</span>`;
+  }
+  function socialUserCard(user, mode='search', requestId=''){
+    const id=esc(user.id), username=esc(user.username);
+    let actions='';
+    if(mode==='search'){
+      actions += `<button type="button" class="secondary" data-social-action="follow" data-user-id="${id}">${user.following?'✓ Folge ich':'＋ Folgen'}</button>`;
+      actions += `<button type="button" class="secondary" data-social-action="request" data-user-id="${id}">${user.friend?'✓ Freunde':'＋ Freundschaft'}</button>`;
+      actions += `<button type="button" class="secondary" data-social-action="message" data-user-id="${id}">✉ Nachricht</button>`;
+    } else if(mode==='requests'){
+      actions += `<button type="button" data-social-action="accept" data-request-id="${esc(requestId)}">✓ Annehmen</button><button type="button" class="secondary" data-social-action="reject" data-request-id="${esc(requestId)}">Ablehnen</button>`;
+    } else if(mode==='followers'){
+      actions += `<button type="button" class="secondary" data-social-action="follow" data-user-id="${id}">${user.following?'✓ Folge ich':'＋ Zurückfolgen'}</button>`;
+    } else if(mode==='following'){
+      actions += `<button type="button" class="secondary" data-social-action="follow" data-user-id="${id}">Nicht mehr folgen</button>`;
+    }
+    return `<article class="social-user-card">${socialAvatar(user)}<div class="social-user-info"><b>@${username}</b><small>${user.followers_count||0} Follower · ${user.following_count||0} folgt</small>${user.bio?`<small>${esc(user.bio)}</small>`:''}</div><div class="social-user-actions">${actions}</div></article>`;
+  }
+  async function searchSocialUsers(){
+    const q=$('userSearchInput')?.value.trim()||'';
+    if(!token){$('userSearchStatus').textContent='Bitte zuerst anmelden, um Nutzer zu suchen.';$('authModal').classList.remove('hidden');return;}
+    if(!q){$('userSearchStatus').textContent='Gib einen Namen ein, zum Beispiel @ninax.';$('userSearchResults').innerHTML='<div class="empty">Noch kein Suchbegriff.</div>';return;}
+    $('userSearchStatus').textContent='Suche läuft …';$('userSearchResults').innerHTML='<div class="empty">Nutzer werden gesucht …</div>';
+    try{const d=await api('/api/users/search?q='+encodeURIComponent(q));$('userSearchStatus').textContent=d.users.length?`${d.users.length} Nutzer gefunden.`:'Keine passenden Nutzer gefunden.';$('userSearchResults').innerHTML=d.users.length?d.users.map(u=>socialUserCard(u,'search')).join(''):'<div class="empty">Kein aktiver Nutzer mit diesem Namen gefunden.</div>';}
+    catch(e){$('userSearchStatus').textContent=e.message;$('userSearchResults').innerHTML='';}
+  }
+  async function loadSocialList(tab=socialTab){
+    socialTab=tab;
+    document.querySelectorAll('[data-social-tab]').forEach(b=>b.classList.toggle('active',b.dataset.socialTab===tab));
+    if(!token){$('socialListStatus').textContent='Bitte anmelden, um Freundesliste und Anfragen zu sehen.';$('socialListResults').innerHTML='<div class="empty">Nach der Anmeldung werden deine Kontakte hier angezeigt.</div>';return;}
+    $('socialListStatus').textContent='Kontakte werden geladen …';
+    try{
+      const d=await api('/api/me/social');$('friendRequestBadge').textContent=String(d.request_count||0);
+      const items=d[socialTabs[tab]]||[];
+      $('socialListStatus').textContent=tab==='friends'?`Freunde: ${items.length}`:tab==='followers'?`Follower: ${items.length}`:tab==='following'?`Du folgst ${items.length} Nutzern`:`Offene Freundschaftsanfragen: ${items.length}`;
+      $('socialListResults').innerHTML=items.length?items.map(item=>tab==='requests'?socialUserCard(item.user,'requests',item.id):socialUserCard(item,tab==='friends'?'friends':tab)).join(''):`<div class="empty">${tab==='requests'?'Du hast momentan keine neuen Freundschaftsanfragen.':tab==='followers'?'Dir folgt momentan noch niemand.':tab==='following'?'Du folgst noch niemandem.':'Deine Freundesliste ist noch leer. Suche oben nach Nutzern.'}</div>`;
+    }catch(e){$('socialListStatus').textContent=e.message;$('socialListResults').innerHTML='';}
+  }
+  $('userSearchBtn')?.addEventListener('click',searchSocialUsers);
+  $('userSearchInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();searchSocialUsers();}});
+  $('socialRefreshBtn')?.addEventListener('click',()=>loadSocialList());
+  document.querySelectorAll('[data-social-tab]').forEach(b=>b.addEventListener('click',()=>loadSocialList(b.dataset.socialTab)));
+  document.addEventListener('click',async e=>{
+    const btn=e.target.closest('[data-social-action]');if(!btn)return;
+    if(!token){$('authModal').classList.remove('hidden');return;}
+    const action=btn.dataset.socialAction, userId=btn.dataset.userId, requestId=btn.dataset.requestId;
+    btn.disabled=true;
+    try{
+      if(action==='follow'){
+        const d=await api('/api/users/'+encodeURIComponent(userId)+'/follow',{method:'POST'});
+        btn.textContent=d.following?'✓ Folge ich':'＋ Folgen';
+        await loadSocialList();
+      } else if(action==='request'){
+        const d=await api('/api/users/'+encodeURIComponent(userId)+'/friend-request',{method:'POST'});
+        btn.textContent='✓ Anfrage gesendet';btn.disabled=true;
+        if($('userSearchStatus'))$('userSearchStatus').textContent='Freundschaftsanfrage wurde gesendet.';
+      } else if(action==='accept'){
+        await api('/api/friend-requests/'+encodeURIComponent(requestId)+'/accept',{method:'POST'});await loadSocialList('requests');
+      } else if(action==='reject'){
+        await api('/api/friend-requests/'+encodeURIComponent(requestId),{method:'DELETE'});await loadSocialList('requests');
+      } else if(action==='message'){
+        privateRecipientId=userId;showView('chat','inbox');setChatMode('private');loadMembers().then(()=>{if($('privateRecipient'))$('privateRecipient').value=userId;loadPrivateHistory();});
+      }
+    }catch(err){alert(err.message||'Aktion konnte nicht ausgeführt werden.');}
+    finally{if(document.body.contains(btn))btn.disabled=false;}
+  });
+
   function updateAuthUI() {
     $('userLabel').textContent = me ? '@'+me.username : 'Nicht angemeldet';
     $('authOpen').textContent = me ? 'Profil' : 'Nickname wählen';

@@ -70,6 +70,9 @@ const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
 const stories = [];
 const adminBlockedUsers = new Set();
+// Friend requests are held in memory in this demo backend; use a database for persistence.
+const friendRequests = new Map(); // recipientId -> [{ id, fromId, created_at }]
+const friendships = new Map(); // userId -> Set(userId)
 let nextStoryId = 1;
 const paypalOrders = new Map();
 const liveRooms = new Map();
@@ -241,7 +244,9 @@ app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   const id = String(req.params.id);
   const user = sessions.get(id);
   if (!user) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
-  sessions.delete(id); adminBlockedUsers.delete(id);
+  sessions.delete(id); adminBlockedUsers.delete(id); friendRequests.delete(id); friendships.delete(id);
+  for (const [recipient, list] of friendRequests) friendRequests.set(recipient, list.filter(r => String(r.fromId) !== id));
+  for (const set of friendships.values()) set.delete(id);
   for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); other.likes = other.likes || new Set(); }
   for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
   for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
@@ -265,6 +270,7 @@ app.post('/api/guest', (req,res) => {
   if (!/^[A-Za-z0-9_]{2,24}$/.test(nickname)) return res.status(400).json({ error: 'Nickname: 2–24 Zeichen, nur Buchstaben, Zahlen und _.' });
   const token = crypto.randomUUID();
   const user = { id: token, username: nickname, avatar_url: null, created_at: new Date().toISOString(), gender: '', bio: '', relationship_status: '', location: '', likes: new Set(), following: new Set(), blockedUsers: new Set() };
+  friendships.set(token, new Set()); friendRequests.set(token, []);
   sessions.set(token, user);
   res.status(201).json({ token, user: publicUser(user) });
 });
@@ -286,6 +292,54 @@ app.get('/api/members', auth, (req,res) => {
     .map(user => publicUser(user));
   res.json({ members });
 });
+// Search active GameTik accounts by @username (case-insensitive).
+app.get('/api/users/search', auth, (req, res) => {
+  const query = String(req.query.q || '').trim().replace(/^@+/, '').toLowerCase().slice(0, 40);
+  if (!query) return res.json({ users: [] });
+  const users = [...sessions.values()]
+    .filter(user => user.id !== String(req.user.id) && !isBlockedBetween(req.user, user.id) && user.username.toLowerCase().includes(query))
+    .slice(0, 20)
+    .map(user => ({ ...publicUser(user), following: req.user.following.has(String(user.id)), friend: friendships.get(String(req.user.id))?.has(String(user.id)) || false }));
+  res.json({ users });
+});
+app.get('/api/me/social', auth, (req, res) => {
+  const meId = String(req.user.id);
+  const followers = [...sessions.values()].filter(user => user.id !== meId && user.following?.has(meId) && !isBlockedBetween(req.user, user.id)).map(publicUser);
+  const following = [...req.user.following].map(id => sessions.get(String(id))).filter(user => user && !isBlockedBetween(req.user, user.id)).map(publicUser);
+  const friends = [...(friendships.get(meId) || new Set())].map(id => sessions.get(String(id))).filter(user => user && !isBlockedBetween(req.user, user.id)).map(publicUser);
+  const requests = (friendRequests.get(meId) || []).map(r => ({ ...r, user: sessions.get(String(r.fromId)) })).filter(r => r.user && !isBlockedBetween(req.user, r.fromId)).map(r => ({ id: r.id, created_at: r.created_at, user: publicUser(r.user) }));
+  res.json({ followers, following, friends, requests, request_count: requests.length });
+});
+app.post('/api/users/:id/friend-request', auth, (req, res) => {
+  const targetId = String(req.params.id), meId = String(req.user.id);
+  if (targetId === meId) return res.status(400).json({ error: 'Du kannst dir selbst keine Freundschaftsanfrage senden.' });
+  if (!sessions.has(targetId)) return res.status(404).json({ error: 'Dieser Nutzer ist momentan nicht verfügbar.' });
+  if (isBlockedBetween(req.user, targetId)) return res.status(403).json({ error: 'Wegen einer Blockierung nicht möglich.' });
+  if (friendships.get(meId)?.has(targetId)) return res.status(409).json({ error: 'Ihr seid bereits befreundet.' });
+  const list = friendRequests.get(targetId) || [];
+  if (list.some(r => String(r.fromId) === meId)) return res.status(409).json({ error: 'Anfrage wurde bereits gesendet.' });
+  if ((friendRequests.get(meId) || []).some(r => String(r.fromId) === targetId)) return res.status(409).json({ error: 'Dieser Nutzer hat dir bereits eine Anfrage gesendet. Öffne deine Anfragen.' });
+  list.push({ id: crypto.randomUUID(), fromId: meId, created_at: new Date().toISOString() });
+  friendRequests.set(targetId, list);
+  res.status(201).json({ ok: true, pending: true });
+});
+app.post('/api/friend-requests/:id/accept', auth, (req, res) => {
+  const meId = String(req.user.id), requestId = String(req.params.id), list = friendRequests.get(meId) || [];
+  const index = list.findIndex(r => r.id === requestId);
+  if (index < 0) return res.status(404).json({ error: 'Freundschaftsanfrage nicht gefunden.' });
+  const request = list[index], fromId = String(request.fromId);
+  if (!sessions.has(fromId) || isBlockedBetween(req.user, fromId)) { list.splice(index, 1); return res.status(404).json({ error: 'Nutzer nicht mehr verfügbar.' }); }
+  const mine = friendships.get(meId) || new Set(), theirs = friendships.get(fromId) || new Set();
+  mine.add(fromId); theirs.add(meId); friendships.set(meId, mine); friendships.set(fromId, theirs);
+  list.splice(index, 1); friendRequests.set(meId, list);
+  res.json({ ok: true, friend: publicUser(sessions.get(fromId)) });
+});
+app.delete('/api/friend-requests/:id', auth, (req, res) => {
+  const meId = String(req.user.id), list = friendRequests.get(meId) || [], index = list.findIndex(r => r.id === String(req.params.id));
+  if (index < 0) return res.status(404).json({ error: 'Freundschaftsanfrage nicht gefunden.' });
+  list.splice(index, 1); friendRequests.set(meId, list); res.json({ ok: true });
+});
+
 app.get('/api/messages/:userId', auth, (req,res) => {
   const otherId = String(req.params.userId);
   if (otherId === req.user.id) return res.status(400).json({ error: 'Du kannst dir selbst keine Nachricht schicken.' });

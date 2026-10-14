@@ -686,6 +686,20 @@ input,select,textarea{
 @media(max-width:480px){#liveGamePanel.gt-live-game [style*="grid-template-columns:1fr 1fr"]{gap:8px!important}#liveGamePanel.gt-live-game [style*="grid-template-columns:1fr 1fr"]>div{padding:10px!important}#livePaidGifts .live-gift{min-width:0;padding:10px 7px}#liveCandyPanel .row{gap:7px!important}}
 @media(prefers-reduced-motion:reduce){#liveGamePanel.gt-live-game button,#liveCandyPanel button,#livePaidGifts button{transition:none}}
 </style>
+
+<style>
+.social-hub{border-radius:20px;padding:16px;backdrop-filter:blur(18px)}
+.social-hub input{background:#090d19;color:#f5f7ff;border:1px solid #42415f;border-radius:13px;padding:12px 14px;min-height:46px}
+.social-hub button{border-radius:13px;transition:transform .16s,box-shadow .16s,border-color .16s}
+.social-hub button:hover{transform:translateY(-1px);box-shadow:0 0 14px #8c43ff28}
+.social-tab.active{border-color:#f24cdd;background:linear-gradient(105deg,#f02fc8,#8755ff,#25cfff);color:#fff;box-shadow:0 0 15px #8c43ff30}
+.social-user-card{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:11px;border:1px solid #343653;border-radius:15px;background:linear-gradient(115deg,#11182aee,#171125ee)}
+.social-user-avatar{width:44px;height:44px;flex:0 0 44px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:linear-gradient(135deg,#f02fc8,#7c4dff,#24dfff);color:#fff;font-weight:900;border:1px solid #ffffff55}
+.social-user-info{flex:1;min-width:90px}.social-user-info b{display:block;overflow-wrap:anywhere}.social-user-info small{color:#aeb8d1}
+.social-user-actions{display:flex;gap:6px;flex-wrap:wrap}.social-user-actions button{font-size:12px;padding:8px 10px}
+@media(max-width:600px){.social-hub{padding:11px}.social-user-card{gap:8px}.social-user-actions{width:100%}.social-user-actions button{flex:1}}
+</style>
+
 </head>
 <body>
 <header class="top">
@@ -715,6 +729,13 @@ input,select,textarea{
         <button type="button" class="secondary explore-tag" data-query="#musik">#musik</button>
         <button type="button" class="secondary explore-tag" data-query="#comedy">#comedy</button>
         <button type="button" class="secondary explore-tag" data-query="">Alle anzeigen</button>
+      </div>
+      <div class="panel social-hub" style="margin:14px 0;border:1px solid #493b68;background:linear-gradient(135deg,#0c1020ee,#171027ee);box-shadow:0 0 22px #8c42ff12">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3 style="margin:0">👥 GameTik Community</h3><p class="muted tiny" style="margin:5px 0 0">Suche Nutzer mit @Name, folge ihnen und verwalte Freundschaften.</p></div><button type="button" id="socialRefreshBtn" class="secondary">↻ Aktualisieren</button></div>
+        <div class="row" style="gap:8px;margin:12px 0"><input id="userSearchInput" type="search" placeholder="@ninax zumbe suchen …" aria-label="Nutzer nach @Benutzername suchen" style="flex:1;min-width:0"><button type="button" id="userSearchBtn">Suchen</button></div>
+        <div id="userSearchStatus" class="muted tiny" aria-live="polite"></div><div id="userSearchResults" class="grid" style="display:grid;gap:8px;margin:8px 0 14px"><div class="empty">Suche nach einem @Benutzernamen.</div></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin:10px 0"><button type="button" class="secondary social-tab active" data-social-tab="friends">♧ Freundesliste</button><button type="button" class="secondary social-tab" data-social-tab="followers">♥ Wer mir folgt</button><button type="button" class="secondary social-tab" data-social-tab="following">➜ Wem ich folge</button><button type="button" class="secondary social-tab" data-social-tab="requests">✉ Anfragen <span id="friendRequestBadge" class="badge">0</span></button></div>
+        <div id="socialListStatus" class="muted tiny" aria-live="polite"></div><div id="socialListResults" class="grid" style="display:grid;gap:8px"><div class="empty">Melde dich an, um deine Kontakte zu sehen.</div></div>
       </div>
       <div id="exploreResults" class="feed"><div class="empty">Videos werden gesucht …</div></div>
     </section>

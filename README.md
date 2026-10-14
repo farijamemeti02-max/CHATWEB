@@ -138,3 +138,11 @@ Im LIVE-Host-Bereich gibt es einen optionalen Web-Audio-Mixer mit Mikrofon-Lauts
 
 ## Fix v3.7: virtuelle Geschenk-Icons
 Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `index.html` eingebettet. Dadurch werden sie auch angezeigt, wenn der Hosting-Deploy den Ordner `assets/` nicht korrekt ausliefert. Die Original-SVG-Dateien bleiben zusätzlich im Ordner `assets/`.
+
+## GameTik Community: Suche, Folgen und Freundschaftsanfragen
+- In Entdecken gibt es eine Nutzer-Suche über `@Benutzername`.
+- Nutzer können direkt gefolgt werden.
+- Freundschaftsanfragen können gesendet, angenommen und abgelehnt werden.
+- Die Freundesliste zeigt bestätigte Freundschaften; eigene Follower und gefolgte Nutzer sind getrennt aufrufbar.
+- Ein eigener Anfragen-Button zeigt die Anzahl offener eingehender Freundschaftsanfragen.
+- Hinweis: Diese Demo verwaltet Nutzer, Follows und Freundschaftsanfragen derzeit im Arbeitsspeicher. Daten gehen bei einem Render-Neustart verloren. Für dauerhafte Accounts und Kontakte muss eine Datenbank angebunden werden.
