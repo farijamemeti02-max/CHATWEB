@@ -641,7 +641,7 @@ function livekitService() {
   return new RoomServiceClient(host, process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET);
 }
 function livePublic(room) {
-  return { id: room.id, roomName: room.roomName, title: room.title, hostId: room.hostId, hostUsername: room.hostUsername, startedAt: room.startedAt, status: room.status };
+  return { id: room.id, roomName: room.roomName, title: room.title, hostId: room.hostId, hostUsername: room.hostUsername, startedAt: room.startedAt, status: room.status, likes: Number(room.likes || 0) };
 }
 app.get('/api/live', (_req, res) => {
   const active = [...liveRooms.values()].filter(room => room.status === 'live').map(livePublic).reverse();
@@ -654,13 +654,31 @@ app.post('/api/live/create', auth, asyncRoute(async (req, res) => {
   const title = String(req.body.title || '').trim().slice(0, 100) || `${req.user.username} ist live`;
   const id = crypto.randomUUID();
   const roomName = `gametik-${id.replace(/-/g, '')}`;
-  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live' };
+  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live', likes: 0, likedBy: new Set() };
   const access = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, { identity: String(req.user.id), name: req.user.username, ttl: '1h' });
   access.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true, canPublishData: true });
   const token = await access.toJwt();
   liveRooms.set(id, room);
   res.status(201).json({ stream: livePublic(room), serverUrl: process.env.LIVEKIT_URL, token, role: 'host' });
 }));
+// Public guest viewing: guests can watch without creating a GameTik account.
+app.post('/api/live/:id/guest-join', asyncRoute(async (req, res) => {
+  if (!livekitConfigured()) return res.status(503).json({ error: 'Live ist noch nicht eingerichtet. Bitte LiveKit-Zugangsdaten prüfen.' });
+  const room = liveRooms.get(String(req.params.id));
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht mehr verfügbar.' });
+  const identity = 'guest-' + crypto.randomUUID();
+  const access = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, { identity, name: 'Gast', ttl: '1h' });
+  access.addGrant({ roomJoin: true, room: room.roomName, canPublish: false, canSubscribe: true, canPublishData: false });
+  res.json({ stream: livePublic(room), serverUrl: process.env.LIVEKIT_URL, token: await access.toJwt(), role: 'guest', likes: room.likes || 0 });
+}));
+app.post('/api/live/:id/like', (req, res) => {
+  const room = liveRooms.get(String(req.params.id));
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht mehr aktiv.' });
+  // Anonymous likes are intentionally counted as taps; add rate limiting before public production launch.
+  room.likes = Math.min(1000000000, Number(room.likes || 0) + 1);
+  io.to('live:' + room.id).emit('live:like-count', { roomId: room.id, likes: room.likes });
+  res.json({ ok: true, likes: room.likes });
+});
 app.post('/api/live/:id/join', auth, asyncRoute(async (req, res) => {
   if (!livekitConfigured()) return res.status(503).json({ error: 'Live ist noch nicht eingerichtet. Bitte LiveKit-Zugangsdaten in Render konfigurieren.' });
   const room = liveRooms.get(String(req.params.id));
@@ -678,26 +696,34 @@ app.post('/api/live/:id/end', auth, (req, res) => {
   io.to('live:' + room.id).emit('live:ended', { id: room.id });
   res.json({ ok: true });
 });
-app.get('/api/live/:id/count', auth, asyncRoute(async (req, res) => {
+app.get('/api/live/:id/count', asyncRoute(async (req, res) => {
   const room = liveRooms.get(String(req.params.id));
-  if (!room || room.status !== 'live') return res.json({ count: 0, status: 'ended' });
-  if (!livekitConfigured()) return res.json({ count: 0, status: 'unconfigured' });
+  if (!room || room.status !== 'live') return res.json({ count: 0, likes: 0, status: 'ended' });
+  if (!livekitConfigured()) return res.json({ count: 0, likes: room.likes || 0, status: 'unconfigured' });
   try {
     const participants = await livekitService().listParticipants(room.roomName);
-    res.json({ count: participants.length, status: room.status });
+    res.json({ count: participants.length, likes: room.likes || 0, status: room.status });
   } catch (error) {
     console.error('LiveKit participant count failed:', error.message);
-    res.json({ count: 0, status: room.status, countAvailable: false });
+    res.json({ count: 0, likes: room.likes || 0, status: room.status, countAvailable: false });
   }
 }));
 
 
 io.use((socket,next) => {
-  const token = socket.handshake.auth && socket.handshake.auth.token;
+  const authData = socket.handshake.auth || {};
+  const token = authData.token;
   const user = sessions.get(String(token || ''));
-  if (!user) return next(new Error('Bitte zuerst einen Nickname wählen.'));
-  socket.user = user;
-  next();
+  if (user) { socket.user = user; socket.isGuestLive = false; return next(); }
+  const guestRoomId = String(authData.guestLiveRoomId || '');
+  const guestRoom = liveRooms.get(guestRoomId);
+  if (guestRoom && guestRoom.status === 'live') {
+    socket.user = { id: 'guest-' + crypto.randomUUID(), username: 'Gast', blockedUsers: new Set(), following: new Set() };
+    socket.isGuestLive = true;
+    socket.guestLiveRoomId = guestRoomId;
+    return next();
+  }
+  return next(new Error('Bitte zuerst einen Nickname wählen.'));
 });
 io.on('connection', socket => {
   socket.emit('chat:history', chatMessages.slice(-80));
@@ -705,7 +731,7 @@ io.on('connection', socket => {
   socket.on('live:join-chat', (payload, ack) => {
     const id = String(payload && payload.roomId || '');
     const room = liveRooms.get(id);
-    if (!room || room.status !== 'live') { if (ack) ack({ error: 'Live-Stream nicht verfügbar.' }); return; }
+    if (!room || room.status !== 'live' || (socket.isGuestLive && socket.guestLiveRoomId !== id)) { if (ack) ack({ error: 'Live-Stream nicht verfügbar.' }); return; }
     socket.join('live:' + id);
     if (ack) ack({ ok: true });
   });
@@ -718,7 +744,31 @@ io.on('connection', socket => {
     io.to('live:' + id).emit('live:chat-message', message);
     if (ack) ack({ ok: true });
   });
+  // WebRTC 1:1 call signaling. Media travels peer-to-peer; the server only relays signaling.
+  socket.on('call:invite', (payload, ack) => {
+    const toId = String(payload && payload.toId || '');
+    const kind = payload && payload.kind === 'voice' ? 'voice' : 'video';
+    if (!toId || toId === String(socket.user.id)) { if (ack) ack({ error: 'Bitte einen anderen Nutzer auswählen.' }); return; }
+    const recipient = sessions.get(toId);
+    if (!recipient || !io.sockets.adapter.rooms.has('user:' + toId)) { if (ack) ack({ error: 'Der Nutzer ist gerade nicht online.' }); return; }
+    if (socket.user.blockedUsers?.has(toId) || recipient.blockedUsers?.has(String(socket.user.id)) || adminBlockedUsers.has(toId)) { if (ack) ack({ error: 'Anruf zwischen diesen Nutzern nicht möglich.' }); return; }
+    io.to('user:' + toId).emit('call:incoming', { callId: crypto.randomUUID(), fromId: String(socket.user.id), fromUsername: socket.user.username, kind });
+    if (ack) ack({ ok: true });
+  });
+  for (const eventName of ['call:accept','call:reject','call:offer','call:answer','call:ice','call:hangup']) {
+    socket.on(eventName, (payload, ack) => {
+      if (socket.isGuestLive) { if (ack) ack({ error: 'Gäste können Live-Streams ansehen, aber keine privaten Anrufe starten.' }); return; }
+      const toId = String(payload && payload.toId || '');
+      if (!toId || toId === String(socket.user.id) || !sessions.has(toId)) { if (ack) ack({ error: 'Anrufpartner nicht verfügbar.' }); return; }
+      const safe = { ...payload, fromId: String(socket.user.id), fromUsername: socket.user.username };
+      delete safe.toId;
+      io.to('user:' + toId).emit(eventName, safe);
+      if (ack) ack({ ok: true });
+    });
+  }
+
   socket.on('private:send', (payload,ack) => {
+    if (socket.isGuestLive) { if (ack) ack({ error: 'Bitte melde dich für private Nachrichten an.' }); return; }
     const toId = String(payload && payload.toId || '');
     const body = String(payload && payload.body || '').trim().slice(0,1000);
     if (!body) { if (ack) ack({ error: 'Nachricht darf nicht leer sein.' }); return; }
@@ -740,6 +790,7 @@ io.on('connection', socket => {
     if (ack) ack({ ok: true, message });
   });
   socket.on('chat:send', (body,ack) => {
+    if (socket.isGuestLive) { if (ack) ack({ error: 'Gäste können nur im Live-Chat schreiben.' }); return; }
     const text = String(body || '').trim().slice(0,1000);
     if (!text) { if (ack) ack({ error: 'Nachricht darf nicht leer sein.' }); return; }
     const message = { id: crypto.randomUUID(), username: socket.user.username, body: text, created_at: new Date().toISOString() };

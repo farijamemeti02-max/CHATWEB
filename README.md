@@ -92,3 +92,25 @@ Kopiere `.env.example` als Vorlage (nicht als echte `.env` hochladen) und trage 
 - Die Kamera öffnet eine echte Browser-Vorschau via `getUserMedia`; Fotos werden per Canvas aufgenommen und Videos per MediaRecorder aufgezeichnet. Funktioniert nur über HTTPS/localhost und mit Geräteberechtigung.
 - `paypal.html` ist eine separate PayPal-/Geschenke-Seite und verwendet die vorhandene serverseitige Bestellroute.
 - Admin Login ist über `admin.html` verlinkt. Admin-Zugangsdaten bleiben serverseitig zu konfigurieren.
+
+## 1:1-Sprach- und Videoanrufe
+
+Die Chat-Oberfläche enthält jetzt eine WebRTC-Signalisierung über Socket.IO für Anrufeinladung, Annehmen/Ablehnen, SDP-Angebot/Antwort, ICE-Kandidaten, Auflegen sowie lokale Mikrofon-/Kamerasteuerung. Beide Nutzer müssen angemeldet und online sein. Browser-Kamera/Mikrofon benötigen HTTPS und Zustimmung.
+
+Die Verbindung verwendet aktuell einen öffentlichen STUN-Server als Minimal-Konfiguration. Manche NATs/Netzwerke benötigen zusätzlich einen TURN-Dienst; dafür muss ein eigener TURN-Dienst konfiguriert und getestet werden. Die Funktion ist syntaktisch geprüft, aber noch nicht mit zwei echten Geräten im veröffentlichten Render-/Netlify-System end-to-end getestet.
+
+
+## Ergänzungen (14.10.2026)
+- Live-Streams können über Web Share geteilt werden; ein Link mit `?live=<ID>` öffnet den Stream automatisch.
+- Gäste können öffentliche Live-Streams ansehen, Live liken und im jeweiligen Live-Chat schreiben, ohne ein Konto anzulegen. Private Anrufe und private Nachrichten bleiben Gästen gesperrt.
+- Live-Likes werden im laufenden Serverprozess gezählt; sie sind nicht dauerhaft in einer Datenbank gespeichert. Vor größerem öffentlichen Betrieb sollte ein IP-/Session-Rate-Limit ergänzt werden.
+- Teilen nutzt die native Teilen-Funktion des Geräts; WhatsApp hat einen direkten Link. TikTok und Instagram lassen das Teilen von externen Links nicht in allen Browsern automatisch zu.
+- Kameraeffekte sind visuelle CSS-Filter, keine KI-Hautretusche. 4K ist nur ein best-effort Kameraprofil und hängt von Gerät, Browser, Uploadbandbreite und LiveKit ab; es wird nicht garantiert.
+- Folgen/Entfolgen, Blockieren, Bild-/Video-Reaktionen und Bewertungen 1–10 verwenden die bestehenden API-Funktionen.
+
+
+## Live-Stummschaltung (v1.3.0)
+- Der Host kann sein Mikrofon während des Streams stummschalten und wieder aktivieren.
+- Zuschauer und Gäste können den Stream-Ton lokal stummschalten bzw. wieder einschalten.
+- LiveKit-Zugriffsrechte erlauben Zuschauern nur das Abonnieren; nur der Host darf Audio/Video veröffentlichen.
+- Der Stream wird nicht beendet, wenn der Host das Mikrofon stummschaltet.
