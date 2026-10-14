@@ -144,7 +144,7 @@
       processedAudioTrack = localTrack; micPublished = true; hostMicMuted = false;
       $('liveMuteBtn').textContent = '🎙️ Mikrofon aktiv'; $('liveMuteBtn').setAttribute('aria-pressed','false');
       $('liveAudioStatus').textContent = mode === 'autotune' ? 'Mixer aktiv. AutoTune-Stil nutzt eine Klangfärbung, keine vollwertige Tonhöhenkorrektur.' : 'Studio-Mixer aktiv: Lautstärke, Hall und Delay werden live auf deinen Ton angewendet.';
-      button.textContent = '✅ Mixer aktiv'; updateAudioMixer();
+      button.textContent = '⏻ Mixer ausschalten'; button.dataset.active = 'true'; updateAudioMixer();
     } catch (error) {
       $('liveAudioStatus').textContent = 'Mixer konnte nicht aktiviert werden: ' + error.message;
       if (micStream) micStream.getTracks().forEach(track => track.stop());
@@ -158,7 +158,7 @@
     if (micStream) micStream.getTracks().forEach(track => track.stop());
     if (audioContext) { try { await audioContext.close(); } catch {} }
     audioContext = null; micSource = null; micStream = null; micDestination = null; micGain = null; reverbGain = null; dryGain = null; delayNode = null; delayFeedback = null; delayGain = null; micCompressor = null; voiceFilter = null; processedAudioTrack = null; micPublished = false;
-    if ($('liveAudioEnable')) $('liveAudioEnable').textContent = '🎙️ Mixer aktivieren';
+    if ($('liveAudioEnable')) { $('liveAudioEnable').textContent = '🎙️ Mixer aktivieren'; $('liveAudioEnable').dataset.active = 'false'; }
   }
   function changeVoiceEffect() {
     if (!voiceFilter || !audioContext) return;
@@ -172,7 +172,7 @@
   async function connectStream(data, role) {
     if (!window.LivekitClient || !window.LivekitClient.Room) throw new Error('LiveKit-Browser-SDK konnte nicht geladen werden. Bitte Internetverbindung/CDN prüfen.');
     await leaveStream(false);
-    currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
+    currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.add('hidden'); $('liveAudioToggle')?.setAttribute('aria-expanded','false'); if ($('liveAudioToggleIcon')) $('liveAudioToggleIcon').textContent = '＋'; $('liveAudioToggle')?.closest('#liveAudioMixerLauncher')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
     $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; if ($('liveEndTopBtn')) { $('liveEndTopBtn').classList.toggle('hidden', role !== 'host'); $('liveEndTopBtn').disabled = role !== 'host'; } $('liveStartBtn').classList.toggle('hidden', role === 'host');
@@ -242,10 +242,31 @@
     catch (error) { alert(error.message); }
     finally { button.disabled = false; }
   });
+  $('liveAudioToggle')?.addEventListener('click', () => {
+    const panel = $('liveAudioMixer');
+    const open = panel?.classList.contains('hidden');
+    if (!panel) return;
+    panel.classList.toggle('hidden', !open);
+    panel.classList.toggle('mixer-open', !!open);
+    $('liveAudioToggle')?.setAttribute('aria-expanded', String(!!open));
+    if ($('liveAudioToggleIcon')) $('liveAudioToggleIcon').textContent = open ? '−' : '＋';
+    if (open) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
   $('liveAudioEnable')?.addEventListener('click', async () => {
     if (!room || currentRole !== 'host') return;
-    try { await room.localParticipant.setMicrophoneEnabled(false); await enableAudioMixer(); }
-    catch (error) { $('liveAudioStatus').textContent = error.message; }
+    const button = $('liveAudioEnable');
+    try {
+      if (micPublished) {
+        await stopAudioMixer();
+        try { await room.localParticipant.setMicrophoneEnabled(true); } catch {}
+        hostMicMuted = false;
+        if ($('liveMuteBtn')) { $('liveMuteBtn').textContent = '🎙️ Mikrofon aktiv'; $('liveMuteBtn').setAttribute('aria-pressed','false'); }
+        $('liveAudioStatus').textContent = 'Mixer ausgeschaltet. Dein normales Mikrofon ist wieder aktiv. Du kannst den Mixer jederzeit erneut einschalten.';
+      } else {
+        await room.localParticipant.setMicrophoneEnabled(false);
+        await enableAudioMixer();
+      }
+    } catch (error) { $('liveAudioStatus').textContent = error.message; if (!micPublished) { try { await room.localParticipant.setMicrophoneEnabled(true); } catch {} } }
   });
   ['liveMicVolume','liveReverb','liveDelay'].forEach(id => $(id)?.addEventListener('input', updateAudioMixer));
   $('liveVoiceEffect')?.addEventListener('change', changeVoiceEffect);

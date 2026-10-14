@@ -1,104 +1,29 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b16"><title>GameTik – PayPal & Geschenke</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#1d2442,#070810 65%);color:#f5f7ff;font:16px/1.5 system-ui,sans-serif;padding:20px}.wrap{max-width:680px;margin:30px auto}.panel{background:#111526;border:1px solid #303b5a;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 15px 45px #0005}h1{margin:0 0 8px}.muted{color:#aab4d0}button,a.btn{display:block;width:100%;padding:14px;margin:10px 0;border-radius:13px;border:1px solid #364b6b;background:linear-gradient(110deg,#26e6ff,#ff31c8);color:#080a14;font-weight:800;text-decoration:none;text-align:center;font-size:15px}button.gift{background:#171d31;color:#fff;border:1px solid #394663}#status{overflow-wrap:anywhere;min-height:24px}.back{display:inline-block;color:#26e6ff;margin-bottom:18px}</style><style id="gametik-logo-button-theme-v2">
-/* GameTik Logo Theme: neon pink + cyan/blue + violet + silver, applied consistently site-wide */
-:root{--gt-violet:#9b5cff;--gt-silver:#e6edf7;--gt-blue:#3b82f6;--gt-cyan:#24dfff;--gt-pink:#ff28d2;--gt-button-gradient:linear-gradient(112deg,#ff28d2 0%,#9b5cff 48%,#24dfff 100%);--gt-button-text:#fff}
-button,.button,.btn,[role="button"],input[type="button"],input[type="submit"],input[type="reset"]{
-  border:1px solid #c7d8ff66!important;
-  background:var(--gt-button-gradient)!important;
-  color:var(--gt-button-text)!important;
-  font-weight:800;
-  box-shadow:0 0 0 1px #24dfff14,0 4px 14px #0005,0 0 13px #9b5cff24;
-  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
-}
-button:hover,.button:hover,.btn:hover,[role="button"]:hover,input[type="button"]:hover,input[type="submit"]:hover,input[type="reset"]:hover{
-  filter:brightness(1.13) saturate(1.12)!important;
-  box-shadow:0 0 0 1px #e6edf788,0 0 12px #ff28d255,0 0 22px #24dfff38!important;
-  transform:translateY(-1px);
-}
-button:active,.button:active,.btn:active,[role="button"]:active,input[type="button"]:active,input[type="submit"]:active,input[type="reset"]:active{transform:translateY(0) scale(.985)}
-button:focus-visible,.button:focus-visible,.btn:focus-visible,[role="button"]:focus-visible,input[type="button"]:focus-visible,input[type="submit"]:focus-visible,input[type="reset"]:focus-visible{outline:2px solid var(--gt-silver)!important;outline-offset:3px}
-/* Secondary actions use the same logo palette, with a darker glass surface */
-button.secondary,.secondary button,button.close,.close,.navbtn:not(.active),.story-item,.profile-tab:not(.active){background:linear-gradient(135deg,#17152a,#101a2c)!important;color:#eaf2ff!important;border:1px solid #8b5cf688!important;box-shadow:inset 0 0 0 1px #24dfff12,0 0 10px #9b5cff12}
-button.secondary:hover,.close:hover,.navbtn:not(.active):hover,.story-item:hover,.profile-tab:not(.active):hover{background:linear-gradient(110deg,#4a174f,#142d4d)!important;border-color:#24dfff!important}
-button.danger,.danger,button[aria-label*="Löschen"],button[aria-label*="Entfernen"]{background:linear-gradient(110deg,#ff4d8d,#9b5cff)!important;color:#fff!important;border-color:#ff9dc8!important}
-.navbtn.active,.create-neon,.paypal-nav,.admin-nav,.story-launch,.camera-action,.gift,.camera-shutter{border-color:#24dfff!important;box-shadow:0 0 12px #24dfff26,0 0 16px #ff28d222}
-.navbtn.active{background:linear-gradient(110deg,#ff28d238,#9b5cff30,#24dfff24)!important;color:#fff!important}
-input:focus,textarea:focus,select:focus{outline:1px solid #24dfff!important;border-color:#ff28d2!important;box-shadow:0 0 0 3px #9b5cff30!important}
-a{color:#24dfff}
-@media(prefers-reduced-motion:reduce){button,.button,.btn,[role="button"]{transition:none!important}}
-</style>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090b16"><title>GameTik – PayPal & Geschenke</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#1d2442,#070810 65%);color:#f5f7ff;font:16px/1.5 system-ui,sans-serif;padding:20px}.wrap{max-width:680px;margin:30px auto}.panel{background:#111526;border:1px solid #303b5a;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 15px 45px #0005}h1{margin:0 0 8px}.muted{color:#aab4d0}button,a.btn{display:block;width:100%;padding:14px;margin:10px 0;border-radius:13px;border:1px solid #364b6b;background:linear-gradient(110deg,#26e6ff,#ff31c8);color:#080a14;font-weight:800;text-decoration:none;text-align:center;font-size:15px}button.gift{background:#171d31;color:#fff;border:1px solid #394663}#status{overflow-wrap:anywhere;min-height:24px}.back{display:inline-block;color:#26e6ff;margin-bottom:18px}</style>
 
-<style id="gametik-unified-modern-buttons-v21">
-/* Unified contemporary GameTik buttons: chrome + neon pink/blue/violet */
-:root{
-  --gt-pink:#ff38c8;--gt-violet:#9b5cff;--gt-blue:#21d4fd;
-  --gt-silver:#e8f4ff;--gt-dark:#101323;
-}
-button,.button,[role="button"],input[type="button"],input[type="submit"]{
-  position:relative;
-  border:1px solid transparent!important;
-  border-radius:15px!important;
-  color:#f8faff!important;
-  background:
-    linear-gradient(115deg,rgba(22,23,43,.98),rgba(13,22,40,.98)) padding-box,
-    linear-gradient(115deg,var(--gt-pink),var(--gt-violet) 48%,var(--gt-blue)) border-box!important;
-  box-shadow:0 5px 16px rgba(0,0,0,.22),0 0 9px rgba(155,92,255,.15),inset 0 1px 0 rgba(255,255,255,.10)!important;
-  font-weight:750!important;
-  letter-spacing:.005em;
-  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-button:hover,.button:hover,[role="button"]:hover,input[type="button"]:hover,input[type="submit"]:hover{
-  filter:brightness(1.15);
-  box-shadow:0 0 0 1px rgba(232,244,255,.18),0 0 18px rgba(33,212,253,.22),0 0 20px rgba(255,56,200,.16)!important;
-  transform:translateY(-1px);
-}
-button:active,.button:active,[role="button"]:active,input[type="button"]:active,input[type="submit"]:active{
-  transform:translateY(1px) scale(.985);
-}
-button:focus-visible,.button:focus-visible,[role="button"]:focus-visible,input:focus-visible{
-  outline:2px solid var(--gt-blue)!important;outline-offset:3px;
-}
-button:disabled,input:disabled{
-  opacity:.48!important;filter:saturate(.55);cursor:not-allowed;transform:none!important;
-}
-/* Primary actions glow; dangerous/end buttons stay obvious but match the brand */
-button:not(.secondary):not(.danger):not(.navbtn):not(.story-item):not(.close),
-input[type="submit"],input[type="button"]{
-  background:linear-gradient(110deg,var(--gt-pink),var(--gt-violet) 50%,var(--gt-blue)) padding-box,
-             linear-gradient(110deg,#ffd9f7,#e4d8ff,#d3f8ff) border-box!important;
-  color:#fff!important;text-shadow:0 1px 3px #25123f;
-  box-shadow:0 5px 18px rgba(155,92,255,.22),0 0 13px rgba(255,56,200,.18)!important;
-}
-button.secondary,.navbtn,.profile-tab,.story-item,.close{
-  background:linear-gradient(130deg,#171a2d,#101827) padding-box,
-             linear-gradient(110deg,#566a9b,#8b5cf6,#397eaa) border-box!important;
-  color:#f2f6ff!important;
-}
-.navbtn.active,.profile-tab.active{
-  background:linear-gradient(110deg,rgba(255,56,200,.22),rgba(155,92,255,.23),rgba(33,212,253,.18)) padding-box,
-             linear-gradient(110deg,var(--gt-pink),var(--gt-violet),var(--gt-blue)) border-box!important;
-  box-shadow:0 0 16px rgba(155,92,255,.24)!important;
-}
-button.danger,#liveEndTopBtn,#liveEndBtn{
-  background:linear-gradient(110deg,#ff368d,#c83dff,#2bcfff) padding-box,
-             linear-gradient(110deg,#ffe1f1,#eee0ff,#d9faff) border-box!important;
-  color:#fff!important;border:1px solid transparent!important;
-}
-.gift,.gift-grid button,.live-candy-send{
-  background:linear-gradient(135deg,#17182e,#10253b) padding-box,
-             linear-gradient(110deg,#ff38c8,#9b5cff,#21d4fd) border-box!important;
-  color:#fff!important;
-}
-input,select,textarea{
-  border:1px solid #454c70!important;border-radius:13px!important;
-  background:#0b0e19!important;color:#f8faff!important;
-}
-@media(prefers-reduced-motion:reduce){button,.button,[role="button"]{transition:none!important}}
-@media(max-width:640px){
-  button,.button,[role="button"],input[type="button"],input[type="submit"]{
-    min-height:44px;border-radius:14px!important;padding:11px 14px;
-  }
-}
-</style>
 
-</head><body><main class="wrap"><a class="back" href="/">← Zurück zu GameTik</a><section class="panel"><h1>💳 PayPal & Geschenke</h1><p class="muted">Unterstütze GameTik oder sende ein virtuelles Geschenk. Die Zahlung wird serverseitig über PayPal bestätigt.</p><button data-gift="Spende">♥ 5 € mit PayPal spenden</button><p class="muted">Virtuelle Geschenke</p><button class="gift" data-gift="Herz">❤️ Herz · 0,99 €</button><button class="gift" data-gift="Stern">⭐ Stern · 1,99 €</button><button class="gift" data-gift="Feuer">🔥 Feuer · 2,99 €</button><button class="gift" data-gift="Krone">👑 Krone · 4,99 €</button><div id="status" class="muted" aria-live="polite"></div></section><section class="panel"><h2>Admin</h2><p class="muted">Betreiberzugang zur Verwaltung.</p><a class="btn" href="/admin.html">🛡 Admin Login öffnen</a></section></main><script>(()=>{const host=location.hostname,onRender=host.endsWith('.onrender.com'),local=['localhost','127.0.0.1'].includes(host);const API_BASE=window.GAMETIK_API_BASE||((onRender||local)?'':'https://chatweb-iajl.onrender.com');const status=document.getElementById('status');async function buy(gift){const token=localStorage.getItem('gametik_token')||'';if(!token){status.textContent='Bitte zuerst auf GameTik einen Nickname wählen/anmelden und danach erneut versuchen.';return;}status.textContent='PayPal-Bestellung wird erstellt …';const r=await fetch(API_BASE+'/api/payments/paypal/create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({gift})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'PayPal-Bestellung konnte nicht erstellt werden.');if(!d.approvalUrl||!/^https:\/\/(www\.)?paypal\.com\//i.test(d.approvalUrl)&&!/^https:\/\/(www\.)?sandbox\.paypal\.com\//i.test(d.approvalUrl))throw Error('PayPal hat keinen gültigen Zahlungslink geliefert.');location.href=d.approvalUrl;}document.querySelectorAll('[data-gift]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{await buy(b.dataset.gift)}catch(e){status.textContent=e.message}finally{b.disabled=false}}));const p=new URLSearchParams(location.search);if(p.get('paypal')==='success')status.textContent='Zahlung zurückgekehrt. Öffne GameTik wieder, damit die bestehende Bestätigung verarbeitet werden kann.';})();</script></body></html>
+<style id="gametik-paypal-page-modern-v24">
+body{padding:clamp(12px,3vw,24px);background:radial-gradient(ellipse at 12% 0%,#1c2245 0%,#0a0b16 48%,#06070d 100%)}
+.wrap{max-width:760px;margin:clamp(12px,4vh,42px) auto}
+.panel{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(19,23,43,.97),rgba(12,16,31,.98));border:1px solid transparent;border-radius:26px;padding:clamp(20px,5vw,38px);box-shadow:0 18px 55px #0007,0 0 22px #9b5cff17}
+.panel:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#ff38c8,#9b5cff,#21d4fd);opacity:.95}
+.panel h1{font-size:clamp(1.8rem,7vw,3rem);line-height:1.14;letter-spacing:-.035em;margin:4px 0 20px;text-wrap:balance}
+.panel h2{font-size:clamp(1.35rem,5vw,1.8rem)}
+.panel p{font-size:clamp(1rem,3.5vw,1.18rem);line-height:1.7}
+.muted{color:#b5bfd8}
+.back{display:inline-flex;align-items:center;gap:8px;margin:0 0 18px;color:#69eaff;font-weight:750;text-decoration:none;border-bottom:1px solid #69eaff77;padding:8px 0}
+button,a.btn{position:relative;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:56px;padding:14px 18px;margin:12px 0;border-radius:16px;border:1px solid #e6f4ffb0;background:linear-gradient(110deg,#ff38c8,#9b5cff 50%,#21d4fd);color:#fff;font-weight:850;text-decoration:none;text-align:center;font-size:clamp(.95rem,3.5vw,1.08rem);box-shadow:0 7px 20px #9b5cff2b,0 0 16px #ff38c81c;transition:filter .16s,transform .16s,box-shadow .16s}
+button:hover,a.btn:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 0 22px #21d4fd35,0 0 18px #ff38c833}
+button:active,a.btn:active{transform:scale(.99)}
+button:disabled{opacity:.6;cursor:wait;transform:none}
+button.gift{background:linear-gradient(130deg,#151a30,#101d34);border:1px solid transparent;box-shadow:inset 0 0 0 1px #ffffff0c,0 0 0 1px #9b5cff88,0 0 15px #9b5cff1a;color:#f8faff}
+button.gift:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(110deg,#ff38c8,#9b5cff,#21d4fd);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+#status{overflow-wrap:anywhere;min-height:24px;padding-top:5px}
+@media(max-width:480px){body{padding:12px}.wrap{margin:10px auto}.panel{border-radius:21px;padding:21px 17px}.panel h1{max-width:100%}button,a.btn{min-height:54px}}
+@media(prefers-reduced-motion:reduce){button,a.btn{transition:none}}
+</style>
+<style id="gametik-realistic-gift-icons-v25">
+.gt-real-gift-icon{width:42px;height:42px;object-fit:contain;flex:0 0 42px;filter:drop-shadow(0 3px 5px #0007);vertical-align:middle}
+.live-gift,.gift{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;min-height:60px}
+.live-gift span,.gift span{line-height:1.25}
+@media(max-width:600px){.gt-real-gift-icon{width:36px;height:36px;flex-basis:36px}.live-gift,.gift{min-height:54px}}
+</style></head><body><main class="wrap"><a class="back" href="/">← Zurück zu GameTik</a><section class="panel"><h1>💳 PayPal & Geschenke</h1><p class="muted">Unterstütze GameTik oder sende ein virtuelles Geschenk. Die Zahlung wird serverseitig über PayPal bestätigt.</p><button data-gift="Spende">♥ 5 € mit PayPal spenden</button><p class="muted">Virtuelle Geschenke</p><button class="gift" data-gift="Herz"><img class="gt-real-gift-icon" src="/assets/gift-heart.svg" alt="" aria-hidden="true"><span>Herz · 0,99 €</span></button><button class="gift" data-gift="Stern"><img class="gt-real-gift-icon" src="/assets/gift-star.svg" alt="" aria-hidden="true"><span>Stern · 1,99 €</span></button><button class="gift" data-gift="Feuer"><img class="gt-real-gift-icon" src="/assets/gift-fire.svg" alt="" aria-hidden="true"><span>Feuer · 2,99 €</span></button><button class="gift" data-gift="Krone"><img class="gt-real-gift-icon" src="/assets/gift-crown.svg" alt="" aria-hidden="true"><span>Krone · 4,99 €</span></button><div id="status" class="muted" aria-live="polite"></div></section><section class="panel"><h2>Admin</h2><p class="muted">Betreiberzugang zur Verwaltung.</p><a class="btn" href="/admin.html">🛡 Admin Login öffnen</a></section></main><script>(()=>{const host=location.hostname,onRender=host.endsWith('.onrender.com'),local=['localhost','127.0.0.1'].includes(host);const API_BASE=window.GAMETIK_API_BASE||((onRender||local)?'':'https://chatweb-iajl.onrender.com');const status=document.getElementById('status');async function buy(gift){const token=localStorage.getItem('gametik_token')||'';if(!token){status.textContent='Bitte zuerst auf GameTik einen Nickname wählen/anmelden und danach erneut versuchen.';return;}status.textContent='PayPal-Bestellung wird erstellt …';const r=await fetch(API_BASE+'/api/payments/paypal/create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({gift})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'PayPal-Bestellung konnte nicht erstellt werden.');if(!d.approvalUrl||!/^https:\/\/(www\.)?paypal\.com\//i.test(d.approvalUrl)&&!/^https:\/\/(www\.)?sandbox\.paypal\.com\//i.test(d.approvalUrl))throw Error('PayPal hat keinen gültigen Zahlungslink geliefert.');location.href=d.approvalUrl;}document.querySelectorAll('[data-gift]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{await buy(b.dataset.gift)}catch(e){status.textContent=e.message}finally{b.disabled=false}}));const p=new URLSearchParams(location.search);if(p.get('paypal')==='success')status.textContent='Zahlung zurückgekehrt. Öffne GameTik wieder, damit die bestehende Bestätigung verarbeitet werden kann.';})();</script></body></html>
