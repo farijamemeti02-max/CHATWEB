@@ -627,7 +627,15 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
     created_at: new Date().toISOString()
   };
   gifts.push(giftRecord);
-  if (saved.liveRoomId) io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, username: req.user.username, gift: saved.gift, paymentId: capture.id, created_at: giftRecord.created_at });
+  if (saved.liveRoomId) {
+    const liveRoom = liveRooms.get(saved.liveRoomId);
+    const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[saved.gift] || 0;
+    if (liveRoom?.game?.active && giftPoints > 0 && Date.now() < liveRoom.game.endsAt) {
+      liveRoom.game.hostPoints = Math.min(1000000000, Number(liveRoom.game.hostPoints || 0) + giftPoints);
+      io.to('live:' + saved.liveRoomId).emit('live:game-state', { roomId: saved.liveRoomId, game: liveRoom.game });
+    }
+    io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, username: req.user.username, gift: saved.gift, points: giftPoints, paymentId: capture.id, created_at: giftRecord.created_at });
+  }
 
   res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id });
 }));
@@ -641,7 +649,7 @@ function livekitService() {
   return new RoomServiceClient(host, process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET);
 }
 function livePublic(room) {
-  return { id: room.id, roomName: room.roomName, title: room.title, hostId: room.hostId, hostUsername: room.hostUsername, startedAt: room.startedAt, status: room.status, likes: Number(room.likes || 0) };
+  return { id: room.id, roomName: room.roomName, title: room.title, hostId: room.hostId, hostUsername: room.hostUsername, startedAt: room.startedAt, status: room.status, likes: Number(room.likes || 0), game: room.game || { active:false, endsAt:null, hostPoints:0, communityPoints:0, winner:null } };
 }
 app.get('/api/live', (_req, res) => {
   const active = [...liveRooms.values()].filter(room => room.status === 'live').map(livePublic).reverse();
@@ -654,7 +662,7 @@ app.post('/api/live/create', auth, asyncRoute(async (req, res) => {
   const title = String(req.body.title || '').trim().slice(0, 100) || `${req.user.username} ist live`;
   const id = crypto.randomUUID();
   const roomName = `gametik-${id.replace(/-/g, '')}`;
-  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live', likes: 0, likedBy: new Set() };
+  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live', likes: 0, likedBy: new Set(), game: { active: false, endsAt: null, hostPoints: 0, communityPoints: 0, winner: null }, gameTimer: null };
   const access = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, { identity: String(req.user.id), name: req.user.username, ttl: '1h' });
   access.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true, canPublishData: true });
   const token = await access.toJwt();
@@ -676,6 +684,7 @@ app.post('/api/live/:id/like', (req, res) => {
   if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht mehr aktiv.' });
   // Anonymous likes are intentionally counted as taps; add rate limiting before public production launch.
   room.likes = Math.min(1000000000, Number(room.likes || 0) + 1);
+  if (room.game?.active && Date.now() < room.game.endsAt) { room.game.communityPoints = Math.min(1000000000, Number(room.game.communityPoints || 0) + 1); io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game }); }
   io.to('live:' + room.id).emit('live:like-count', { roomId: room.id, likes: room.likes });
   res.json({ ok: true, likes: room.likes });
 });
@@ -688,11 +697,43 @@ app.post('/api/live/:id/join', auth, asyncRoute(async (req, res) => {
   const token = await access.toJwt();
   res.json({ stream: livePublic(room), serverUrl: process.env.LIVEKIT_URL, token, role: 'viewer' });
 }));
+app.post('/api/live/:id/game/start', auth, (req, res) => {
+  const room = liveRooms.get(String(req.params.id));
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht aktiv.' });
+  if (room.hostId !== String(req.user.id)) return res.status(403).json({ error: 'Nur der Gastgeber kann das LIVE-Spiel starten.' });
+  const seconds = Math.max(30, Math.min(600, Number(req.body.seconds) || 180));
+  if (room.gameTimer) clearTimeout(room.gameTimer);
+  room.game = { active: true, endsAt: Date.now() + seconds * 1000, hostPoints: 0, communityPoints: 0, winner: null };
+  io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game });
+  room.gameTimer = setTimeout(() => {
+    if (!room.game?.active) return;
+    room.game.active = false;
+    room.game.winner = room.game.hostPoints === room.game.communityPoints ? 'draw' : (room.game.hostPoints > room.game.communityPoints ? 'host' : 'community');
+    room.gameTimer = null;
+    io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game });
+  }, seconds * 1000);
+  if (room.gameTimer.unref) room.gameTimer.unref();
+  res.json({ ok: true, game: room.game });
+});
+app.post('/api/live/:id/game/stop', auth, (req, res) => {
+  const room = liveRooms.get(String(req.params.id));
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht aktiv.' });
+  if (room.hostId !== String(req.user.id)) return res.status(403).json({ error: 'Nur der Gastgeber kann das LIVE-Spiel beenden.' });
+  if (room.gameTimer) clearTimeout(room.gameTimer);
+  room.gameTimer = null;
+  if (room.game?.active) {
+    room.game.active = false;
+    room.game.winner = room.game.hostPoints === room.game.communityPoints ? 'draw' : (room.game.hostPoints > room.game.communityPoints ? 'host' : 'community');
+  }
+  io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game });
+  res.json({ ok: true, game: room.game });
+});
+
 app.post('/api/live/:id/end', auth, (req, res) => {
   const room = liveRooms.get(String(req.params.id));
   if (!room) return res.status(404).json({ error: 'Live-Stream nicht gefunden.' });
   if (room.hostId !== String(req.user.id)) return res.status(403).json({ error: 'Nur der Stream-Host kann den Stream beenden.' });
-  room.status = 'ended'; room.endedAt = new Date().toISOString();
+  room.status = 'ended'; room.endedAt = new Date().toISOString(); if (room.gameTimer) clearTimeout(room.gameTimer); room.gameTimer = null;
   io.to('live:' + room.id).emit('live:ended', { id: room.id });
   res.json({ ok: true });
 });

@@ -74,6 +74,12 @@ Die Hauptnavigation ist auf fünf übersichtliche Bereiche reduziert: Home, Entd
 - JavaScript-Syntax mit `node --check` geprüft; kein vollständiger Live-/Gerätetest durchgeführt.
 
 
+## Optionales LIVE-Spiel (Countdown, Punkte und Geschenke)
+- Im Live-Bereich gibt es jetzt ein freiwillig startbares Spiel mit 1-, 3-, 5- oder 10-Minuten-Runden. Nur der Host kann die Runde starten oder beenden.
+- Der Server führt den Countdown und sendet den Spielstand an alle verbundenen Live-Zuschauer. Likes geben dem Community-Team je 1 Punkt.
+- Nur nach erfolgreicher serverseitiger PayPal-Capture-Bestätigung werden bezahlte Geschenke gewertet: Herz 99, Stern 199, Feuer 299 und Krone 499 Punkte für das Streamer-Team. Ein Klick auf einen Geschenkbutton allein gibt keine Punkte.
+- Der Spielstand wird im Arbeitsspeicher gehalten und wird nach einem Server-Neustart zurückgesetzt. Diese Runde ist ein Streamer-gegen-Community-Spiel, noch kein 1-gegen-1-Kamera-Duell.
+
 ## Live-Streams mit WebRTC / SFU (LiveKit)
 - Das Feed-Panel enthält einen Live-Bereich: Streams starten/ansehen, Kamera/Mikrofon beim Host, Teilnehmerzahl, Live-Chat und PayPal-Geschenke.
 - Medien laufen über LiveKit (SFU); der Browser-SDK wird aus dem jsDelivr-CDN geladen. Die Backend-API erzeugt getrennte Host-/Viewer-Tokens. API-Secrets bleiben ausschließlich in Render-Umgebungsvariablen.
@@ -114,3 +120,17 @@ Die Verbindung verwendet aktuell einen öffentlichen STUN-Server als Minimal-Kon
 - Zuschauer und Gäste können den Stream-Ton lokal stummschalten bzw. wieder einschalten.
 - LiveKit-Zugriffsrechte erlauben Zuschauern nur das Abonnieren; nur der Host darf Audio/Video veröffentlichen.
 - Der Stream wird nicht beendet, wenn der Host das Mikrofon stummschaltet.
+
+
+## Live-Overlay-Update
+- Live-Chat-Nachrichten werden zusätzlich über dem Stream eingeblendet.
+- Tippen/Klicken auf die Live-Bühne erzeugt animierte Herzen und sendet einen Like-Request.
+- Zusätzliche Farblooks sowie Regler für Beauty-Look, Helligkeit und Sättigung wurden ergänzt.
+- Hinweis: Diese CSS-Effekte verändern die lokale Vorschau; sie werden nicht automatisch in die von LiveKit übertragenen Videodaten eingerechnet. Für echte, für Zuschauer sichtbare Beauty-Verarbeitung ist eine Canvas/WebGL-Verarbeitung der Kamera vor dem Publish erforderlich.
+- 4K bleibt von Gerät, Browser, Upload und LiveKit-Plan abhängig.
+
+## GameTik Studio-Mixer (LIVE)
+
+Im LIVE-Host-Bereich gibt es einen optionalen Web-Audio-Mixer mit Mikrofon-Lautstärke, Hall (Reverb), Delay, Kompressor sowie Radio-/Roboter-Klangfärbung. Der Mixer verarbeitet den Mikrofon-Ton im Browser und veröffentlicht den bearbeiteten Ton über LiveKit. Er benötigt eine HTTPS-Seite und die Mikrofonfreigabe des Browsers. Bei Mobilgeräten können Bluetooth-Headsets, Energiesparmodi oder Browserbeschränkungen die Audioverarbeitung beeinflussen.
+
+**Hinweis zu AutoTune:** Die Auswahl „AutoTune-Stil“ in dieser Version ist eine klangliche Färbung und keine echte Tonhöhenkorrektur wie bei professioneller Auto-Tune-Software. Für echte Tonhöhenkorrektur ist ein separater Pitch-Correction-DSP erforderlich.
