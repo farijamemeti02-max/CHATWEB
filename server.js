@@ -14,14 +14,34 @@ const io = new Server(httpServer, { cors: { origin: true } });
 const PORT = Number(process.env.PORT || 10000);
 const MAX_VIDEO_BYTES = 35 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
-const dataRoot = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
-fs.mkdirSync(dataRoot, { recursive: true });
+// Prefer the configured persistent disk, but do not crash the service when
+// DATA_DIR points to an unmounted/unwritable path (e.g. /var/data without a
+// Render Persistent Disk). In that case use a writable local fallback and warn
+// clearly that data may be lost on redeploy/restart.
+const requestedDataRoot = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
+let dataRoot = requestedDataRoot;
+function ensureDataDirectories(root) {
+  fs.mkdirSync(path.join(root, 'uploads', 'videos'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'uploads', 'avatars'), { recursive: true });
+  // Confirm the selected directory is writable before the server starts.
+  const probe = path.join(root, `.gametik-write-test-${process.pid}`);
+  fs.writeFileSync(probe, 'ok');
+  fs.unlinkSync(probe);
+}
+try {
+  ensureDataDirectories(dataRoot);
+} catch (error) {
+  const fallbackRoot = path.resolve(__dirname, 'data');
+  if (fallbackRoot === dataRoot) throw error;
+  console.error(`WARN: DATA_DIR '${requestedDataRoot}' is not writable (${error.code || error.message}). ` +
+    `Falling back to '${fallbackRoot}'. Configure a Render Persistent Disk mounted at '${requestedDataRoot}' to keep data across deploys.`);
+  dataRoot = fallbackRoot;
+  ensureDataDirectories(dataRoot);
+}
 const uploadRoot = path.join(dataRoot, 'uploads');
 const stateFile = path.join(dataRoot, 'gametik-state.json');
 const videoDir = path.join(uploadRoot, 'videos');
 const avatarDir = path.join(uploadRoot, 'avatars');
-fs.mkdirSync(videoDir, { recursive: true });
-fs.mkdirSync(avatarDir, { recursive: true });
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -291,21 +311,27 @@ app.delete('/api/admin/stories/:id', adminAuth, (req, res) => {
 });
 app.patch('/api/admin/users/:id/block', adminAuth, (req, res) => {
   const id = String(req.params.id);
-  if (!sessions.has(id)) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
+  const userExists = [...sessions.values()].some(user => String(user.id) === id);
+  if (!userExists) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
   const blocked = req.body.blocked === true;
   if (blocked) adminBlockedUsers.add(id); else adminBlockedUsers.delete(id);
+  savePersistentState();
   res.json({ ok: true, blocked });
 });
 app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   const id = String(req.params.id);
-  const user = sessions.get(id);
-  if (!user) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
-  sessions.delete(id); adminBlockedUsers.delete(id); friendRequests.delete(id); friendships.delete(id);
+  const account = [...accounts.entries()].find(([, value]) => String(value.id) === id);
+  const matchingTokens = [...sessions.entries()].filter(([, user]) => String(user.id) === id).map(([token]) => token);
+  if (!matchingTokens.length && !account) return res.status(404).json({ error: 'Nutzer nicht gefunden.' });
+  for (const token of matchingTokens) sessions.delete(token);
+  if (account) accounts.delete(account[0]);
+  adminBlockedUsers.delete(id); friendRequests.delete(id); friendships.delete(id);
   for (const [recipient, list] of friendRequests) friendRequests.set(recipient, list.filter(r => String(r.fromId) !== id));
   for (const set of friendships.values()) set.delete(id);
-  for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); other.likes = other.likes || new Set(); }
+  for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); }
   for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
   for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
+  savePersistentState();
   res.json({ ok: true });
 });
 

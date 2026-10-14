@@ -9,7 +9,7 @@
     "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
