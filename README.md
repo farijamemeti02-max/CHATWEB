@@ -16,8 +16,18 @@ Node.js 20 oder neuer installieren, dann `npm install`, `npm run check` und `npm
 - Reaktionen: Herz, Gefällt mir, I Love You und Dislike.
 - Bewertungen von 1 bis 10; Durchschnitt und Anzahl werden angezeigt.
 
-## Wichtig
-Dies ist weiterhin eine Demo ohne Datenbank. Nutzer, Beiträge, Reaktionen und Bewertungen liegen im Arbeitsspeicher und können nach Server-Neustarts verloren gehen. Upload-Dateien liegen lokal im Render-Service; für dauerhafte Speicherung wird persistenter Speicher oder Objektspeicher benötigt. Ein echter Live-Test gegen Render/Netlify wurde nicht durchgeführt.
+## Registrierung, Anmeldung und dauerhafte Speicherung
+- Nutzer können ein Konto mit Benutzername, E-Mail und Passwort registrieren und sich später anmelden.
+- Passwörter werden mit `scrypt` plus individuellem Salt gehasht; Klartextpasswörter werden nicht gespeichert.
+- Konten, aktive Sitzungen, Profile, Social-Beziehungen, Beiträge und Upload-Metadaten werden in `DATA_DIR/gametik-state.json` gespeichert.
+- Uploads (Videos, Storys, Profilbilder) werden unter `DATA_DIR/uploads/` gespeichert.
+- Der Server schreibt Zustände regelmäßig und beim Herunterfahren. Bei Stromausfall kann maximal der letzte Speicherintervall verloren gehen.
+
+### Render dauerhaft konfigurieren (wichtig)
+Render-Dateisysteme sind ohne Persistent Disk nicht dauerhaft. Im Render-Web-Service unter **Disks** einen Persistent Disk hinzufügen, z. B. Mount Path `/var/data`, und in **Environment** `DATA_DIR=/var/data` setzen. Danach den Service neu deployen. Ohne diese Disk können Daten bei Deploys/Neustarts weiterhin verloren gehen.
+
+### Grenzen
+Diese dateibasierte Speicherung ist für einen kleinen Testbetrieb gedacht und nicht für mehrere gleichzeitig laufende Serverinstanzen. Für einen großen öffentlichen Dienst sollten PostgreSQL und ein dauerhafter Objektspeicher verwendet werden. Vorhandene Gastkonten werden nicht automatisch in registrierte Konten umgewandelt. Ein echter Live-Test gegen Render/Netlify wurde nicht durchgeführt.
 
 ## Follow-Button-Update
 - Follow/Unfollow ist im Feed bei Video- und Fotobeiträgen sichtbar.

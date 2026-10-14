@@ -148,7 +148,7 @@
 
   function updateAuthUI() {
     $('userLabel').textContent = me ? '@'+me.username : 'Nicht angemeldet';
-    $('authOpen').textContent = me ? 'Profil' : 'Nickname wählen';
+    $('authOpen').textContent = me ? 'Profil' : 'Anmelden / Registrieren';
     $('logoutBtn').classList.toggle('hidden',!me);
     $('avatarForm').classList.toggle('hidden',!me);
   }
@@ -159,7 +159,10 @@
   }
   $('authOpen').onclick=()=>{ if(me){showView('profile');return;} $('authModal').classList.remove('hidden'); };
   $('authClose').onclick=()=> $('authModal').classList.add('hidden');
-  $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const d=await api('/api/guest',{method:'POST',body:JSON.stringify({nickname:$('authUsername').value.trim()})});token=d.token;localStorage.setItem('gametik_token',token);me=d.user;updateAuthUI();$('authModal').classList.add('hidden');if(socket){socket.disconnect();socket=null;}connectChat();showView('feed');}catch(err){status('authStatus',err.message);}finally{$('authSubmit').disabled=false;}};
+  let authMode='register';
+  function setAuthMode(mode){authMode=mode;const registering=mode==='register';$('authEmailWrap').classList.toggle('hidden',!registering);$('authEmail').required=registering;$('authUsername').maxLength=registering?24:254;$('authUsername').placeholder=registering?'z. B. Gamer2026':'Benutzername oder E-Mail';$('authPassword').autocomplete=registering?'new-password':'current-password';$('authPassword').placeholder=registering?'Mindestens 10 Zeichen':'Dein Passwort';$('authSubmit').textContent=registering?'Konto erstellen':'Anmelden';$('authModeRegister').classList.toggle('secondary',!registering);$('authModeLogin').classList.toggle('secondary',registering);$('authStatus').textContent='';}
+  $('authModeRegister').onclick=()=>setAuthMode('register');$('authModeLogin').onclick=()=>setAuthMode('login');
+  $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const body=authMode==='register'?{username:$('authUsername').value.trim(),email:$('authEmail').value.trim(),password:$('authPassword').value}:{identity:$('authUsername').value.trim(),password:$('authPassword').value};const d=await api(authMode==='register'?'/api/auth/register':'/api/auth/login',{method:'POST',body:JSON.stringify(body)});token=d.token;localStorage.setItem('gametik_token',token);me=d.user;updateAuthUI();$('authModal').classList.add('hidden');if(socket){socket.disconnect();socket=null;}connectChat();showView('feed');}catch(err){status('authStatus',err.message);}finally{$('authSubmit').disabled=false;}};
   $('logoutBtn').onclick=async()=>{try{if(token)await api('/api/auth/logout',{method:'POST'});}catch(e){}finally{token='';me=null;localStorage.removeItem('gametik_token');if(socket){socket.disconnect();socket=null;}privateRecipientId='';updateAuthUI();loadProfile();showView('feed');$('authModal').classList.remove('hidden');}};
 
   // Real camera preview and capture using the browser camera API.
@@ -539,5 +542,5 @@
     }catch(e){}
   }
 
-  restoreSession().then(()=>{loadConfig();loadStories();loadFeed();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
+  restoreSession().then(()=>{setAuthMode('register');loadConfig();loadStories();loadFeed();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
 })();
