@@ -65,6 +65,9 @@ const videos = [];
 const chatMessages = [];
 const privateMessages = [];
 const gifts = [];
+const candyBalances = new Map();
+const candyDailyClaims = new Map();
+const candySpinCooldowns = new Map();
 const stories = [];
 const adminBlockedUsers = new Set();
 let nextStoryId = 1;
@@ -83,12 +86,9 @@ const avatarStorage = multer.diskStorage({
 function safeExtension(mimetype, originalName) {
   // Use the validated MIME type to prevent mismatched extensions (e.g. an MP4 named .jpg).
   const extensions = {
-    'video/mp4': '.mp4',
-    'video/webm': '.webm',
-    'video/quicktime': '.mov',
-    'image/jpeg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
+    'video/mp4': '.mp4', 'video/webm': '.webm', 'video/quicktime': '.mov', 'video/ogg': '.ogv', 'video/x-m4v': '.m4v',
+    'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif', 'image/avif': '.avif', 'image/bmp': '.bmp',
+    'audio/mpeg': '.mp3', 'audio/mp3': '.mp3', 'audio/mp4': '.m4a', 'audio/x-m4a': '.m4a', 'audio/aac': '.aac', 'audio/ogg': '.ogg', 'audio/wav': '.wav', 'audio/x-wav': '.wav', 'audio/webm': '.webm', 'audio/flac': '.flac', 'audio/x-flac': '.flac',
     'audio/mpeg': '.mp3', 'audio/mp3': '.mp3',
     'application/pdf': '.pdf', 'text/plain': '.txt', 'text/csv': '.csv',
     'application/msword': '.doc', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
@@ -98,16 +98,16 @@ function safeExtension(mimetype, originalName) {
   };
   return extensions[mimetype] || '';
 }
-const allowedMediaTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'image/jpeg', 'image/png', 'image/webp'];
-const allowedAudioTypes = ['audio/mpeg', 'audio/mp3'];
+const allowedMediaTypes = ['video/mp4','video/webm','video/quicktime','video/ogg','video/x-m4v','image/jpeg','image/png','image/webp','image/gif','image/avif','image/bmp'];
+const allowedAudioTypes = ['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/aac','audio/ogg','audio/wav','audio/x-wav','audio/webm','audio/flac','audio/x-flac'];
 const allowedDocumentTypes = ['application/pdf','text/plain','text/csv','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/rtf','application/zip'];
 const videoUpload = multer({ storage: videoStorage, limits: { fileSize: MAX_VIDEO_BYTES, files: 1 }, fileFilter: (_req, f, cb) => {
   const allowed = allowedMediaTypes.includes(f.mimetype);
-  cb(allowed ? null : Object.assign(new Error('Erlaubt sind JPG, PNG, WebP, MP4, WebM und MOV.'), { status: 400 }), allowed);
+  cb(allowed ? null : Object.assign(new Error('Erlaubt sind gängige Bildformate (JPG, PNG, WebP, GIF, AVIF, BMP) sowie MP4, WebM, MOV, OGV und M4V.'), { status: 400 }), allowed);
 }});
 const postUpload = multer({ storage: videoStorage, limits: { fileSize: MAX_VIDEO_BYTES, files: 3 }, fileFilter: (_req, f, cb) => {
   const allowed = f.fieldname === 'music' ? allowedAudioTypes.includes(f.mimetype) : f.fieldname === 'video' ? allowedMediaTypes.includes(f.mimetype) : f.fieldname === 'document' && allowedDocumentTypes.includes(f.mimetype);
-  const message = f.fieldname === 'music' ? 'Nur MP3-Musikdateien sind erlaubt.' : f.fieldname === 'document' ? 'Dokumentformat nicht erlaubt. Erlaubt: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, RTF oder ZIP.' : 'Erlaubt sind JPG, PNG, WebP, MP4, WebM und MOV.';
+  const message = f.fieldname === 'music' ? 'Erlaubt sind MP3, M4A, AAC, OGG, WAV, WebM und FLAC.' : f.fieldname === 'document' ? 'Dokumentformat nicht erlaubt. Erlaubt: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, RTF oder ZIP.' : 'Erlaubt sind gängige Bildformate (JPG, PNG, WebP, GIF, AVIF, BMP) sowie MP4, WebM, MOV, OGV und M4V.';
   cb(allowed ? null : Object.assign(new Error(message), { status: 400 }), allowed);
 }});
 const avatarUpload = multer({ storage: avatarStorage, limits: { fileSize: MAX_AVATAR_BYTES, files: 1 }, fileFilter: (_req, f, cb) => {
@@ -121,8 +121,8 @@ const storyUpload = multer({
   }),
   limits: { fileSize: MAX_VIDEO_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
-    cb(allowed.includes(file.mimetype) ? null : Object.assign(new Error('Storys erlauben JPG, PNG, WebP, MP4, WebM oder MOV.'), { status: 400 }), allowed.includes(file.mimetype));
+    const allowed = ['image/jpeg','image/png','image/webp','image/gif','image/avif','image/bmp','video/mp4','video/webm','video/quicktime','video/ogg','video/x-m4v'];
+    cb(allowed.includes(file.mimetype) ? null : Object.assign(new Error('Storys erlauben gängige Bildformate sowie MP4, WebM, MOV, OGV oder M4V.'), { status: 400 }), allowed.includes(file.mimetype));
   }
 });
 function purgeExpiredStories() {
@@ -639,6 +639,42 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
 
   res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id });
 }));
+// Virtual candy wallet: free-only credits, no cash value, no purchase or cash-out.
+function candyBalance(userId) { return Math.max(0, Number(candyBalances.get(String(userId)) || 0)); }
+app.get('/api/candy/balance', auth, (req, res) => res.json({ balance: candyBalance(req.user.id), unit: 'Süßigkeiten', note: 'Virtuelle kostenlose Punkte ohne Geldwert.' }));
+app.post('/api/candy/claim', auth, (req, res) => {
+  const id = String(req.user.id), today = new Date().toISOString().slice(0,10);
+  if (candyDailyClaims.get(id) === today) return res.status(429).json({ error: 'Deine täglichen kostenlosen Süßigkeiten hast du bereits abgeholt.', balance: candyBalance(id) });
+  candyDailyClaims.set(id, today); candyBalances.set(id, candyBalance(id) + 10);
+  res.json({ ok: true, awarded: 10, balance: candyBalance(id) });
+});
+app.post('/api/candy/spin', auth, (req, res) => {
+  const id = String(req.user.id), now = Date.now(), last = Number(candySpinCooldowns.get(id) || 0);
+  if (now - last < 8000) return res.status(429).json({ error: 'Bitte warte kurz vor dem nächsten kostenlosen Dreh.', balance: candyBalance(id), waitMs: 8000 - (now-last) });
+  candySpinCooldowns.set(id, now);
+  // Free entertainment only; no purchased credits, deposits, prizes with cash value, or cash-out.
+  const rewards = [0, 1, 2, 3, 5], weights = [15, 35, 25, 18, 7];
+  let roll = Math.random()*weights.reduce((a,b)=>a+b,0), reward = 0;
+  for (let i=0;i<weights.length;i++) { roll -= weights[i]; if (roll < 0) { reward = rewards[i]; break; } }
+  candyBalances.set(id, candyBalance(id) + reward);
+  res.json({ ok: true, reward, balance: candyBalance(id), symbols: reward >= 5 ? ['🍬','🍬','🍬'] : reward >= 3 ? ['🍭','🍬','🍭'] : reward ? ['🍬','🍭','🍬'] : ['🍒','🍋','🍇'] });
+});
+app.post('/api/candy/gift', auth, (req, res) => {
+  const roomId = String(req.body.liveRoomId || ''), amount = Math.max(1, Math.min(20, Math.floor(Number(req.body.amount) || 1)));
+  const room = liveRooms.get(roomId);
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser LIVE-Stream ist nicht aktiv.' });
+  if (String(req.user.id) === room.hostId) return res.status(400).json({ error: 'Der Gastgeber kann sich selbst keine Süßigkeiten schicken.' });
+  const id = String(req.user.id), balance = candyBalance(id);
+  if (balance < amount) return res.status(400).json({ error: 'Nicht genug Süßigkeiten. Hole kostenlose Süßigkeiten oder spiele 🎰.', balance });
+  candyBalances.set(id, balance - amount);
+  if (room.game?.active && Date.now() < room.game.endsAt) {
+    room.game.communityPoints = Math.min(1000000000, Number(room.game.communityPoints || 0) + amount);
+    room.game.candyCount = Math.min(1000000000, Number(room.game.candyCount || 0) + amount);
+    io.to('live:' + roomId).emit('live:game-state', { roomId, game: room.game });
+  }
+  io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: 'Süßigkeiten 🍬 ×' + amount, points: amount, free: true, created_at: new Date().toISOString() });
+  res.json({ ok: true, spent: amount, balance: candyBalance(id) });
+});
 app.get('/api/demo-stats', (_req,res) => res.json({ sessions: sessions.size, videos: videos.length, messages: chatMessages.length, gifts: gifts.length }));
 app.get('/api/live/config', (_req, res) => res.json({ enabled: Boolean(process.env.LIVEKIT_URL && process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET), provider: 'LiveKit', note: 'Live-Streams benötigen LiveKit-Zugangsdaten.' }));
 function livekitConfigured() {
@@ -684,7 +720,7 @@ app.post('/api/live/:id/like', (req, res) => {
   if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht mehr aktiv.' });
   // Anonymous likes are intentionally counted as taps; add rate limiting before public production launch.
   room.likes = Math.min(1000000000, Number(room.likes || 0) + 1);
-  if (room.game?.active && Date.now() < room.game.endsAt) { room.game.communityPoints = Math.min(1000000000, Number(room.game.communityPoints || 0) + 1); io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game }); }
+  // Likes animate the LIVE but do not decide the candy duel winner.
   io.to('live:' + room.id).emit('live:like-count', { roomId: room.id, likes: room.likes });
   res.json({ ok: true, likes: room.likes });
 });
@@ -733,6 +769,7 @@ app.post('/api/live/:id/end', auth, (req, res) => {
   const room = liveRooms.get(String(req.params.id));
   if (!room) return res.status(404).json({ error: 'Live-Stream nicht gefunden.' });
   if (room.hostId !== String(req.user.id)) return res.status(403).json({ error: 'Nur der Stream-Host kann den Stream beenden.' });
+  if (room.status !== 'live') return res.json({ ok: true, alreadyEnded: true });
   room.status = 'ended'; room.endedAt = new Date().toISOString(); if (room.gameTimer) clearTimeout(room.gameTimer); room.gameTimer = null;
   io.to('live:' + room.id).emit('live:ended', { id: room.id });
   res.json({ ok: true });

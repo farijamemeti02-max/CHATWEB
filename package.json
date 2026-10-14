@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.4.0",
-  "description": "GAMETIK social platform with LiveKit streaming, optional live game countdown, points and server-confirmed PayPal gifts",
+  "version": "1.8.0",
+  "description": "GAMETIK social platform with live duels, virtual candy wallet, free candy game, studio mixer and multi-format media uploads",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

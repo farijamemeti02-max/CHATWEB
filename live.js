@@ -36,6 +36,20 @@
     heart.style.setProperty('--heart-x', `${18 + Math.random()*64}%`);
     container.appendChild(heart); setTimeout(() => heart.remove(), 1700);
   }
+  let candyBalanceCache = 0, soundContext = null, lastAnnouncedWinner = null;
+  async function refreshCandyBalance() {
+    if (!localStorage.getItem('gametik_token')) { candyBalanceCache = 0; if ($('liveCandyBalance')) $('liveCandyBalance').textContent = '🍬 0'; if ($('liveCasinoBalance')) $('liveCasinoBalance').textContent = '0 🍬'; return; }
+    try { const d = await api('/api/candy/balance'); candyBalanceCache = Number(d.balance || 0); if ($('liveCandyBalance')) $('liveCandyBalance').textContent = '🍬 ' + candyBalanceCache; if ($('liveCasinoBalance')) $('liveCasinoBalance').textContent = candyBalanceCache + ' 🍬'; } catch {}
+  }
+  function playGameJingle(kind='gift') {
+    try {
+      soundContext ||= new (window.AudioContext || window.webkitAudioContext)();
+      const notes = kind === 'win' ? [523.25,659.25,783.99,1046.5] : kind === 'draw' ? [440,523.25,440] : [659.25,783.99,987.77];
+      if (soundContext.state === 'suspended') soundContext.resume().catch(()=>{});
+      const now = soundContext.currentTime;
+      notes.forEach((hz,i)=>{ const osc=soundContext.createOscillator(), gain=soundContext.createGain(); osc.type='sine'; osc.frequency.value=hz; gain.gain.setValueAtTime(.0001,now+i*.11); gain.gain.exponentialRampToValueAtTime(.07,now+i*.11+.025); gain.gain.exponentialRampToValueAtTime(.0001,now+i*.11+.14); osc.connect(gain); gain.connect(soundContext.destination); osc.start(now+i*.11); osc.stop(now+i*.11+.15); });
+    } catch {}
+  }
   function applyCameraEffect() {
     const effect = $('liveEffect')?.value || 'none';
     const filters = { none:'', soft:'contrast(.96) saturate(1.04)', glow:'contrast(.98) saturate(1.12)', warm:'sepia(.18) saturate(1.16)', mono:'grayscale(1)', vivid:'saturate(1.45) contrast(1.08)', cinema:'contrast(1.12) saturate(.82) sepia(.08)', cool:'hue-rotate(12deg) saturate(1.12)', retro:'sepia(.3) contrast(1.08) saturate(.85)', dream:'saturate(1.15) contrast(.92)' };
@@ -67,17 +81,17 @@
   }
   function renderGame(game) {
     currentGame = game || {active:false, endsAt:null, hostPoints:0, communityPoints:0, winner:null};
-    $('liveGameHostPoints').textContent = String(Number(currentGame.hostPoints || 0));
-    $('liveGameCommunityPoints').textContent = String(Number(currentGame.communityPoints || 0));
-    $('liveGameStart').classList.toggle('hidden', currentRole !== 'host' || !!currentGame.active);
+    $('liveGameHostPoints').textContent = String(Number(currentGame.hostPoints || 0)); if ($('liveDuelHostScore')) $('liveDuelHostScore').textContent = String(Number(currentGame.hostPoints || 0));
+    $('liveGameCommunityPoints').textContent = String(Number(currentGame.communityPoints || 0)); if ($('liveDuelCommunityScore')) $('liveDuelCommunityScore').textContent = String(Number(currentGame.communityPoints || 0));
+    $('liveGameStart').classList.toggle('hidden', currentRole !== 'host' || !!currentGame.active); $('liveGameStart').textContent = currentGame.winner ? '🏆 Ehrenrunde starten' : '▶ Duell starten'; if ($('liveDuelOverlay')) $('liveDuelOverlay').classList.toggle('hidden', !currentGame.active && !currentGame.winner);
     $('liveGameStop').classList.toggle('hidden', currentRole !== 'host' || !currentGame.active);
     if (currentGame.active && currentGame.endsAt) {
       const remaining = Math.max(0, Math.ceil((Number(currentGame.endsAt) - Date.now()) / 1000));
-      $('liveGameTimer').textContent = `${String(Math.floor(remaining / 60)).padStart(2,'0')}:${String(remaining % 60).padStart(2,'0')}`;
-      $('liveGameResult').textContent = '🔥 Runde läuft! Geschenke und Likes zählen live.';
+      $('liveGameTimer').textContent = `${String(Math.floor(remaining / 60)).padStart(2,'0')}:${String(remaining % 60).padStart(2,'0')}`; if ($('liveDuelTimer')) $('liveDuelTimer').textContent = $('liveGameTimer').textContent;
+      $('liveGameResult').textContent = '🔥 Duell läuft! Süßigkeiten und Geschenke zählen live.'; if ($('liveDuelResult')) $('liveDuelResult').textContent = '🍬 Süßigkeiten zählen live · Runde läuft!';
     } else {
       $('liveGameTimer').textContent = '00:00';
-      $('liveGameResult').textContent = currentGame.winner === 'host' ? '🏆 Streamer-Team gewinnt!' : currentGame.winner === 'community' ? '🏆 Community-Team gewinnt!' : currentGame.winner === 'draw' ? '🤝 Unentschieden!' : 'Das Spiel ist aus. Nur der Gastgeber kann es starten.';
+      $('liveGameResult').textContent = currentGame.winner === 'host' ? '🏆 Streamer-Team gewinnt!' : currentGame.winner === 'community' ? '🏆 Community-Team gewinnt!' : currentGame.winner === 'draw' ? '🤝 Unentschieden!' : 'Das Spiel ist aus. Nur der Gastgeber kann es starten.'; if ($('liveDuelResult')) $('liveDuelResult').textContent = currentGame.winner ? (currentGame.winner === 'draw' ? '🤝 Ehrenrunde: Unentschieden!' : '🏆 ' + (currentGame.winner === 'host' ? 'Gastgeber' : 'Community') + ' gewinnt! 🎉') : '3-Minuten-Runde · kostenlose 🍬 zählen!'; if (currentGame.active) lastAnnouncedWinner = null; else if (currentGame.winner && currentGame.winner !== lastAnnouncedWinner) { lastAnnouncedWinner = currentGame.winner; playGameJingle(currentGame.winner === 'draw' ? 'draw' : 'win'); }
     }
   }
   function updateAudioMixer() {
@@ -161,9 +175,9 @@
     currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
-    $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveStartBtn').classList.toggle('hidden', role === 'host');
+    $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; $('liveStartBtn').classList.toggle('hidden', role === 'host');
     $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
-    liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
+    refreshCandyBalance(); liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
     room = new window.LivekitClient.Room({adaptiveStream: true, dynacast: true});
     room.on(window.LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => renderTrack(track, participant));
     room.on(window.LivekitClient.RoomEvent.TrackUnsubscribed, (track) => { try { track.detach().forEach(el => el.remove()); } catch {} });
@@ -185,7 +199,7 @@
       chatSocket = window.io(apiBase || undefined, {auth: localStorage.getItem('gametik_token') ? {token: localStorage.getItem('gametik_token')} : {guestLiveRoomId: currentStream.id}});
       chatSocket.on('connect', () => chatSocket.emit('live:join-chat', {roomId: currentStream.id}, result => { if (result?.error) liveStatus(result.error); }));
       chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at); });
-      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); });
+      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); playGameJingle('gift'); });
       chatSocket.on('live:game-state', event => { if (event.roomId === currentStream?.id) renderGame(event.game); });
       chatSocket.on('live:like-count', data => { if (data.roomId === currentStream?.id) { liveLikeCount = Number(data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; } });
       chatSocket.on('live:ended', event => { if (event.id === currentStream?.id) { liveStatus('Der Stream wurde beendet.'); leaveStream(false); refreshStreams(); } });
@@ -277,8 +291,9 @@
   });
   $('liveEndBtn').addEventListener('click', async () => {
     if (!currentStream || currentRole !== 'host') return;
-    try { await api(`/api/live/${encodeURIComponent(currentStream.id)}/end`, {method:'POST', body:'{}'}); await leaveStream(); await refreshStreams(); }
-    catch (error) { alert(error.message); }
+    const button = $('liveEndBtn'); button.disabled = true;
+    try { await api(`/api/live/${encodeURIComponent(currentStream.id)}/end`, {method:'POST', body:'{}'}); liveStatus('LIVE wurde beendet.'); await leaveStream(); await refreshStreams(); }
+    catch (error) { alert(error.message); button.disabled = false; }
   });
   $('liveLeaveBtn').addEventListener('click', async () => { await leaveStream(); await refreshStreams(); });
   $('liveChatForm').addEventListener('submit', event => {
@@ -296,6 +311,13 @@
       location.href = data.approvalUrl;
     } catch (error) { $('liveGiftStatus').textContent = error.message; }
   }));
+  document.querySelectorAll('.live-smiley').forEach(button => button.addEventListener('click', () => { const input=$('liveChatInput'); if (!input) return; input.value=(input.value ? input.value+' ' : '')+button.dataset.smiley; input.focus(); }));
+  $('liveCandyClaim')?.addEventListener('click', async () => { if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } try { const d=await api('/api/candy/claim',{method:'POST',body:'{}'}); candyBalanceCache=Number(d.balance||0); $('liveGiftStatus').textContent=`🎉 ${d.awarded} kostenlose Süßigkeiten erhalten!`; await refreshCandyBalance(); playGameJingle('gift'); } catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); } });
+  $('liveCandyGift')?.addEventListener('click', async () => { if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; } if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } const amount=Number(prompt('Wie viele kostenlose Süßigkeiten möchtest du verschenken? (1–20)', '1')); if (!Number.isInteger(amount)||amount<1||amount>20) return; try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeiten verschenkt. Dein Guthaben: ${d.balance}`; await refreshCandyBalance(); } catch(e) { $('liveGiftStatus').textContent=e.message; } });
+  $('liveCasinoOpen')?.addEventListener('click', async () => { if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } $('liveCasinoModal')?.classList.remove('hidden'); await refreshCandyBalance(); });
+  $('liveCasinoClose')?.addEventListener('click', () => $('liveCasinoModal')?.classList.add('hidden'));
+  $('liveCasinoSpin')?.addEventListener('click', async () => { const button=$('liveCasinoSpin'); button.disabled=true; try { const d=await api('/api/candy/spin',{method:'POST',body:'{}'}); $('liveCasinoReels').textContent=(d.symbols||['🍬','🍭','🍬']).join(' '); $('liveCasinoResult').textContent=d.reward ? `🎉 Du gewinnst ${d.reward} kostenlose Süßigkeit(en)!` : 'Diesmal kein Gewinn. Versuche es später erneut.'; candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward) playGameJingle('gift'); } catch(e) { $('liveCasinoResult').textContent=e.message; } finally { setTimeout(()=>{button.disabled=false;},8000); } });
+  refreshCandyBalance();
   async function sendLiveLike() {
     if (!currentStream) return;
     showFloatingHeart();
@@ -337,5 +359,11 @@
     try { const data = await api(localStorage.getItem('gametik_token') ? `/api/live/${encodeURIComponent(sharedLiveId)}/join` : `/api/live/${encodeURIComponent(sharedLiveId)}/guest-join`, {method:'POST', body:'{}'}); await connectStream(data, localStorage.getItem('gametik_token') ? 'viewer' : 'guest'); }
     catch (error) { $('liveConfigStatus').textContent = error.message; }
   });
-  window.addEventListener('beforeunload', () => { try { micStream?.getTracks().forEach(track => track.stop()); audioContext?.close(); room?.disconnect(); chatSocket?.disconnect(); } catch {} });
+  function endHostLiveOnExit() {
+    if (currentRole !== 'host' || !currentStream?.id) return;
+    const token = localStorage.getItem('gametik_token') || '';
+    try { fetch(apiBase + '/api/live/' + encodeURIComponent(currentStream.id) + '/end', {method:'POST', keepalive:true, headers:{'Content-Type':'application/json', ...(token ? {Authorization:'Bearer '+token} : {})}, body:'{}'}).catch(()=>{}); } catch {}
+  }
+  window.addEventListener('pagehide', endHostLiveOnExit);
+  window.addEventListener('beforeunload', () => { endHostLiveOnExit(); try { micStream?.getTracks().forEach(track => track.stop()); audioContext?.close(); room?.disconnect(); chatSocket?.disconnect(); } catch {} });
 })();
