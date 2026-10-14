@@ -28,6 +28,81 @@ input:focus,textarea:focus,select:focus{outline:1px solid #24dfff!important;bord
 a{color:#24dfff}
 @media(prefers-reduced-motion:reduce){button,.button,.btn,[role="button"]{transition:none!important}}
 </style>
+
+<style id="gametik-unified-modern-buttons-v21">
+/* Unified contemporary GameTik buttons: chrome + neon pink/blue/violet */
+:root{
+  --gt-pink:#ff38c8;--gt-violet:#9b5cff;--gt-blue:#21d4fd;
+  --gt-silver:#e8f4ff;--gt-dark:#101323;
+}
+button,.button,[role="button"],input[type="button"],input[type="submit"]{
+  position:relative;
+  border:1px solid transparent!important;
+  border-radius:15px!important;
+  color:#f8faff!important;
+  background:
+    linear-gradient(115deg,rgba(22,23,43,.98),rgba(13,22,40,.98)) padding-box,
+    linear-gradient(115deg,var(--gt-pink),var(--gt-violet) 48%,var(--gt-blue)) border-box!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.22),0 0 9px rgba(155,92,255,.15),inset 0 1px 0 rgba(255,255,255,.10)!important;
+  font-weight:750!important;
+  letter-spacing:.005em;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+button:hover,.button:hover,[role="button"]:hover,input[type="button"]:hover,input[type="submit"]:hover{
+  filter:brightness(1.15);
+  box-shadow:0 0 0 1px rgba(232,244,255,.18),0 0 18px rgba(33,212,253,.22),0 0 20px rgba(255,56,200,.16)!important;
+  transform:translateY(-1px);
+}
+button:active,.button:active,[role="button"]:active,input[type="button"]:active,input[type="submit"]:active{
+  transform:translateY(1px) scale(.985);
+}
+button:focus-visible,.button:focus-visible,[role="button"]:focus-visible,input:focus-visible{
+  outline:2px solid var(--gt-blue)!important;outline-offset:3px;
+}
+button:disabled,input:disabled{
+  opacity:.48!important;filter:saturate(.55);cursor:not-allowed;transform:none!important;
+}
+/* Primary actions glow; dangerous/end buttons stay obvious but match the brand */
+button:not(.secondary):not(.danger):not(.navbtn):not(.story-item):not(.close),
+input[type="submit"],input[type="button"]{
+  background:linear-gradient(110deg,var(--gt-pink),var(--gt-violet) 50%,var(--gt-blue)) padding-box,
+             linear-gradient(110deg,#ffd9f7,#e4d8ff,#d3f8ff) border-box!important;
+  color:#fff!important;text-shadow:0 1px 3px #25123f;
+  box-shadow:0 5px 18px rgba(155,92,255,.22),0 0 13px rgba(255,56,200,.18)!important;
+}
+button.secondary,.navbtn,.profile-tab,.story-item,.close{
+  background:linear-gradient(130deg,#171a2d,#101827) padding-box,
+             linear-gradient(110deg,#566a9b,#8b5cf6,#397eaa) border-box!important;
+  color:#f2f6ff!important;
+}
+.navbtn.active,.profile-tab.active{
+  background:linear-gradient(110deg,rgba(255,56,200,.22),rgba(155,92,255,.23),rgba(33,212,253,.18)) padding-box,
+             linear-gradient(110deg,var(--gt-pink),var(--gt-violet),var(--gt-blue)) border-box!important;
+  box-shadow:0 0 16px rgba(155,92,255,.24)!important;
+}
+button.danger,#liveEndTopBtn,#liveEndBtn{
+  background:linear-gradient(110deg,#ff368d,#c83dff,#2bcfff) padding-box,
+             linear-gradient(110deg,#ffe1f1,#eee0ff,#d9faff) border-box!important;
+  color:#fff!important;border:1px solid transparent!important;
+}
+.gift,.gift-grid button,.live-candy-send{
+  background:linear-gradient(135deg,#17182e,#10253b) padding-box,
+             linear-gradient(110deg,#ff38c8,#9b5cff,#21d4fd) border-box!important;
+  color:#fff!important;
+}
+input,select,textarea{
+  border:1px solid #454c70!important;border-radius:13px!important;
+  background:#0b0e19!important;color:#f8faff!important;
+}
+@media(prefers-reduced-motion:reduce){button,.button,[role="button"]{transition:none!important}}
+@media(max-width:640px){
+  button,.button,[role="button"],input[type="button"],input[type="submit"]{
+    min-height:44px;border-radius:14px!important;padding:11px 14px;
+  }
+}
+</style>
+
 </head><body><main><h1>♛ GAMETIK ADMIN</h1><p class="muted">Geschützter Verwaltungsbereich · Nutzer, Beiträge und Storys verwalten</p><p><a href="/">Zur Webseite</a></p><section id="login"><h2>Administrator-Anmeldung</h2><form id="loginForm"><label>Administratorname</label><input id="username" autocomplete="username" required><label>Passwort</label><input id="password" type="password" autocomplete="current-password" required><button class="primary">Sicher anmelden</button></form><div id="loginStatus" class="status hidden"></div></section><div id="dashboard" class="hidden"><div class="panel"><button id="refresh" class="primary">Daten aktualisieren</button> <button id="logout">Abmelden</button><div id="stats" class="grid"></div></div><section><h2>Nutzerkontrolle</h2><p class="muted">Sperren verhindert weitere authentifizierte Aktionen. Löschen entfernt Nutzer und dessen Beiträge/Storys aus dem aktuellen Serverspeicher.</p><div id="users" class="grid"></div></section><section><h2>Beiträge löschen</h2><div id="videos" class="grid"></div></section><section><h2>Storys löschen</h2><div id="stories" class="grid"></div></section><div id="status" class="status hidden"></div></div></main><script>
 (()=>{const $=id=>document.getElementById(id);const host=location.hostname;const base=window.GAMETIK_API_BASE||((host.endsWith('.onrender.com')||['localhost','127.0.0.1'].includes(host))?'':'https://chatweb-iajl.onrender.com');let token=sessionStorage.getItem('gametik_admin_token')||'';async function api(path,opt={}){const headers={...(opt.headers||{})};if(token)headers.Authorization='Bearer '+token;if(opt.body)headers['Content-Type']='application/json';const r=await fetch(base+path,{...opt,headers});const d=await r.json().catch(()=>({error:'Ungültige Serverantwort'}));if(!r.ok)throw Error(d.error||'Anfrage fehlgeschlagen');return d}function msg(id,t){$(id).textContent=t;$(id).classList.remove('hidden')}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function show(){ $('login').classList.toggle('hidden',!!token);$('dashboard').classList.toggle('hidden',!token);if(token)load().catch(e=>{token='';sessionStorage.removeItem('gametik_admin_token');show();msg('loginStatus',e.message)})}async function load(){const d=await api('/api/admin/overview');$('stats').innerHTML=Object.entries(d.stats).map(([k,v])=>`<div class="item"><b>${esc(k)}</b><div>${esc(v)}</div></div>`).join('');$('users').innerHTML=d.users.map(u=>`<div class="item"><b>@${esc(u.username)}</b><div class="muted">Beiträge: ${u.posts_count} · Follower: ${u.followers_count}</div><p>Status: ${u.adminBlocked?'GESPERRT':'Aktiv'}</p><button data-action="block" data-id="${esc(u.id)}" data-blocked="${u.adminBlocked?'1':'0'}">${u.adminBlocked?'Sperre aufheben':'Nutzer sperren'}</button><button class="danger" data-action="user-delete" data-id="${esc(u.id)}">Nutzer löschen</button></div>`).join('')||'<p>Keine Nutzer vorhanden.</p>';$('videos').innerHTML=d.videos.map(v=>`<div class="item"><b>@${esc(v.username)}</b><p>${esc(v.caption||'Ohne Beschreibung')}</p><button class="danger" data-action="video-delete" data-id="${v.id}">Beitrag löschen</button></div>`).join('')||'<p>Keine Beiträge.</p>';$('stories').innerHTML=d.stories.map(v=>`<div class="item"><b>@${esc(v.username)}</b><p>${esc(v.caption||v.type||'Story')}</p><button class="danger" data-action="story-delete" data-id="${v.id}">Story löschen</button></div>`).join('')||'<p>Keine Storys.</p>'} $('loginForm').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({username:$('username').value,password:$('password').value})});token=d.token;sessionStorage.setItem('gametik_admin_token',token);$('password').value='';show()}catch(e){msg('loginStatus',e.message)}};$('refresh').onclick=()=>load().catch(e=>msg('status',e.message));$('logout').onclick=async()=>{try{await api('/api/admin/logout',{method:'POST'})}catch{}token='';sessionStorage.removeItem('gametik_admin_token');show()};document.addEventListener('click',async e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=encodeURIComponent(b.dataset.id),action=b.dataset.action;try{if(action==='block'){const blocked=b.dataset.blocked!=='1';await api('/api/admin/users/'+id+'/block',{method:'PATCH',body:JSON.stringify({blocked})})}else if(action==='user-delete'){if(!confirm('Nutzer und dessen Beiträge/Storys wirklich löschen?'))return;await api('/api/admin/users/'+id,{method:'DELETE'})}else if(action==='video-delete'){if(!confirm('Beitrag wirklich löschen?'))return;await api('/api/admin/videos/'+id,{method:'DELETE'})}else if(action==='story-delete'){if(!confirm('Story wirklich löschen?'))return;await api('/api/admin/stories/'+id,{method:'DELETE'})}msg('status','Änderung ausgeführt.');await load()}catch(err){msg('status',err.message)}});show();})();
 </script></body></html>

@@ -192,6 +192,173 @@ input:focus,textarea:focus,select:focus{outline:1px solid #24dfff!important;bord
 a{color:#24dfff}
 @media(prefers-reduced-motion:reduce){button,.button,.btn,[role="button"]{transition:none!important}}
 </style>
+
+<style id="gametik-modern-chat-buttons-v20">
+/* Modern GameTik glass/neon controls for chat and calls */
+#publicChatTab,#privateChatTab,#refreshMembers,#archiveChatBtn,#clearChatBtn,#muteChatBtn,#voiceCallBtn,#videoCallBtn{
+  position:relative; isolation:isolate; display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  min-height:52px; padding:13px 19px; border:1px solid rgba(158,135,255,.48)!important;
+  border-radius:17px!important; color:#f8f8ff!important; font-weight:750; letter-spacing:.1px;
+  background:linear-gradient(135deg,rgba(32,28,57,.98),rgba(12,24,43,.98))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 7px 22px rgba(0,0,0,.24),0 0 14px rgba(116,91,255,.12);
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+#publicChatTab::before,#privateChatTab::before,#refreshMembers::before,#archiveChatBtn::before,#clearChatBtn::before,#muteChatBtn::before,#voiceCallBtn::before,#videoCallBtn::before{
+  content:""; width:9px; height:9px; flex:0 0 9px; border-radius:50%;
+  background:linear-gradient(135deg,#ff55d8,#55ddff); box-shadow:0 0 10px rgba(80,220,255,.8),0 0 16px rgba(255,70,210,.35);
+}
+#publicChatTab:hover,#privateChatTab:hover,#refreshMembers:hover,#archiveChatBtn:hover,#clearChatBtn:hover,#muteChatBtn:hover,#voiceCallBtn:hover,#videoCallBtn:hover{
+  transform:translateY(-2px); border-color:#57ddff!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 9px 26px rgba(0,0,0,.3),0 0 19px rgba(73,210,255,.24),0 0 16px rgba(237,76,222,.12);
+  background:linear-gradient(115deg,rgba(63,28,80,.98),rgba(12,47,68,.98))!important;
+}
+#publicChatTab:focus-visible,#privateChatTab:focus-visible,#refreshMembers:focus-visible,#archiveChatBtn:focus-visible,#clearChatBtn:focus-visible,#muteChatBtn:focus-visible,#voiceCallBtn:focus-visible,#videoCallBtn:focus-visible{outline:2px solid #58e5ff;outline-offset:3px}
+#publicChatTab.active,#privateChatTab.active,[aria-pressed="true"]#publicChatTab,[aria-pressed="true"]#privateChatTab{background:linear-gradient(110deg,#d92cc6,#7556f5,#1caedb)!important;border-color:#d5f8ff!important;box-shadow:0 0 22px rgba(172,87,255,.3),inset 0 1px 0 rgba(255,255,255,.3)}
+#muteChatBtn{border-color:rgba(255,95,157,.48)!important}
+#muteChatBtn::before{background:linear-gradient(135deg,#ff709e,#ffca7a);box-shadow:0 0 10px rgba(255,100,150,.6)}
+@media(max-width:520px){#publicChatTab,#privateChatTab,#refreshMembers,#archiveChatBtn,#clearChatBtn,#muteChatBtn,#voiceCallBtn,#videoCallBtn{min-height:48px;padding:11px 13px;border-radius:15px!important;font-size:14px;flex:1 1 auto}}
+</style>
+
+
+<style id="gametik-unified-modern-buttons-v21">
+/* Unified contemporary GameTik buttons: chrome + neon pink/blue/violet */
+:root{
+  --gt-pink:#ff38c8;--gt-violet:#9b5cff;--gt-blue:#21d4fd;
+  --gt-silver:#e8f4ff;--gt-dark:#101323;
+}
+button,.button,[role="button"],input[type="button"],input[type="submit"]{
+  position:relative;
+  border:1px solid transparent!important;
+  border-radius:15px!important;
+  color:#f8faff!important;
+  background:
+    linear-gradient(115deg,rgba(22,23,43,.98),rgba(13,22,40,.98)) padding-box,
+    linear-gradient(115deg,var(--gt-pink),var(--gt-violet) 48%,var(--gt-blue)) border-box!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.22),0 0 9px rgba(155,92,255,.15),inset 0 1px 0 rgba(255,255,255,.10)!important;
+  font-weight:750!important;
+  letter-spacing:.005em;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+button:hover,.button:hover,[role="button"]:hover,input[type="button"]:hover,input[type="submit"]:hover{
+  filter:brightness(1.15);
+  box-shadow:0 0 0 1px rgba(232,244,255,.18),0 0 18px rgba(33,212,253,.22),0 0 20px rgba(255,56,200,.16)!important;
+  transform:translateY(-1px);
+}
+button:active,.button:active,[role="button"]:active,input[type="button"]:active,input[type="submit"]:active{
+  transform:translateY(1px) scale(.985);
+}
+button:focus-visible,.button:focus-visible,[role="button"]:focus-visible,input:focus-visible{
+  outline:2px solid var(--gt-blue)!important;outline-offset:3px;
+}
+button:disabled,input:disabled{
+  opacity:.48!important;filter:saturate(.55);cursor:not-allowed;transform:none!important;
+}
+/* Primary actions glow; dangerous/end buttons stay obvious but match the brand */
+button:not(.secondary):not(.danger):not(.navbtn):not(.story-item):not(.close),
+input[type="submit"],input[type="button"]{
+  background:linear-gradient(110deg,var(--gt-pink),var(--gt-violet) 50%,var(--gt-blue)) padding-box,
+             linear-gradient(110deg,#ffd9f7,#e4d8ff,#d3f8ff) border-box!important;
+  color:#fff!important;text-shadow:0 1px 3px #25123f;
+  box-shadow:0 5px 18px rgba(155,92,255,.22),0 0 13px rgba(255,56,200,.18)!important;
+}
+button.secondary,.navbtn,.profile-tab,.story-item,.close{
+  background:linear-gradient(130deg,#171a2d,#101827) padding-box,
+             linear-gradient(110deg,#566a9b,#8b5cf6,#397eaa) border-box!important;
+  color:#f2f6ff!important;
+}
+.navbtn.active,.profile-tab.active{
+  background:linear-gradient(110deg,rgba(255,56,200,.22),rgba(155,92,255,.23),rgba(33,212,253,.18)) padding-box,
+             linear-gradient(110deg,var(--gt-pink),var(--gt-violet),var(--gt-blue)) border-box!important;
+  box-shadow:0 0 16px rgba(155,92,255,.24)!important;
+}
+button.danger,#liveEndTopBtn,#liveEndBtn{
+  background:linear-gradient(110deg,#ff368d,#c83dff,#2bcfff) padding-box,
+             linear-gradient(110deg,#ffe1f1,#eee0ff,#d9faff) border-box!important;
+  color:#fff!important;border:1px solid transparent!important;
+}
+.gift,.gift-grid button,.live-candy-send{
+  background:linear-gradient(135deg,#17182e,#10253b) padding-box,
+             linear-gradient(110deg,#ff38c8,#9b5cff,#21d4fd) border-box!important;
+  color:#fff!important;
+}
+input,select,textarea{
+  border:1px solid #454c70!important;border-radius:13px!important;
+  background:#0b0e19!important;color:#f8faff!important;
+}
+@media(prefers-reduced-motion:reduce){button,.button,[role="button"]{transition:none!important}}
+@media(max-width:640px){
+  button,.button,[role="button"],input[type="button"],input[type="submit"]{
+    min-height:44px;border-radius:14px!important;padding:11px 14px;
+  }
+}
+</style>
+
+
+<style id="gametik-live-duel-overlay-v22">
+#liveVideoStage{isolation:isolate}
+#gtDuelHud{
+ position:absolute;z-index:8;left:10px;right:10px;top:10px;
+ display:none;pointer-events:none;color:#fff;
+}
+#gtDuelHud.gt-duel-visible{display:block}
+.gt-duel-hud-card{
+ max-width:440px;margin:0 auto;padding:10px 12px;border-radius:16px;
+ background:linear-gradient(115deg,rgba(10,12,29,.88),rgba(25,12,43,.82));
+ border:1px solid transparent;
+ background-clip:padding-box;
+ box-shadow:0 5px 22px #05050a77,0 0 18px #9b5cff44;
+ backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.gt-duel-hud-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:12px;font-weight:850;letter-spacing:.06em}
+.gt-duel-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3d9a;box-shadow:0 0 10px #ff3d9a;margin-right:5px}
+.gt-duel-clock{padding:5px 9px;border-radius:999px;background:linear-gradient(100deg,#ff38c8,#8d5cff,#21d4fd);font-size:14px;font-weight:900;font-variant-numeric:tabular-nums}
+.gt-duel-scoreline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.gt-duel-team{min-width:0;padding:7px 9px;border-radius:11px;background:#121a31d9;border:1px solid #66cfff99}
+.gt-duel-team.community{background:#29132cd9;border-color:#ff69c899;text-align:right}
+.gt-duel-team-name{font-size:11px;opacity:.88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt-duel-score{font-size:24px;font-weight:950;line-height:1.2;font-variant-numeric:tabular-nums}
+.gt-duel-vs{font-size:10px;font-weight:900;color:#e7eaff;text-shadow:0 0 10px #a78bfa}
+.gt-duel-progress{height:4px;border-radius:99px;background:#ffffff26;overflow:hidden;margin-top:8px}
+#gtDuelProgressFill{height:100%;width:100%;background:linear-gradient(90deg,#ff38c8,#9b5cff,#21d4fd);transition:width .25s linear}
+#liveGamePanel.gt-duel-controls{border-radius:18px!important;border:1px solid #8b5cf6!important;box-shadow:0 0 18px #9b5cff22}
+#liveGamePanel.gt-duel-controls>div:first-child b{font-size:1.1rem}
+#liveGamePanel .gt-duel-control-hint{font-size:12px;color:#b9c3df}
+#liveGamePanel .row button,#liveGamePanel select{min-height:44px}
+#liveVideoStage.gt-duel-running #liveVideoOverlay{background:linear-gradient(180deg,rgba(6,7,18,.18),transparent 35%,rgba(0,0,0,.62))}
+@media(max-width:520px){
+ #gtDuelHud{left:7px;right:7px;top:7px}
+ .gt-duel-hud-card{padding:8px 9px;border-radius:13px}
+ .gt-duel-score{font-size:21px}
+ .gt-duel-team{padding:6px 7px}
+ .gt-duel-team-name{font-size:10px}
+}
+</style>
+
+
+<style id="gametik-live-chat-under-stream-v23">
+#liveChatPanel,#liveChatBox,.live-chat-panel,.live-chat-box,[data-live-chat]{
+  scroll-margin-top:8px;
+}
+#liveChatPanel.gt-chat-docked,#liveChatBox.gt-chat-docked,.live-chat-panel.gt-chat-docked,.live-chat-box.gt-chat-docked{
+  margin:8px 0 12px!important;padding:10px!important;border-radius:17px!important;
+  border:1px solid transparent!important;
+  background:linear-gradient(150deg,rgba(10,12,25,.97),rgba(14,18,35,.97)) padding-box,
+    linear-gradient(115deg,#ff38c8,#9b5cff,#21d4fd) border-box!important;
+  box-shadow:0 5px 22px #0005,0 0 14px #9b5cff20!important;
+}
+.gt-live-chat-title{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-weight:850;font-size:14px;color:#f7f8ff}
+.gt-live-chat-dot{width:7px;height:7px;border-radius:50%;background:#ff38c8;box-shadow:0 0 10px #ff38c8;display:inline-block}
+.gt-live-chat-messages{height:clamp(96px,18vh,170px)!important;min-height:96px!important;max-height:170px!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#805bdb #111426}
+.gt-live-chat-form{display:flex;align-items:stretch;gap:8px;margin-top:8px}
+.gt-live-chat-form input,.gt-live-chat-form textarea{min-width:0;flex:1;font-size:14px!important;min-height:42px!important;padding:10px 12px!important;border-radius:13px!important}
+.gt-live-chat-form button{flex:0 0 auto;min-width:78px;min-height:42px!important;padding:9px 14px!important;border-radius:13px!important}
+@media(max-width:600px){
+ #liveChatPanel.gt-chat-docked,#liveChatBox.gt-chat-docked,.live-chat-panel.gt-chat-docked,.live-chat-box.gt-chat-docked{padding:9px!important}
+ .gt-live-chat-messages{height:clamp(86px,15vh,135px)!important;min-height:86px!important;max-height:135px!important}
+}
+</style>
+
 </head>
 <body>
 <header class="top">
@@ -261,18 +428,18 @@ a{color:#24dfff}
     </section>
     <section id="chatView" class="panel hidden">
       <h2 class="section-title">Nachrichten</h2><p class="muted tiny">Öffentlicher Community-Chat oder private Unterhaltung mit einem ausgewählten Mitglied.</p>
-      <div class="row" style="margin:10px 0;flex-wrap:wrap"><button type="button" id="publicChatTab" class="secondary">🌐 Öffentlicher Chat</button><button type="button" id="privateChatTab" class="secondary">🔒 Privat chatten</button></div>
+      <div class="row" style="margin:10px 0;flex-wrap:wrap"><button type="button" id="publicChatTab" class="secondary">Öffentlicher Chat</button><button type="button" id="privateChatTab" class="secondary">Privater Chat</button></div>
       <div id="privateChatLayout" class="hidden">
         <label for="privateRecipient">Mitglied auswählen</label>
         <select id="privateRecipient" style="width:100%;background:#0b0b13;border:1px solid #39394f;color:white;border-radius:10px;padding:12px;margin:5px 0 12px"><option value="">Mitglieder werden geladen …</option></select>
         <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0">
-          <button type="button" id="refreshMembers" class="secondary">↻ Kontakte aktualisieren</button>
-          <button type="button" id="archiveChatBtn" class="secondary">🗃️ Chat archivieren</button>
-          <button type="button" id="clearChatBtn" class="secondary">🗑️ Chatliste aufräumen</button>
-          <button type="button" id="muteChatBtn" class="secondary">🔔 Benachrichtigungen stummschalten</button>
+          <button type="button" id="refreshMembers" class="secondary">Kontakte synchronisieren</button>
+          <button type="button" id="archiveChatBtn" class="secondary">Chat archivieren</button>
+          <button type="button" id="clearChatBtn" class="secondary">Chatliste leeren</button>
+          <button type="button" id="muteChatBtn" class="secondary">Stumm schalten</button>
         </div>
         <label for="muteDuration">Stummschalten für</label><select id="muteDuration"><option value="3600000">1 Stunde</option><option value="28800000">8 Stunden</option><option value="86400000">24 Stunden</option><option value="604800000">7 Tage</option><option value="0">Dauerhaft</option></select>
-        <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button type="button" id="voiceCallBtn" class="secondary">📞 Sprachanruf</button><button type="button" id="videoCallBtn" class="secondary">📹 Videoanruf</button></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button type="button" id="voiceCallBtn" class="secondary">Audioanruf</button><button type="button" id="videoCallBtn" class="secondary">Videoanruf</button></div>
         <div id="chatToolsStatus" class="muted tiny" aria-live="polite"></div>
         <p id="privateChatHint" class="muted tiny">Wähle einen Nutzer, um die private Unterhaltung zu öffnen.</p>
       </div>
@@ -371,5 +538,92 @@ document.addEventListener('DOMContentLoaded',()=>{
 .live-candy-send{background:linear-gradient(130deg,#17152a,#101c32)!important;color:#fff!important;border:1px solid #8b5cf6!important;box-shadow:0 0 10px #8b5cf633}
 .live-candy-send:active{transform:scale(.94)}
 </style>
+
+<script id="gametik-live-duel-overlay-script-v22">
+(function(){
+ const init=()=>{
+  const stage=document.getElementById('liveVideoStage');
+  const panel=document.getElementById('liveGamePanel');
+  if(!stage||!panel||document.getElementById('gtDuelHud'))return;
+  panel.classList.add('gt-duel-controls');
+  const hud=document.createElement('div');
+  hud.id='gtDuelHud';
+  hud.setAttribute('aria-live','polite');
+  hud.innerHTML='<div class="gt-duel-hud-card"><div class="gt-duel-hud-top"><span><i class="gt-duel-live-dot"></i>GAMETIK DUELL</span><span class="gt-duel-clock" id="gtDuelHudClock">03:00</span></div><div class="gt-duel-scoreline"><div class="gt-duel-team"><div class="gt-duel-team-name">🎁 STREAMER</div><div class="gt-duel-score" id="gtDuelHudHost">0</div></div><div class="gt-duel-vs">VS</div><div class="gt-duel-team community"><div class="gt-duel-team-name">🍬 COMMUNITY</div><div class="gt-duel-score" id="gtDuelHudCommunity">0</div></div></div><div class="gt-duel-progress"><div id="gtDuelProgressFill"></div></div></div>';
+  stage.appendChild(hud);
+  const start=document.getElementById('liveGameStart');
+  const stop=document.getElementById('liveGameStop');
+  const timer=document.getElementById('liveGameTimer');
+  const host=document.getElementById('liveGameHostPoints');
+  const community=document.getElementById('liveGameCommunityPoints');
+  const result=document.getElementById('liveGameResult');
+  const duration=document.getElementById('liveGameDuration');
+  let running=false,total=180,initial=180;
+  function sync(){
+    const t=(timer?.textContent||'03:00').trim();
+    const parts=t.split(':').map(Number);
+    const seconds=parts.length===2?(parts[0]*60+parts[1]):Number(t);
+    if(Number.isFinite(seconds)&&seconds>=0)total=seconds;
+    const h=document.getElementById('gtDuelHudClock');
+    if(h)h.textContent=t;
+    const hp=document.getElementById('gtDuelHudHost');
+    const cp=document.getElementById('gtDuelHudCommunity');
+    if(hp)hp.textContent=(host?.textContent||'0').trim();
+    if(cp)cp.textContent=(community?.textContent||'0').trim();
+    const fill=document.getElementById('gtDuelProgressFill');
+    if(fill)fill.style.width=Math.max(0,Math.min(100,initial?total/initial*100:0))+'%';
+    const isRunning=!!(stop&&!stop.classList.contains('hidden')) ||
+      /läuft|running|gestartet|runde läuft/i.test(result?.textContent||'');
+    running=isRunning;
+    hud.classList.toggle('gt-duel-visible',isRunning);
+    stage.classList.toggle('gt-duel-running',isRunning);
+    if(!isRunning&&/gewonnen|unentschieden|beendet|abgelaufen/i.test(result?.textContent||'')){
+      hud.classList.add('gt-duel-visible');
+      if(fill)fill.style.width='0%';
+    }
+  }
+  start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;setTimeout(sync,80);setTimeout(sync,350);});
+  stop?.addEventListener('click',()=>setTimeout(sync,80));
+  [timer,host,community,result,start,stop].forEach(el=>{if(el)new MutationObserver(sync).observe(el,{childList:true,subtree:true,characterData:true,attributes:true});});
+  if(duration)duration.addEventListener('change',()=>{initial=Number(duration.value||180);total=initial;sync();});
+  new MutationObserver(sync).observe(panel,{subtree:true,childList:true,attributes:true,characterData:true});
+  sync();
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+
+<script id="gametik-live-chat-under-stream-script-v23">
+(function(){
+ function init(){
+   const candidates=[
+     document.getElementById('liveChatPanel'),
+     document.getElementById('liveChatBox'),
+     document.getElementById('liveChatForm')?.closest('.panel'),
+     document.querySelector('.live-chat-panel'),
+     document.querySelector('.live-chat-box'),
+     document.querySelector('[data-live-chat]')
+   ].filter(Boolean);
+   const chat=candidates[0];
+   const stage=document.getElementById('liveVideoStage') || document.getElementById('liveStage') ||
+     document.querySelector('.live-video-stage') ||
+     document.querySelector('[data-live-stage]');
+   if(!chat||!stage||chat.dataset.gtDocked==='1')return;
+   chat.dataset.gtDocked='1';
+   chat.classList.add('gt-chat-docked');
+   const heading=chat.querySelector('h2,h3,h4,.title,strong');
+   if(heading)heading.classList.add('gt-live-chat-title');
+   const messages=chat.querySelector('#liveChatMessages,#liveChatList,.messages,.chat-messages,[data-chat-messages]');
+   if(messages)messages.classList.add('gt-live-chat-messages');
+   const form=chat.querySelector('form');
+   if(form)form.classList.add('gt-live-chat-form');
+   // Keep chat immediately after the video stage, before gifts/effects and the rest of the page.
+   stage.insertAdjacentElement('afterend',chat);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
 </body>
 </html>

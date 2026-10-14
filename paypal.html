@@ -26,4 +26,79 @@ input:focus,textarea:focus,select:focus{outline:1px solid #24dfff!important;bord
 a{color:#24dfff}
 @media(prefers-reduced-motion:reduce){button,.button,.btn,[role="button"]{transition:none!important}}
 </style>
+
+<style id="gametik-unified-modern-buttons-v21">
+/* Unified contemporary GameTik buttons: chrome + neon pink/blue/violet */
+:root{
+  --gt-pink:#ff38c8;--gt-violet:#9b5cff;--gt-blue:#21d4fd;
+  --gt-silver:#e8f4ff;--gt-dark:#101323;
+}
+button,.button,[role="button"],input[type="button"],input[type="submit"]{
+  position:relative;
+  border:1px solid transparent!important;
+  border-radius:15px!important;
+  color:#f8faff!important;
+  background:
+    linear-gradient(115deg,rgba(22,23,43,.98),rgba(13,22,40,.98)) padding-box,
+    linear-gradient(115deg,var(--gt-pink),var(--gt-violet) 48%,var(--gt-blue)) border-box!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.22),0 0 9px rgba(155,92,255,.15),inset 0 1px 0 rgba(255,255,255,.10)!important;
+  font-weight:750!important;
+  letter-spacing:.005em;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+button:hover,.button:hover,[role="button"]:hover,input[type="button"]:hover,input[type="submit"]:hover{
+  filter:brightness(1.15);
+  box-shadow:0 0 0 1px rgba(232,244,255,.18),0 0 18px rgba(33,212,253,.22),0 0 20px rgba(255,56,200,.16)!important;
+  transform:translateY(-1px);
+}
+button:active,.button:active,[role="button"]:active,input[type="button"]:active,input[type="submit"]:active{
+  transform:translateY(1px) scale(.985);
+}
+button:focus-visible,.button:focus-visible,[role="button"]:focus-visible,input:focus-visible{
+  outline:2px solid var(--gt-blue)!important;outline-offset:3px;
+}
+button:disabled,input:disabled{
+  opacity:.48!important;filter:saturate(.55);cursor:not-allowed;transform:none!important;
+}
+/* Primary actions glow; dangerous/end buttons stay obvious but match the brand */
+button:not(.secondary):not(.danger):not(.navbtn):not(.story-item):not(.close),
+input[type="submit"],input[type="button"]{
+  background:linear-gradient(110deg,var(--gt-pink),var(--gt-violet) 50%,var(--gt-blue)) padding-box,
+             linear-gradient(110deg,#ffd9f7,#e4d8ff,#d3f8ff) border-box!important;
+  color:#fff!important;text-shadow:0 1px 3px #25123f;
+  box-shadow:0 5px 18px rgba(155,92,255,.22),0 0 13px rgba(255,56,200,.18)!important;
+}
+button.secondary,.navbtn,.profile-tab,.story-item,.close{
+  background:linear-gradient(130deg,#171a2d,#101827) padding-box,
+             linear-gradient(110deg,#566a9b,#8b5cf6,#397eaa) border-box!important;
+  color:#f2f6ff!important;
+}
+.navbtn.active,.profile-tab.active{
+  background:linear-gradient(110deg,rgba(255,56,200,.22),rgba(155,92,255,.23),rgba(33,212,253,.18)) padding-box,
+             linear-gradient(110deg,var(--gt-pink),var(--gt-violet),var(--gt-blue)) border-box!important;
+  box-shadow:0 0 16px rgba(155,92,255,.24)!important;
+}
+button.danger,#liveEndTopBtn,#liveEndBtn{
+  background:linear-gradient(110deg,#ff368d,#c83dff,#2bcfff) padding-box,
+             linear-gradient(110deg,#ffe1f1,#eee0ff,#d9faff) border-box!important;
+  color:#fff!important;border:1px solid transparent!important;
+}
+.gift,.gift-grid button,.live-candy-send{
+  background:linear-gradient(135deg,#17182e,#10253b) padding-box,
+             linear-gradient(110deg,#ff38c8,#9b5cff,#21d4fd) border-box!important;
+  color:#fff!important;
+}
+input,select,textarea{
+  border:1px solid #454c70!important;border-radius:13px!important;
+  background:#0b0e19!important;color:#f8faff!important;
+}
+@media(prefers-reduced-motion:reduce){button,.button,[role="button"]{transition:none!important}}
+@media(max-width:640px){
+  button,.button,[role="button"],input[type="button"],input[type="submit"]{
+    min-height:44px;border-radius:14px!important;padding:11px 14px;
+  }
+}
+</style>
+
 </head><body><main class="wrap"><a class="back" href="/">← Zurück zu GameTik</a><section class="panel"><h1>💳 PayPal & Geschenke</h1><p class="muted">Unterstütze GameTik oder sende ein virtuelles Geschenk. Die Zahlung wird serverseitig über PayPal bestätigt.</p><button data-gift="Spende">♥ 5 € mit PayPal spenden</button><p class="muted">Virtuelle Geschenke</p><button class="gift" data-gift="Herz">❤️ Herz · 0,99 €</button><button class="gift" data-gift="Stern">⭐ Stern · 1,99 €</button><button class="gift" data-gift="Feuer">🔥 Feuer · 2,99 €</button><button class="gift" data-gift="Krone">👑 Krone · 4,99 €</button><div id="status" class="muted" aria-live="polite"></div></section><section class="panel"><h2>Admin</h2><p class="muted">Betreiberzugang zur Verwaltung.</p><a class="btn" href="/admin.html">🛡 Admin Login öffnen</a></section></main><script>(()=>{const host=location.hostname,onRender=host.endsWith('.onrender.com'),local=['localhost','127.0.0.1'].includes(host);const API_BASE=window.GAMETIK_API_BASE||((onRender||local)?'':'https://chatweb-iajl.onrender.com');const status=document.getElementById('status');async function buy(gift){const token=localStorage.getItem('gametik_token')||'';if(!token){status.textContent='Bitte zuerst auf GameTik einen Nickname wählen/anmelden und danach erneut versuchen.';return;}status.textContent='PayPal-Bestellung wird erstellt …';const r=await fetch(API_BASE+'/api/payments/paypal/create-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({gift})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'PayPal-Bestellung konnte nicht erstellt werden.');if(!d.approvalUrl||!/^https:\/\/(www\.)?paypal\.com\//i.test(d.approvalUrl)&&!/^https:\/\/(www\.)?sandbox\.paypal\.com\//i.test(d.approvalUrl))throw Error('PayPal hat keinen gültigen Zahlungslink geliefert.');location.href=d.approvalUrl;}document.querySelectorAll('[data-gift]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{await buy(b.dataset.gift)}catch(e){status.textContent=e.message}finally{b.disabled=false}}));const p=new URLSearchParams(location.search);if(p.get('paypal')==='success')status.textContent='Zahlung zurückgekehrt. Öffne GameTik wieder, damit die bestehende Bestätigung verarbeitet werden kann.';})();</script></body></html>
