@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
+const nodemailer = require('nodemailer');
 const { Server } = require('socket.io');
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
@@ -138,6 +139,7 @@ app.use(express.static(publicDir, { dotfiles: 'deny', index: false }));
 
 const sessions = new Map();
 const accounts = new Map(); // normalized username -> persistent account data
+const passwordResetTokens = new Map(); // SHA-256 token hash -> { accountKey, expiresAt }
 const adminSessions = new Map();
 const adminLoginAttempts = new Map();
 const videos = [];
@@ -162,6 +164,7 @@ function savePersistentState() {
   try {
     const data = {
       accounts: [...accounts.entries()],
+      passwordResetTokens: [...passwordResetTokens.entries()],
       sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
       videos, chatMessages, privateMessages, gifts, stories,
       candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
@@ -178,6 +181,7 @@ function loadPersistentState() {
     if (!fs.existsSync(stateFile)) return;
     const d = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     for (const [k,v] of d.accounts || []) accounts.set(k,v);
+    for (const [k,v] of d.passwordResetTokens || []) passwordResetTokens.set(k,v);
     for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
     for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) { v.push(...(d[k]||[])); }
     for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
@@ -441,6 +445,82 @@ app.post('/api/auth/register', (req,res) => {
   const created=createUser(username,id); savePersistentState();
   res.status(201).json({token:created.token,user:publicUser(created.user)});
 });
+const smtpReady = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM);
+let mailTransporter = null;
+function getMailTransporter() {
+  if (!smtpReady()) throw new Error('SMTP-Konfiguration fehlt. Bitte SMTP_HOST, SMTP_USER, SMTP_PASS und SMTP_FROM in Render prüfen.');
+  if (!mailTransporter) {
+    const port = Number(process.env.SMTP_PORT || 587);
+    mailTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+    });
+  }
+  return mailTransporter;
+}
+app.post('/api/auth/forgot-password', asyncRoute(async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  // Always use the same response so the endpoint does not reveal registered addresses.
+  const generic = { ok: true, message: 'Wenn diese E-Mail registriert ist, erhältst du eine Nachricht mit weiteren Schritten.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(200).json(generic);
+  const entry = [...accounts.entries()].find(([, account]) => String(account.email || '').toLowerCase() === email);
+  if (!entry) return res.json(generic);
+  const [accountKey, account] = entry;
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = Date.now() + 60 * 60 * 1000;
+  for (const [hash, item] of passwordResetTokens) if (item.accountKey === accountKey || item.expiresAt < Date.now()) passwordResetTokens.delete(hash);
+  passwordResetTokens.set(tokenHash, { accountKey, expiresAt });
+  savePersistentState();
+  const baseUrl = String(process.env.APP_BASE_URL || '').trim().replace(/\/$/, '');
+  if (!baseUrl || !/^https:\/\//i.test(baseUrl)) {
+    passwordResetTokens.delete(tokenHash); savePersistentState();
+    console.error('Passwort-Reset nicht gesendet: APP_BASE_URL fehlt oder ist keine HTTPS-Adresse.');
+    return res.json(generic);
+  }
+  const resetUrl = `${baseUrl}/?resetToken=${encodeURIComponent(rawToken)}`;
+  try {
+    await getMailTransporter().sendMail({
+      from: process.env.SMTP_FROM,
+      to: account.email,
+      subject: 'GAMETIK – Passwort zurücksetzen',
+      text: `Hallo ${account.username},\n\nüber diesen Link kannst du dein GAMETIK-Passwort innerhalb von 60 Minuten zurücksetzen:\n${resetUrl}\n\nWenn du das nicht angefordert hast, ignoriere diese E-Mail.`,
+      html: `<p>Hallo ${String(account.username).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},</p><p>Du kannst dein GAMETIK-Passwort über den folgenden Link innerhalb von <b>60 Minuten</b> zurücksetzen:</p><p><a href="${resetUrl}">Passwort zurücksetzen</a></p><p>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p>`
+    });
+  } catch (error) {
+    passwordResetTokens.delete(tokenHash); savePersistentState();
+    console.error('GAMETIK Passwort-Reset-Mail fehlgeschlagen:', error.message);
+    // Keep the public response generic, but report a service failure so the user can retry.
+    return res.status(503).json({ error: 'Die E-Mail konnte gerade nicht gesendet werden. Bitte später erneut versuchen.' });
+  }
+  res.json(generic);
+}));
+app.post('/api/auth/reset-password', (req, res) => {
+  const token = String(req.body.token || '');
+  const password = String(req.body.password || '');
+  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).json({ error: 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.' });
+  if (password.length < 10 || password.length > 128) return res.status(400).json({ error: 'Das Passwort muss 10–128 Zeichen lang sein.' });
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const record = passwordResetTokens.get(tokenHash);
+  if (!record || record.expiresAt < Date.now()) {
+    if (record) { passwordResetTokens.delete(tokenHash); savePersistentState(); }
+    return res.status(400).json({ error: 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.' });
+  }
+  const account = accounts.get(record.accountKey);
+  if (!account) { passwordResetTokens.delete(tokenHash); savePersistentState(); return res.status(400).json({ error: 'Das Konto wurde nicht gefunden.' }); }
+  const credentials = hashPassword(password);
+  account.passwordSalt = credentials.salt;
+  account.passwordHash = credentials.hash;
+  // Invalidate the used token and all other reset links for this account.
+  for (const [hash, item] of passwordResetTokens) if (item.accountKey === record.accountKey) passwordResetTokens.delete(hash);
+  // Revoke existing login sessions for the account after password change.
+  for (const [sessionToken, user] of sessions) if (String(user.id) === String(account.id)) sessions.delete(sessionToken);
+  savePersistentState();
+  res.json({ ok: true, message: 'Passwort geändert. Du kannst dich jetzt mit dem neuen Passwort anmelden.' });
+});
+
 app.post('/api/auth/login', (req,res) => {
   const identity=String(req.body.identity||req.body.username||'').trim();
   const password=String(req.body.password||'');
