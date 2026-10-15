@@ -1,12 +1,12 @@
 {
   "name": "gametik",
-  "version": "1.8.3",
+  "version": "1.8.2",
   "description": "GAMETIK social platform with live duels, virtual candy wallet, free candy game, studio mixer and multi-format media uploads",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node --check live.js"
+    "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
   },
   "engines": {
     "node": "22.x"

@@ -1,0 +1,44 @@
+GAMETIK – KORRIGIERTER PROJEKTSTAND
+
+WICHTIG
+- admin.html wurde nicht geändert.
+- Neon PostgreSQL bleibt für dauerhafte Daten zuständig.
+- Cloudflare R2 bleibt für Profilbilder zuständig.
+- Render Free bleibt als Hosting-Ziel erhalten.
+- Dieses Paket enthält keine Zugangsdaten. Werte in .env.example sind nur Platzhalter.
+
+KORREKTUREN
+- Profilbild-URL wird im Sitzungsobjekt UND im zugehörigen Kontodatensatz gespeichert.
+- Login stellt fehlende Avatar-URLs aus Kontodaten wieder her; wenn dort nichts liegt, versucht er, das neueste Bild unter avatars/<KONTO-ID>/ in R2 wiederzufinden.
+- JSONB-Daten aus Neon werden beim Laden rekursiv normalisiert, damit serialisierte Set-Werte nach einem Neustart nicht den Serverstart beschädigen.
+- Profilbild-Upload wartet auf die Datenbank-Speicherung und meldet bei einem Fehler keinen falschen Erfolg.
+- Kontoerstellung und Anmeldung warten auf die Datenbank-Speicherung.
+- Passwort-Reset nutzt APP_BASE_URL, danach RENDER_EXTERNAL_URL oder die aktuelle HTTPS-Adresse als Basis.
+- /api/health zeigt nur Status-Flags (keine Schlüssel oder Passwörter) für Neon, R2 und Passwort-Reset-Konfiguration.
+
+WICHTIG ZUM PASSWORT-RESET
+Der Code kann E-Mails nicht ohne einen echten SMTP-Anbieter versenden. In Render müssen SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS und SMTP_FROM mit gültigen Werten eingerichtet sein. APP_BASE_URL muss auf die öffentlich erreichbare GameTik-Webseite zeigen. SMTP_FROM muss beim E-Mail-Anbieter als Absender zugelassen/verifiziert sein. Ohne diese Werte ist die Reset-Funktion absichtlich nicht als erfolgreich markiert.
+
+RENDER-UMGEBUNGSVARIABLEN
+- DATABASE_URL: Neon PostgreSQL Connection String (SSL aktiv)
+- R2_ACCOUNT_ID
+- R2_ACCESS_KEY_ID
+- R2_SECRET_ACCESS_KEY
+- R2_BUCKET_NAME=gametik-media
+- R2_PUBLIC_URL: öffentliche Basis-URL des R2-Buckets, ohne abschließenden Slash
+- R2_REGION=auto
+- APP_BASE_URL=https://DEINE-OEFFENTLICHE-GAMETIK-URL
+- SMTP_HOST, SMTP_PORT=587, SMTP_USER, SMTP_PASS, SMTP_FROM
+
+DEPLOY
+1. In GitHub die Dateien aus diesem Paket aktualisieren; admin.html unverändert lassen.
+2. Sicherstellen, dass package.json und server.js zusammen aktualisiert werden, damit pg und die R2-Abhängigkeit installiert sind.
+3. Render deployen lassen.
+4. Öffne https://DEINE-RENDER-URL/api/health. Erwartet: ok=true, database=postgresql-connected, r2Configured=true und passwordResetConfigured=true.
+5. Einloggen, Profilbild hochladen, Seite aktualisieren, ausloggen und erneut einloggen.
+6. Für Passwort-Reset die Funktion anfordern und den Posteingang/Spam prüfen.
+
+PRÜFUNGEN
+- JavaScript-Syntaxprüfungen mit npm run check.
+- Statische Projektprüfungen mit scripts/check-project.js.
+- Ein echter Test gegen Render, Neon, Cloudflare R2 und den SMTP-Anbieter ist nur nach dem Deploy mit den echten Zugangsdaten möglich; dieses Paket enthält keine Zugangsdaten.

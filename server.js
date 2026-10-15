@@ -6,7 +6,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const { Server } = require('socket.io');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
 const { Pool } = require('pg');
@@ -74,6 +74,18 @@ const r2 = r2Ready ? new S3Client({
   endpoint: r2Endpoint,
   credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
 }) : null;
+async function restoreAvatarFromR2(userId) {
+  if (!r2Ready || !r2 || !userId) return null;
+  try {
+    const prefix = `avatars/${String(userId).replace(/[^a-zA-Z0-9_-]/g, '')}/`;
+    const result = await r2.send(new ListObjectsV2Command({ Bucket: r2Bucket, Prefix: prefix, MaxKeys: 100 }));
+    const newest = (result.Contents || []).filter(item => item.Key && item.LastModified).sort((a,b) => new Date(b.LastModified) - new Date(a.LastModified))[0];
+    return newest?.Key ? `${r2PublicUrl}/${newest.Key}` : null;
+  } catch (e) {
+    console.error('Avatar recovery from R2 failed:', e.name || e.message);
+    return null;
+  }
+}
 // SMTP is initialized lazily so a temporary email outage cannot prevent the app from starting.
 function smtpTransport() {
   const host = process.env.SMTP_HOST;
@@ -162,19 +174,45 @@ function savePersistentState() {
     const tmp = stateFile + '.tmp';
     fs.writeFileSync(tmp, json);
     fs.renameSync(tmp, stateFile);
-  } catch (e) { console.error('GameTik local state could not be saved:', e.message); }
-  if (dbPool && json) {
-    // Serialize writes so slower requests cannot overwrite newer state.
-    dbSaveQueue = dbSaveQueue.then(async () => {
-      if (!databaseReady) return;
-      await dbPool.query(`INSERT INTO gametik_state (id, payload, updated_at) VALUES (1, $1::jsonb, NOW()) ON CONFLICT (id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = NOW()`, [json]);
-    }).catch(e => console.error('GameTik PostgreSQL save failed:', e.message));
+  } catch (e) {
+    console.error('GameTik local state could not be saved:', e.message);
   }
+  if (dbPool && json) {
+    // Keep writes ordered, but allow a later save to recover after an earlier DB error.
+    const payload = json;
+    dbSaveQueue = dbSaveQueue.catch(() => {}).then(async () => {
+      if (!databaseReady) return;
+      await dbPool.query(`INSERT INTO gametik_state (id, payload, updated_at) VALUES (1, $1::jsonb, NOW()) ON CONFLICT (id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = NOW()`, [payload]);
+    });
+    dbSaveQueue.catch(e => console.error('GameTik PostgreSQL save failed:', e.message));
+  }
+  return dbSaveQueue;
+}
+// PostgreSQL's pg driver returns jsonb as an ordinary JS object (not a JSON string),
+// so JSON.parse's reviver is not applied on that path. Restore our tagged Set values
+// recursively before any code tries to construct new Set(value).
+function revivePersistentTypes(value) {
+  if (Array.isArray(value)) return value.map(revivePersistentTypes);
+  if (!value || typeof value !== 'object') return value;
+  if (value.__gametikType === 'Set' && Array.isArray(value.values)) {
+    return new Set(value.values.map(revivePersistentTypes));
+  }
+  const result = {};
+  for (const [key, child] of Object.entries(value)) result[key] = revivePersistentTypes(child);
+  return result;
 }
 function applyPersistentState(d) {
+  d = revivePersistentTypes(d || {});
   for (const [k,v] of d.accounts || []) accounts.set(k,v);
   for (const [k,v] of d.passwordResetTokens || []) if (v && Number(v.expiresAt) > Date.now()) passwordResetTokens.set(k,v);
-  for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
+  for (const [token,u] of d.sessions || []) {
+    const accountEntry = [...(d.accounts || [])].find(([, a]) => String(a.id) === String(u.id));
+    const account = accountEntry?.[1];
+    const avatarUrl = u.avatar_url || account?.avatar_url || null;
+    sessions.set(token,{...u,avatar_url:avatarUrl,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
+    // Repair older state snapshots where the avatar URL was stored only on the session.
+    if (accountEntry && avatarUrl && !account.avatar_url) account.avatar_url = avatarUrl;
+  }
   for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) v.push(...(d[k]||[]));
   for (const video of videos) {
     if (!(video.likes instanceof Set)) video.likes = new Set(Array.isArray(video.likes) ? video.likes : []);
@@ -222,9 +260,9 @@ function verifyPassword(password, salt, expected) {
   const expectedBuf = Buffer.from(expected || '', 'hex');
   return expectedBuf.length === actual.length && crypto.timingSafeEqual(actual, expectedBuf);
 }
-function createUser(username, accountId = crypto.randomUUID()) {
+function createUser(username, accountId = crypto.randomUUID(), profile = {}) {
   const id = String(accountId), token = crypto.randomUUID();
-  const user = { id, username, avatar_url:null, created_at:new Date().toISOString(), gender:'', bio:'', relationship_status:'', location:'', social_private:true, social_visibility:'private', likes:new Set(), following:new Set(), blockedUsers:new Set() };
+  const user = { id, username, avatar_url: profile.avatar_url || null, created_at: profile.created_at || new Date().toISOString(), gender: profile.gender || '', bio: profile.bio || '', relationship_status: profile.relationship_status || '', location: profile.location || '', social_private: profile.social_private !== false, social_visibility: profile.social_visibility || (profile.social_private === false ? 'public' : 'private'), likes:new Set(), following:new Set(), blockedUsers:new Set() };
   sessions.set(token,user); friendships.set(id,new Set()); friendRequests.set(id,[]);
   return {token,user};
 }
@@ -416,7 +454,7 @@ function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,ne
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.status(dbPool && databaseReady ? 200 : 503).json({ ok: Boolean(dbPool && databaseReady), service: 'gametik', mode: dbPool && databaseReady ? 'postgresql' : 'file-backed', storagePath: dataRoot, persistentStorage: Boolean(dbPool && databaseReady), database: dbPool && databaseReady ? 'postgresql-connected' : 'DATABASE_URL-missing-or-not-ready', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.status(dbPool && databaseReady ? 200 : 503).json({ ok: Boolean(dbPool && databaseReady), service: 'gametik', mode: dbPool && databaseReady ? 'postgresql' : 'file-backed', storagePath: dataRoot, persistentStorage: Boolean(dbPool && databaseReady), database: dbPool && databaseReady ? 'postgresql-connected' : 'DATABASE_URL-missing-or-not-ready', r2Configured: Boolean(r2Ready), passwordResetConfigured: Boolean((process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM) && (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL)), secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
@@ -425,7 +463,7 @@ app.get('/api/config', (_req,res) => res.json({
   mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store',
   persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR)
 }));
-app.post('/api/auth/register', async (req,res) => {
+app.post('/api/auth/register', asyncRoute(async (req,res) => {
   const username=String(req.body.username||'').trim();
   const email=String(req.body.email||'').trim().toLowerCase();
   const password=String(req.body.password||'');
@@ -438,12 +476,10 @@ app.post('/api/auth/register', async (req,res) => {
   const credentials=hashPassword(password), id=crypto.randomUUID();
   accounts.set(key,{id,username,email,passwordSalt:credentials.salt,passwordHash:credentials.hash,created_at:new Date().toISOString()});
   const created=createUser(username,id);
-  savePersistentState();
-  // Wait for the queued PostgreSQL write before telling the browser registration succeeded.
-  await dbSaveQueue;
+  try { await savePersistentState(); } catch (e) { accounts.delete(key); sessions.delete(created.token); return res.status(503).json({error:'Konto konnte nicht dauerhaft gespeichert werden. Bitte in Kürze erneut versuchen.'}); }
   res.status(201).json({token:created.token,user:publicUser(created.user)});
-});
-app.post('/api/auth/login', async (req,res) => {
+}));
+app.post('/api/auth/login', asyncRoute(async (req,res) => {
   const identity=String(req.body.identity||req.body.username||'').trim();
   const password=String(req.body.password||'');
   const account=[...accounts.values()].find(a=>a.username.toLowerCase()===identity.replace(/^@/,'').toLowerCase() || a.email===identity.toLowerCase());
@@ -451,12 +487,12 @@ app.post('/api/auth/login', async (req,res) => {
   let existing=[...sessions.entries()].find(([,u])=>String(u.id)===String(account.id));
   let token,user;
   if(existing){ token=existing[0]; user=existing[1]; }
-  else ({token,user}=createUser(account.username,account.id));
-  savePersistentState();
-  // Ensure the renewed session is stored before returning success.
-  await dbSaveQueue;
+  else ({token,user}=createUser(account.username,account.id,account));
+  if (!user.avatar_url) user.avatar_url = account.avatar_url || await restoreAvatarFromR2(account.id);
+  if (user.avatar_url) account.avatar_url = user.avatar_url;
+  try { await savePersistentState(); } catch (e) { return res.status(503).json({error:'Anmeldung möglich, aber die Sitzung konnte nicht dauerhaft gespeichert werden. Bitte erneut versuchen.'}); }
   res.json({token,user:publicUser(user)});
-});
+}));
 app.post('/api/auth/forgot-password', async (req, res) => {
   const email = String(req.body.email || req.body.identity || '').trim().toLowerCase();
   // Same response whether or not the account exists, to avoid disclosing registered emails.
@@ -464,10 +500,10 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Bitte gib eine gültige E-Mail-Adresse ein.' });
   const account = [...accounts.entries()].find(([, a]) => String(a.email || '').toLowerCase() === email);
   if (!account) return res.json({ message: generic });
-  const appBase = String(process.env.APP_BASE_URL || '').replace(/\/$/, '');
+  const appBase = appBaseUrl(req).replace(/\/$/, '');
   if (!appBase || !/^https:\/\//i.test(appBase)) {
-    console.error('Password reset not sent: APP_BASE_URL is missing or not HTTPS.');
-    return res.status(503).json({ error: 'Passwort-Reset ist noch nicht vollständig konfiguriert: APP_BASE_URL in Render prüfen.' });
+    console.error('Password reset not sent: APP_BASE_URL / RENDER_EXTERNAL_URL is missing or not HTTPS.');
+    return res.status(503).json({ error: 'Passwort-Reset ist nicht konfiguriert. In Render APP_BASE_URL auf die öffentliche HTTPS-Adresse dieser GameTik-Webseite setzen.' });
   }
   try {
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -475,7 +511,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     // Remove expired tokens and older tokens for the same account.
     for (const [k, v] of passwordResetTokens) if (Number(v.expiresAt) <= Date.now() || v.accountKey === account[0]) passwordResetTokens.delete(k);
     passwordResetTokens.set(tokenHash, { accountKey: account[0], expiresAt: Date.now() + 60 * 60 * 1000 });
-    savePersistentState();
+    try { await savePersistentState(); } catch (dbError) { passwordResetTokens.delete(tokenHash); return res.status(503).json({ error: 'Der Reset-Link konnte nicht sicher gespeichert werden. Bitte später erneut versuchen.' }); }
     const link = `${appBase}/?resetToken=${encodeURIComponent(rawToken)}`;
     const transporter = smtpTransport();
     await transporter.sendMail({
@@ -491,7 +527,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     res.status(502).json({ error: 'Die E-Mail konnte nicht gesendet werden. Prüfe SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS und ob SMTP_FROM bei Brevo verifiziert ist.' });
   }
 });
-app.post('/api/auth/reset-password', (req, res) => {
+app.post('/api/auth/reset-password', asyncRoute(async (req, res) => {
   const rawToken = String(req.body.token || '');
   const password = String(req.body.password || '');
   if (!/^[a-f0-9]{64}$/i.test(rawToken)) return res.status(400).json({ error: 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.' });
@@ -508,9 +544,9 @@ app.post('/api/auth/reset-password', (req, res) => {
   for (const [k, v] of passwordResetTokens) if (v.accountKey === record.accountKey) passwordResetTokens.delete(k);
   // Invalidate sessions for this account after password change.
   for (const [sessionToken, user] of sessions) if (String(user.id) === String(account.id)) sessions.delete(sessionToken);
-  savePersistentState();
+  try { await savePersistentState(); } catch (e) { return res.status(503).json({ error: 'Das neue Passwort konnte nicht dauerhaft gespeichert werden. Bitte erneut versuchen.' }); }
   res.json({ message: 'Passwort erfolgreich geändert. Bitte melde dich mit dem neuen Passwort an.' });
-});
+}));
 app.post('/api/guest', (req,res) => {
   const nickname = String(req.body.nickname || '').trim();
   if (!/^[A-Za-z0-9_]{2,24}$/.test(nickname)) return res.status(400).json({ error: 'Nickname: 2–24 Zeichen, nur Buchstaben, Zahlen und _.' });
@@ -622,7 +658,20 @@ app.post('/api/me/avatar', auth, (req,res,next) => avatarUpload.single('avatar')
     const key = `avatars/${String(req.user.id).replace(/[^a-zA-Z0-9_-]/g, '')}/${crypto.randomUUID()}${ext}`;
     await r2.send(new PutObjectCommand({ Bucket: r2Bucket, Key: key, Body: req.file.buffer, ContentType: req.file.mimetype, CacheControl: 'public, max-age=31536000, immutable' }));
     req.user.avatar_url = `${r2PublicUrl}/${key}`;
-    savePersistentState();
+    // Keep the avatar URL on the canonical account record as well as the session.
+    // This lets a fresh session recover the same R2 image after a restart or re-login.
+    const accountEntry = [...accounts.entries()].find(([, account]) => String(account.id) === String(req.user.id));
+    if (accountEntry) {
+      accountEntry[1].avatar_url = req.user.avatar_url;
+      accountEntry[1].created_at = accountEntry[1].created_at || req.user.created_at;
+      accounts.set(accountEntry[0], accountEntry[1]);
+    }
+    try {
+      await savePersistentState();
+    } catch (dbError) {
+      console.error('Avatar URL could not be committed to PostgreSQL:', dbError.message);
+      return res.status(503).json({ error: 'Das Bild wurde hochgeladen, aber die Verknüpfung konnte nicht dauerhaft gespeichert werden. Bitte erneut versuchen.' });
+    }
     res.json({ user: publicUser(req.user) });
   } catch (uploadError) {
     console.error('Cloudflare R2 avatar upload failed:', uploadError.name || uploadError.message);
@@ -837,8 +886,10 @@ async function paypalRequest(endpoint, options = {}) {
 function appBaseUrl(req) {
   const configured = String(process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL || '').trim();
   if (configured && /^https:\/\/[^/]+$/i.test(configured)) return configured;
-  // On production, configure APP_BASE_URL explicitly to the public HTTPS website URL.
-  return `${req.protocol}://${req.get('host')}`;
+  // Render sits behind a proxy; honor its forwarded HTTPS protocol when no explicit URL is set.
+  const forwardedProto = String(req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol;
+  return `${protocol}://${req.get('host')}`;
 }
 
 const giftCatalog = Object.freeze({

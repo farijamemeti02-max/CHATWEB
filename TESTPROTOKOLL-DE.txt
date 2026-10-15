@@ -1,0 +1,18 @@
+GameTik statische Prüfung – 15.10.2026
+
+Bestanden:
+- node --check server.js
+- node --check app.js
+- node --check live.js
+- scripts/check-project.js: 27 statische Kernprüfungen bestanden
+- package.json enthält pg, Cloudflare-S3-SDK und nodemailer
+- PostgreSQL-JSONB-Wiederherstellung: serialisierte Set-Werte werden vor dem Laden rekursiv wiederhergestellt
+- admin.html wurde aus dem Ausgangspaket übernommen und nicht bearbeitet
+
+Nicht von dieser Umgebung aus prüfbar:
+- tatsächliche Anmeldung auf dem Live-Render-Dienst
+- echte Schreib-/Lesezugriffe auf das verbundene Neon-Projekt
+- tatsächlicher Upload und öffentliche Abrufbarkeit über Cloudflare R2
+- SMTP-Zustellung beim E-Mail-Anbieter
+
+Diese Live-Tests benötigen die vorhandenen Render-Umgebungsvariablen und können nicht allein durch Syntaxprüfung garantiert werden. Die /api/health-Antwort zeigt dafür sichere Status-Flags, aber niemals Geheimnisse.
