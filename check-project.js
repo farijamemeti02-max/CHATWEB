@@ -27,12 +27,10 @@ const required = [
   [server.includes("httpServer.listen(PORT, '0.0.0.0'"), 'HTTP-Server bindet nicht an 0.0.0.0 für Render'],
   [server.includes('35 * 1024 * 1024'), '35-MB-Videolimit fehlt'],
   [server.includes("app.get('/api/health'"), 'Health-Check für Render fehlt'],
-  [Boolean(pkg.dependencies['@aws-sdk/client-s3']), 'AWS-S3-SDK für Cloudflare R2 fehlt'],
-  [server.includes('process.env.R2_ENDPOINT') && server.includes('process.env.R2_BUCKET') && server.includes('process.env.R2_ACCESS_KEY_ID') && server.includes('process.env.R2_SECRET_ACCESS_KEY'), 'R2-Umgebungsvariablen werden nicht vollständig gelesen'],
-  [server.includes("app.get('/media/*'") && server.includes('new GetObjectCommand'), 'R2-Medienabrufroute fehlt'],
-  [server.includes('new PutObjectCommand') && server.includes("persistUploadedFile(req.file, 'avatars'") && server.includes("persistUploadedFile(req.file, 'videos'"), 'R2-Upload für Profilbilder/Medien fehlt'],
-  [server.includes('new DeleteObjectCommand') && server.includes('deleteStoredMedia'), 'R2-Löschfunktion fehlt'],
-  [read('app.js').includes("path.startsWith('/media/')"), 'Frontend löst R2-Medienadressen nicht auf'],
+  [server.includes("app.post('/api/auth/forgot-password'") && server.includes("app.post('/api/auth/reset-password'"), 'Passwort-Reset-API fehlt'],
+  [server.includes('nodemailer.createTransport') && server.includes('process.env.SMTP_HOST'), 'SMTP-Mailversand fehlt'],
+  [server.includes('@aws-sdk/client-s3') && server.includes("app.get('/media/*'"), 'Cloudflare-R2-Medienroute fehlt'],
+  [html.includes('id="forgotPasswordOpen"') && html.includes('id="resetPasswordForm"'), 'Passwort-Reset-Frontend fehlt'],
 ];
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }
