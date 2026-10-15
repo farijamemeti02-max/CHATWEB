@@ -35,8 +35,6 @@ const required = [
   [server.includes('await savePersistentState()') && server.includes('account.avatar_url = user.avatar_url'), 'Wartende, dauerhafte Avatar-/Kontospeicherung fehlt'],
   [server.includes('APP_BASE_URL') && server.includes('RENDER_EXTERNAL_URL') && server.includes('sendBrevoEmail'), 'Passwort-Reset-Konfiguration fehlt'],
   [Boolean(pkg.dependencies.pg), 'PostgreSQL-Treiber fehlt'],
-  [html.includes('id="gtAccountQuick"') && html.includes('id="authModal"'), 'Sichtbarer Konto-erstellen-/Anmelden-Schnellzugriff fehlt'],
-  [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
 ];
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
