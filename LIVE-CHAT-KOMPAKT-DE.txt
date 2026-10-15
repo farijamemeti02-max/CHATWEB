@@ -1,0 +1,9 @@
+GameTik LIVE – Layout-Update 1.9.11
+
+- Live-Video bleibt groß und erhält auf dem Smartphone etwa 43–46 % der Bildschirmhöhe.
+- Der Live-Chat steht direkt unter dem Video.
+- Das Nachrichtenfeld samt Senden-Schaltfläche folgt direkt unter den Kommentaren und ist sofort benutzbar.
+- Spiel, Süßigkeiten, Geschenke und Stream-Steuerung sind darunter kompakter angeordnet, bleiben sichtbar und bedienbar.
+- Live-Kommentare können als Overlay im Stream sichtbar bleiben.
+
+Hinweis: Die CSS-/JavaScript-Prüfung ersetzt keinen Live-Test auf Render. Nach dem Deploy auf dem Handy testen.
