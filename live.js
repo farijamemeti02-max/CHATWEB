@@ -33,7 +33,8 @@
   function showFloatingHeart() {
     const container = $('liveFloatingHearts'); if (!container) return;
     const heart = document.createElement('span'); heart.className = 'gametik-float-heart'; heart.textContent = ['❤️','💖','💗','💕'][Math.floor(Math.random()*4)];
-    heart.style.setProperty('--heart-x', `${18 + Math.random()*64}%`);
+    // Likes steigen wie in der Vorlage auf der rechten Seite des Streams auf.
+    heart.style.setProperty('--heart-x', `${76 + Math.random()*10}%`);
     container.appendChild(heart); setTimeout(() => heart.remove(), 1700);
   }
   let candyBalanceCache = 0, soundContext = null, lastAnnouncedWinner = null;

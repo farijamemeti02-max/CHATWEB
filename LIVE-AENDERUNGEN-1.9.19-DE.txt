@@ -1,0 +1,11 @@
+GameTik LIVE – Änderung 1.9.19
+
+Ziel: Der Streamer soll im LIVE-Videobereich vollständig sichtbar sein und nicht durch einen zu starken Zoom am Gesicht/Körper abgeschnitten werden.
+
+Änderung ausschließlich in index.html:
+- LIVE-Videobereich auf bis zu 92svh vergrößert, mit größerer Mindesthöhe.
+- Video mittig ausgerichtet und object-fit: contain, damit das Bild vollständig sichtbar bleibt.
+- Schwarzer Hintergrund füllt gegebenenfalls freie Seitenbereiche, statt das Kamerabild zu beschneiden.
+- Bestehende LIVE-Overlays bleiben darüber.
+
+admin.html, server.js, app.js, live.js und package.json wurden nicht verändert.
