@@ -22,6 +22,11 @@ const required = [
   [live.includes('live:game-state') && live.includes('/game/start'), 'LIVE-Spiel-Frontend fehlt'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
+  [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
+  [server.includes("app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))"), 'Startseite wird nicht korrekt ausgeliefert'],
+  [server.includes("httpServer.listen(PORT, '0.0.0.0'"), 'HTTP-Server bindet nicht an 0.0.0.0 für Render'],
+  [server.includes('35 * 1024 * 1024'), '35-MB-Videolimit fehlt'],
+  [server.includes("app.get('/api/health'"), 'Health-Check für Render fehlt'],
 ];
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }
