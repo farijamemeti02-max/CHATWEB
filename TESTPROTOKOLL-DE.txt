@@ -1,0 +1,21 @@
+GAMETIK – STATISCHES TESTPROTOKOLL
+=================================
+
+Durchgeführt vor der Ausgabe:
+- node --check server.js
+- node --check app.js
+- node --check live.js
+- npm run check (enthält Projekt-Kernprüfungen)
+- Prüfung der package.json als gültiges JSON
+- Prüfung, dass admin.html gegenüber der Ausgangs-ZIP unverändert ist
+- Reset-E-Mail enthält eine direkte URL als Text statt eines Brevo-Tracking-Links
+- Frontend zeigt bei Netzwerkfehlern eine verständliche GameTik-/Render-Meldung statt nur „Failed to fetch“
+- ZIP-Archivintegrität geprüft
+
+Nicht durchgeführt / nicht behauptet:
+- Live-Anfrage an Brevo mit echtem BREVO_API_KEY
+- tatsächlicher E-Mail-Versand in Render
+- echtes Zurücksetzen eines Produktionskontos
+- Cloudflare R2 Upload unter Produktionszugangsdaten
+
+Hinweis: Der frühere Render-Logeintrag „ETIMEDOUT“ weist auf einen Timeout beim SMTP-Versand hin. Diese Version nutzt Brevos HTTPS API statt SMTP. Der Live-Test ist nach dem Deploy erforderlich.
