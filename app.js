@@ -170,12 +170,23 @@
   $('authModeRegister').onclick=()=>setAuthMode('register');$('authModeLogin').onclick=()=>setAuthMode('login');
   $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const body=authMode==='register'?{username:$('authUsername').value.trim(),email:$('authEmail').value.trim(),password:$('authPassword').value}:{identity:$('authUsername').value.trim(),password:$('authPassword').value};const d=await api(authMode==='register'?'/api/auth/register':'/api/auth/login',{method:'POST',body:JSON.stringify(body)});token=d.token;localStorage.setItem('gametik_token',token);me=d.user;updateAuthUI();$('authModal').classList.add('hidden');if(socket){socket.disconnect();socket=null;}connectChat();showView('feed');}catch(err){status('authStatus',err.message);}finally{$('authSubmit').disabled=false;}};
   $('forgotPasswordBtn')?.addEventListener('click',async()=>{
-    const email=authMode==='register' ? $('authEmail').value.trim() : $('authUsername').value.trim();
-    if(!email || !email.includes('@')) { status('authStatus','Bitte gib deine registrierte E-Mail-Adresse in das Feld ein.'); return; }
-    const btn=$('forgotPasswordBtn');btn.disabled=true;
-    try { const d=await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email})});status('authStatus',d.message||'Wenn die E-Mail registriert ist, wurde ein Reset-Link versendet.',true); }
-    catch(err){status('authStatus',err.message);}
-    finally{btn.disabled=false;}
+    // In login mode the visible field may contain a username, not an email.
+    // Ask explicitly for the registered email instead of silently doing nothing.
+    const current = authMode==='register' ? ($('authEmail').value.trim() || $('authUsername').value.trim()) : $('authUsername').value.trim();
+    let email = current.includes('@') ? current : '';
+    if (!email) {
+      email = (window.prompt('Bitte gib die E-Mail-Adresse deines GameTik-Kontos ein:') || '').trim();
+    }
+    if (!email) { status('authStatus','Passwort-Reset abgebrochen. Gib deine registrierte E-Mail-Adresse ein.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { status('authStatus','Bitte gib eine gültige E-Mail-Adresse ein.'); return; }
+    const btn=$('forgotPasswordBtn');
+    if (!btn || btn.disabled) return;
+    btn.disabled=true;
+    try {
+      const d=await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email})});
+      status('authStatus',d.message||'Wenn die E-Mail registriert ist, wurde ein Reset-Link versendet.',true);
+    } catch(err) { status('authStatus',err.message || 'Passwort-Reset konnte nicht angefordert werden.'); }
+    finally { btn.disabled=false; }
   });
   $('resetPasswordForm')?.addEventListener('submit',async e=>{
     e.preventDefault();const password=$('resetNewPassword').value;const confirm=$('resetConfirmPassword').value;

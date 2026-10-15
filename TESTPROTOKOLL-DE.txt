@@ -1,21 +1,23 @@
-GAMETIK – STATISCHES TESTPROTOKOLL
-=================================
+GameTik Einzeldatei-Prüfprotokoll – 15.10.2026
 
-Durchgeführt vor der Ausgabe:
+Geprüfte Dateien: server.js, app.js, live.js, index.html, admin.html, paypal.html, package.json, README.md, ANLEITUNG-DE.txt, .env.example, scripts/check-project.js, TESTPROTOKOLL-DE.txt sowie gift-heart.svg, gift-star.svg, gift-fire.svg und gift-crown.svg.
+
+Bestanden:
 - node --check server.js
 - node --check app.js
 - node --check live.js
-- npm run check (enthält Projekt-Kernprüfungen)
-- Prüfung der package.json als gültiges JSON
-- Prüfung, dass admin.html gegenüber der Ausgangs-ZIP unverändert ist
-- Reset-E-Mail enthält eine direkte URL als Text statt eines Brevo-Tracking-Links
-- Frontend zeigt bei Netzwerkfehlern eine verständliche GameTik-/Render-Meldung statt nur „Failed to fetch“
-- ZIP-Archivintegrität geprüft
+- npm run check: 27 statische Kernprüfungen bestanden
+- HTML-Struktur der Hauptseiten eingelesen; keine doppelten IDs in index.html, paypal.html oder admin.html gefunden
+- lokale Dateien, auf die die HTML-Seiten verweisen, geprüft; keine fehlenden lokalen Referenzen gefunden (Socket.IO wird vom Server bereitgestellt)
+- alle vier Geschenk-SVG-Dateien haben ein SVG-Root-Element und schließen korrekt
+- admin.html ist gegenüber der bereitgestellten Ausgangsdatei bytegenau unverändert
+- Passwort-vergessen-Button korrigiert: falls keine E-Mail-Adresse im Feld steht, fragt die Oberfläche nach der registrierten E-Mail-Adresse, statt nur eine schwer sichtbare Statusmeldung zu zeigen
+- ZIP-Integrität wird nach dem Packen geprüft
 
-Nicht durchgeführt / nicht behauptet:
-- Live-Anfrage an Brevo mit echtem BREVO_API_KEY
-- tatsächlicher E-Mail-Versand in Render
-- echtes Zurücksetzen eines Produktionskontos
-- Cloudflare R2 Upload unter Produktionszugangsdaten
+Nicht durch statische Prüfungen belegbar:
+- erfolgreicher E-Mail-Versand über den echten Brevo-API-Schlüssel
+- Erreichbarkeit und Berechtigungen der echten Neon- und Cloudflare-R2-Dienste
+- erfolgreiche Anmeldung, Passwortänderung und Profilbild-Wiederherstellung im Live-Render-Dienst
+- PayPal-Checkout und LiveKit mit echten Zugangsdaten
 
-Hinweis: Der frühere Render-Logeintrag „ETIMEDOUT“ weist auf einen Timeout beim SMTP-Versand hin. Diese Version nutzt Brevos HTTPS API statt SMTP. Der Live-Test ist nach dem Deploy erforderlich.
+Keine Geheimnisse in diese Datei eintragen. Live-Tests müssen nach Deployment erfolgen.
