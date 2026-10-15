@@ -240,7 +240,7 @@
     cameraState.chunks=[];cameraState.recorder=new MediaRecorder(cameraState.stream,mime?{mimeType:mime}:undefined);
     cameraState.recorder.ondataavailable=e=>{if(e.data?.size)cameraState.chunks.push(e.data);};
     cameraState.recorder.onstop=()=>{cameraState.recordedBlob=new Blob(cameraState.chunks,{type:cameraState.recorder.mimeType||'video/webm'});cameraEl('cameraUse').classList.remove('hidden');cameraEl('cameraStatus').textContent='Aufnahme beendet. Du kannst sie jetzt verwenden.';cameraEl('cameraRecord').textContent='● Erneut aufnehmen';};
-    cameraState.recorder.start();cameraEl('cameraRecord').textContent='■ Aufnahme stoppen';cameraEl('cameraStatus').textContent='Aufnahme läuft …';
+    cameraState.recorder.start();cameraEl('cameraRecord').textContent='■ Aufnahme stoppen';cameraEl('cameraStatus').textContent='Aufnahme läuft …';window.__gtRecordLimitStop=()=>{if(cameraState.recorder&&cameraState.recorder.state==='recording')cameraState.recorder.stop();};
   });
   cameraEl('cameraUse')?.addEventListener('click',async()=>{if(!cameraState.recordedBlob)return;assignCapturedFile('videoFile',cameraState.recordedBlob,'gametik-video-'+Date.now()+'.webm');cameraEl('cameraStatus').textContent='Video wurde im Upload-Formular ausgewählt.';await stopCamera();cameraEl('cameraModal').classList.add('hidden');});
   cameraEl('cameraModal')?.addEventListener('click',e=>{if(e.target===cameraEl('cameraModal')){cameraEl('cameraModal').classList.add('hidden');stopCamera();}});
