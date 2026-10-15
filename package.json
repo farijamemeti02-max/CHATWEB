@@ -1,6 +1,6 @@
 {
   "name": "gametik",
-  "version": "1.9.15",
+  "version": "1.9.18",
   "description": "GAMETIK social platform with public member profile navigation and profile posts",
   "main": "server.js",
   "scripts": {

@@ -1323,7 +1323,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     var quick=document.createElement('section');
     quick.id='liveChatQuickActions';
     quick.setAttribute('aria-label','Schnellzugriff auf Live-Geschenke und Stream-Steuerung');
-    panel.insertBefore(quick,chat);
+    var form=document.getElementById('liveChatForm');
+    if(form && form.parentElement===panel) form.insertAdjacentElement('afterend',quick);
+    else chat.insertAdjacentElement('afterend',quick);
     quick.appendChild(game);
     quick.appendChild(candy);
     quick.appendChild(gifts);
@@ -1628,6 +1630,23 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(prefers-reduced-motion:reduce){#gtLiveActionRail button{transition:none!important}}
 </style>
 
+
+<style id="gametik-live-action-buttons-premium-v1">
+/* Premium 2030-style LIVE controls: glass, tactile depth, clear touch targets */
+#gtLiveActionRail{gap:12px!important;right:9px!important;filter:drop-shadow(0 8px 18px rgba(0,0,0,.32))}
+#gtLiveActionRail button{position:relative!important;isolation:isolate;width:46px!important;height:46px!important;min-height:46px!important;padding:0!important;gap:2px!important;overflow:visible!important;border:1px solid rgba(255,255,255,.38)!important;border-radius:50%!important;background:linear-gradient(145deg,rgba(31,37,57,.90),rgba(7,10,22,.82))!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.20),inset 0 -3px 8px rgba(0,0,0,.25),0 5px 14px rgba(0,0,0,.35),0 0 0 1px rgba(53,231,255,.10)!important;backdrop-filter:blur(16px) saturate(145%)!important;-webkit-backdrop-filter:blur(16px) saturate(145%)!important;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease!important}
+#gtLiveActionRail button:before{content:"";position:absolute;inset:2px;border-radius:50%;border:1px solid rgba(255,255,255,.075);pointer-events:none}
+#gtLiveActionRail button:after{content:"";position:absolute;left:15%;right:15%;top:4px;height:35%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.16),transparent);pointer-events:none}
+#gtLiveActionRail button:hover{transform:translateY(-2px) scale(1.035)!important;border-color:rgba(83,231,255,.72)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 7px 18px rgba(0,0,0,.42),0 0 18px rgba(53,231,255,.18)!important;filter:brightness(1.08)}
+#gtLiveActionRail button:active{transform:scale(.93)!important}
+#gtLiveActionRail button small{font-size:9px!important;line-height:1.05!important;font-weight:800!important;letter-spacing:.015em!important;color:#f8fbff!important;text-shadow:0 1px 5px #000!important}
+#gtLiveActionRail button:nth-child(1){border-color:rgba(255,65,153,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 5px 14px #0006,0 0 14px rgba(255,49,151,.13)!important}
+#gtLiveActionRail button:nth-child(2){border-color:rgba(53,231,255,.52)!important}
+#gtLiveActionRail button:nth-child(3){border-color:rgba(191,125,255,.58)!important}
+#gtLiveActionRail button:nth-child(4){border-color:rgba(255,255,255,.34)!important}
+@media(max-width:600px){#gtLiveActionRail{right:7px!important;gap:10px!important}#gtLiveActionRail button{width:42px!important;height:42px!important;min-height:42px!important;font-size:18px!important}#gtLiveActionRail button small{font-size:8px!important}}
+@media(prefers-reduced-motion:reduce){#gtLiveActionRail button{transition:none!important}}
+</style>
 </body>
 </html>
 <style id="gametik-camera-modern-v192">
@@ -1656,4 +1675,56 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoStage #liveDuelOverlay{z-index:3!important;top:54px;left:8px;right:56px;max-width:calc(100% - 68px);pointer-events:none}
 @media(max-width:600px){#liveVideoStage{height:74svh;min-height:440px;max-height:780px}#liveVideoOverlay{padding:9px 52px 9px 9px!important}#liveOverlayChat{max-width:88%!important;max-height:34%!important}#liveChatDock{margin-top:7px!important;padding:8px!important}#liveChatMessages{height:76px!important}}
 @media(max-height:700px){#liveVideoStage{height:68svh;min-height:380px}}
+</style>
+
+<style id="gametik-live-duel-scorebar-v1">
+/* GameTik LIVE-Duell: pink/türkisfarbener Punktebalken mit Countdown direkt darunter */
+#liveVideoOverlay .gt-stream-duel-hud{align-self:stretch!important;width:100%!important;max-width:none!important;box-sizing:border-box;margin:4px 0 0!important;padding:0!important;border:0!important;border-radius:0 0 13px 13px!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible}
+#liveVideoOverlay .gt-stream-duel-head{display:flex!important;justify-content:center!important;margin:0!important;padding:5px 10px!important;border-radius:0 0 12px 12px!important;background:rgba(8,10,22,.76)!important;border:1px solid rgba(255,255,255,.12)!important;border-top:0!important;color:#fff!important;font-size:12px!important;letter-spacing:.01em!important;text-shadow:0 1px 4px #000}
+#liveVideoOverlay .gt-stream-duel-head>span:first-child{font-size:0!important}
+#liveVideoOverlay .gt-stream-duel-head>span:first-child:before{content:'Victory lap';font-size:12px;font-weight:850}
+#liveVideoOverlay .gt-stream-duel-time{padding:2px 7px!important;margin-left:7px;border:0!important;border-radius:7px!important;background:transparent!important;color:#fff!important;font-size:12px!important}
+#liveVideoOverlay .gt-stream-duel-teams{display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;margin:0!important;border-radius:12px 12px 0 0!important;overflow:hidden!important;box-shadow:0 4px 14px #0003}
+#liveVideoOverlay .gt-stream-duel-team{min-width:0;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;padding:8px 11px!important;border:0!important;border-radius:0!important;color:#fff!important;font-size:clamp(10px,2.8vw,14px)!important;font-weight:900!important;text-shadow:0 1px 4px #000}
+#liveVideoOverlay .gt-stream-duel-host{background:linear-gradient(100deg,#ff267e,#ff38c8)!important;text-align:left!important}
+#liveVideoOverlay .gt-stream-duel-community{background:linear-gradient(100deg,#21d4fd,#00b8c8)!important;text-align:right!important}
+#liveVideoOverlay .gt-stream-duel-team strong{font-size:clamp(16px,4.5vw,23px)!important;color:#fff!important;font-weight:950!important}
+#liveVideoOverlay .gt-stream-duel-meter{height:4px!important;gap:0!important;margin:0!important;border-radius:0!important;background:#ffffff2b!important}
+#liveVideoOverlay .gt-stream-duel-host-fill{background:linear-gradient(90deg,#ff267e,#ff38c8)!important;border-radius:0!important}
+#liveVideoOverlay .gt-stream-duel-community-fill{background:linear-gradient(90deg,#21d4fd,#00b8c8)!important;border-radius:0!important}
+#liveVideoOverlay .gt-stream-duel-lead{margin:0!important;padding:3px 8px!important;background:rgba(8,10,22,.42)!important;border-radius:0 0 8px 8px!important;font-size:10px!important;color:#fff!important;text-shadow:0 1px 4px #000}
+@media(max-width:600px){#liveVideoOverlay .gt-stream-duel-team{padding:7px 8px!important}#liveVideoOverlay .gt-stream-duel-head{padding:4px 8px!important}}
+</style>
+
+
+<style id="gametik-live-fullscreen-video-chat-first-v1917">
+/* 1.9.17: large, full-width portrait LIVE video; chat composer appears before gift controls. */
+#liveVideoStage{width:100%!important;height: min(82svh, 900px)!important;min-height:520px!important;max-height:900px!important;margin:8px 0 6px!important;position:relative!important;overflow:hidden!important;background:#03040a!important}
+#liveVideoGrid{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;background:#03040a!important}
+#liveVideoGrid video{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;background:#03040a!important;border-radius:0!important}
+#liveVideoOverlay{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;pointer-events:none!important;padding:10px 54px 10px 9px!important}
+#liveOverlayChat{width:min(84%,420px)!important;max-width:84%!important;max-height:32%!important;overflow:hidden!important}
+#gtLiveActionRail{right:6px!important;top:52%!important;gap:9px!important}
+#gtLiveActionRail button{width:40px!important;height:40px!important;min-height:40px!important}
+#liveChatDock{display:flex!important;flex-direction:column!important;gap:5px!important;margin:6px 0 8px!important;padding:9px!important}
+#liveChatDock .gt-live-chat-heading{order:0!important;margin:0!important}
+#liveChatMessages{order:1!important;height:clamp(88px,16svh,150px)!important;min-height:78px!important;max-height:150px!important;overflow-y:auto!important;margin:4px 0!important}
+#liveChatForm{order:2!important;display:flex!important;flex-direction:row!important;gap:6px!important;margin:0!important}
+#liveChatForm #liveChatInput{min-width:0!important;flex:1 1 auto!important;min-height:42px!important}
+#liveChatForm button{flex:0 0 auto!important;min-height:42px!important}
+#liveGiftStatus{order:3!important}
+#liveChatQuickActions{order:4!important;width:100%!important;box-sizing:border-box!important;margin-top:7px!important}
+#liveChatQuickActions #liveGamePanel{margin:0 0 7px!important}
+#liveChatQuickActions #liveCandyPanel{margin:0 0 7px!important}
+#liveChatQuickActions #livePaidGifts{margin:0!important}
+@media(max-width:600px){
+ #liveVideoStage{height:82svh!important;min-height:500px!important;max-height:900px!important;border-radius:15px!important}
+ #liveVideoGrid video{object-fit:cover!important}
+ #liveVideoOverlay{padding:9px 51px 9px 8px!important}
+ #liveOverlayChat{max-width:82%!important;width:82%!important;max-height:30%!important}
+ #liveChatMessages{height:clamp(90px,17svh,145px)!important;min-height:82px!important;max-height:145px!important}
+ #liveChatQuickActions{padding:7px!important;gap:7px!important}
+}
+@media(max-height:700px){#liveVideoStage{height:76svh!important;min-height:410px!important}}
+@media(prefers-reduced-motion:reduce){#liveVideoStage,#liveVideoGrid video{scroll-behavior:auto!important}}
 </style>
