@@ -68,13 +68,13 @@
     let card = document.getElementById(key);
     if (!card) {
       card = document.createElement('div'); card.id = key;
-      card.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;min-height:0;background:#03040a;border:0;border-radius:0;overflow:hidden;';
-      const label = document.createElement('div'); label.textContent = participant.name || participant.identity; label.style.cssText = 'position:absolute;z-index:2;left:10px;top:58px;max-width:65%;padding:5px 9px;border:1px solid #ffffff30;border-radius:999px;background:#080b18b8;color:#fff;font-size:12px;font-weight:700;backdrop-filter:blur(10px)';
+      card.style.cssText = 'min-height:150px;background:#07070d;border:1px solid #38384e;border-radius:12px;overflow:hidden;position:relative';
+      const label = document.createElement('div'); label.textContent = participant.name || participant.identity; label.style.cssText = 'padding:6px 9px;background:#141421;font-size:12px';
       card.appendChild(label); grid.appendChild(card);
     }
     const element = track.attach();
     if (track.kind === window.LivekitClient.Track.Kind.Audio) element.muted = audioMuted;
-    element.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;min-width:100%;min-height:100%;object-fit:cover;object-position:center center;background:#03040a;display:block;border:0;border-radius:0';
+    element.style.cssText = 'width:100%;max-height:52vh;min-height:130px;object-fit:contain;background:#05050a;display:block';
     if (track.kind === window.LivekitClient.Track.Kind.Audio) element.style.display = 'none';
     card.appendChild(element);
     applyCameraEffect();
