@@ -1580,7 +1580,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   make('gtLiveShareAction','↗','Teilen',()=>document.getElementById('liveShareBtn')?.click());
   overlay.appendChild(rail);
   const gameToggle=document.createElement('button');gameToggle.type='button';gameToggle.id='gtLiveGameToggle';gameToggle.textContent='🎮 GameTik-Spiel';gameToggle.setAttribute('aria-expanded','false');
-  gameToggle.addEventListener('click',()=>{if(!gamePanel)return;const active=stage.classList.toggle('gt-game-overlay-active');gameToggle.setAttribute('aria-expanded',String(active));gameToggle.textContent=active?'✕ Spiel schließen':'🎮 GameTik-Spiel';if(active){stage.appendChild(gamePanel);gamePanel.style.display='block';gamePanel.style.position='absolute';gamePanel.style.zIndex='10';gamePanel.style.left='8px';gamePanel.style.right='54px';gamePanel.style.top='95px';gamePanel.style.maxHeight='45%';gamePanel.style.overflow='auto';gamePanel.style.margin='0';gamePanel.style.padding='9px';}else{gamePanel.style.display='none';const parent=document.getElementById('liveChatQuickActions');if(parent)parent.insertBefore(gamePanel,parent.firstChild);}});
+  gameToggle.addEventListener('click',()=>{if(!gamePanel)return;const active=gameToggle.getAttribute('aria-expanded')!=='true';gameToggle.setAttribute('aria-expanded',String(active));gameToggle.textContent=active?'✕ Spiel schließen':'🎮 GameTik-Spiel';/* Keep the real video unobstructed: never place the full game controls over the stream. */gamePanel.style.display=active?'block':'none';stage.classList.toggle('gt-game-overlay-active',active);const duelHud=document.getElementById('liveDuelOverlay');if(duelHud)duelHud.style.display=active?'block':'';if(active){gamePanel.scrollIntoView({behavior:'smooth',block:'nearest'});}});
   overlay.appendChild(gameToggle);
   if(gamePanel){gamePanel.style.display='none';gamePanel.dataset.gtOriginalParent=gamePanel.parentElement?.id||'';}
   if(gifts&&!document.getElementById('gtLiveGiftDrawer')){
@@ -1599,6 +1599,35 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 })();
 </script>
 
+
+<style id="gametik-reference-live-layout-v1915">
+/* Reference-inspired, video-first LIVE layout: large video, right action rail, visible comments. */
+#liveVideoStage{position:relative!important;width:100%!important;height:min(78svh,820px)!important;min-height:480px!important;max-height:820px!important;margin:8px 0 6px!important;border-radius:18px!important;overflow:hidden!important;background:#03040a!important;border:1px solid rgba(90,220,255,.42)!important;box-shadow:0 0 24px rgba(30,210,255,.08)!important}
+#liveVideoGrid{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;display:block!important;background:#03040a!important}
+#liveVideoGrid video{display:block!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;object-fit:cover!important;object-position:center!important;background:#03040a!important}
+#liveVideoOverlay{position:absolute!important;inset:0!important;z-index:3!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;padding:12px 58px 12px 10px!important;background:linear-gradient(180deg,rgba(2,3,10,.52),transparent 20%,transparent 58%,rgba(0,0,0,.54))!important;pointer-events:none!important}
+#liveVideoOverlay .gt-live-metrics{align-self:flex-start!important;display:flex!important;gap:6px!important;flex-wrap:wrap!important}
+#liveVideoOverlay .gt-live-metric{padding:6px 9px!important;border-radius:999px!important;background:rgba(9,12,25,.66)!important;border:1px solid rgba(92,226,255,.45)!important;backdrop-filter:blur(8px)!important;font-size:12px!important}
+#liveOverlayChat{align-self:flex-start!important;width:min(88%,390px)!important;max-width:88%!important;max-height:42%!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;gap:5px!important;margin:0 0 6px!important}
+#liveOverlayChat .live-overlay-line{width:max-content!important;max-width:100%!important;padding:5px 8px!important;font-size:12px!important;line-height:1.25!important;border-radius:12px!important;background:rgba(8,10,20,.58)!important;border:1px solid rgba(255,255,255,.14)!important;border-left:2px solid #35e7ff!important;backdrop-filter:blur(6px)!important;text-shadow:0 1px 4px #000!important}
+#gtLiveActionRail{position:absolute!important;z-index:8!important;right:7px!important;top:52%!important;transform:translateY(-42%)!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:10px!important;pointer-events:auto!important}
+#gtLiveActionRail button{width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:1px!important;background:rgba(10,12,25,.68)!important;border:1px solid rgba(230,240,255,.28)!important;box-shadow:0 2px 12px #0007,0 0 12px rgba(53,231,255,.14)!important;backdrop-filter:blur(10px)!important;font-size:18px!important;line-height:1!important}
+#gtLiveActionRail button small{font-size:9px!important;line-height:1.05!important}
+#gtLiveGameToggle{position:absolute!important;z-index:9!important;top:58px!important;left:9px!important;min-height:30px!important;padding:5px 9px!important;border-radius:999px!important;background:rgba(9,11,24,.72)!important;border:1px solid rgba(155,92,255,.72)!important;font-size:11px!important;backdrop-filter:blur(8px)!important}
+#liveDuelOverlay{max-width:calc(100% - 64px)!important;max-height:24%!important;overflow:hidden!important;padding:7px!important;opacity:.96!important}
+#liveDuelOverlay .gt-stream-duel-head{font-size:9px!important}#liveDuelOverlay .gt-stream-duel-team{font-size:8px!important;padding:4px 6px!important}#liveDuelOverlay .gt-stream-duel-team strong{font-size:14px!important}
+#liveChatDock{margin:5px 0 9px!important;padding:8px!important;border-radius:15px!important;background:linear-gradient(145deg,rgba(12,14,28,.96),rgba(19,13,34,.96))!important;border:1px solid rgba(155,92,255,.42)!important}
+#liveChatDock .gt-live-chat-heading{margin:0 0 4px!important}#liveChatDock .gt-live-chat-subtitle{font-size:10px!important}
+#liveChatMessages{height:clamp(78px,13vh,125px)!important;min-height:68px!important;max-height:125px!important;overflow-y:auto!important;margin:5px 0!important}
+#liveChatForm{display:flex!important;gap:7px!important;align-items:center!important;margin:0!important}#liveChatForm input,#liveChatForm textarea{min-height:42px!important;padding:9px 12px!important;border-radius:999px!important}#liveChatForm button{min-height:42px!important;border-radius:999px!important;padding:8px 15px!important}
+#liveChatQuickActions{margin:7px 0 10px!important;padding:7px!important;gap:7px!important;border-radius:15px!important}
+#liveChatQuickActions #liveGamePanel{padding:8px!important}#liveChatQuickActions #liveGamePanel>div:first-child .muted{display:none!important}#liveChatQuickActions #liveGamePanel>div:nth-child(2){margin:5px 0!important}#liveChatQuickActions #liveGamePanel #liveGameStart,#liveChatQuickActions #liveGamePanel #liveGameStop{min-height:36px!important;padding:7px 10px!important;font-size:12px!important}
+#liveChatQuickActions #liveCandyPanel{padding:8px!important}#liveChatQuickActions #liveCandyPanel .live-candy-send{min-height:40px!important;padding:5px!important}#liveChatQuickActions #livePaidGifts .live-gift{min-height:46px!important;padding:6px!important}
+@media(max-width:600px){#liveVideoStage{height:76svh!important;min-height:460px!important;max-height:820px!important;border-radius:14px!important}#liveVideoOverlay{padding:10px 52px 10px 8px!important}#gtLiveActionRail{right:5px!important;gap:9px!important}#gtLiveActionRail button{width:38px!important;height:38px!important;min-height:38px!important;font-size:16px!important}#gtLiveActionRail button small{font-size:8px!important}#liveOverlayChat{max-width:calc(100% - 4px)!important;width:calc(100% - 4px)!important;max-height:38%!important}#liveDuelOverlay{top:54px!important;left:7px!important;right:49px!important;width:auto!important;max-width:none!important}#liveChatMessages{height:86px!important;min-height:72px!important;max-height:110px!important}#liveChatDock .gt-live-chat-subtitle{display:none!important}}
+@media(max-height:700px){#liveVideoStage{height:70svh!important;min-height:380px!important}}
+@media(prefers-reduced-motion:reduce){#gtLiveActionRail button{transition:none!important}}
+</style>
+
 </body>
 </html>
 <style id="gametik-camera-modern-v192">
@@ -1613,4 +1642,18 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #uploadView .camera-action{min-height:68px;padding:10px 12px;border-radius:17px;background:linear-gradient(130deg,#11182a,#17132a);border-color:#62558e;box-shadow:inset 0 1px #ffffff0c,0 7px 18px #0003}
 #uploadView .camera-action .camera-icon{width:42px;height:42px;border-radius:13px;font-size:21px}
 @media(max-width:520px){.camera-card .camera-preview{max-height:43dvh}.camera-card .camera-tools{grid-template-columns:1fr 58px 1fr}.camera-live-launch{padding:11px}.camera-live-launch span{flex-basis:100%;text-align:center}}
+</style>
+
+<style id="gametik-live-video-first-v1914">
+/* Video-first layout: gameplay controls never cover the stream. */
+#liveVideoStage{height: min(76svh, 760px);min-height:460px;isolation:isolate;background:#05050a!important}
+#liveVideoGrid{height:100%;min-height:0!important;position:absolute;inset:0}
+#liveVideoGrid video{width:100%!important;height:100%!important;object-fit:contain!important;background:#05050a!important}
+#liveVideoOverlay{z-index:2!important}
+#gtLiveActionRail{z-index:5!important}
+#gtLiveGameToggle{z-index:6!important;top:54px!important}
+#liveVideoStage #liveGamePanel{position:static!important;inset:auto!important;max-height:none!important;overflow:visible!important;margin:10px 0!important}
+#liveVideoStage #liveDuelOverlay{z-index:3!important;top:54px;left:8px;right:56px;max-width:calc(100% - 68px);pointer-events:none}
+@media(max-width:600px){#liveVideoStage{height:74svh;min-height:440px;max-height:780px}#liveVideoOverlay{padding:9px 52px 9px 9px!important}#liveOverlayChat{max-width:88%!important;max-height:34%!important}#liveChatDock{margin-top:7px!important;padding:8px!important}#liveChatMessages{height:76px!important}}
+@media(max-height:700px){#liveVideoStage{height:68svh;min-height:380px}}
 </style>

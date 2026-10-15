@@ -14,3 +14,6 @@ Diese Version baut auf den vorhandenen Projektdateien auf. Die statischen Prüfu
 
 Sicherheits-/Deployment-Hinweis:
 Neon DATABASE_URL, Cloudflare-R2-Schlüssel und Render-Environment-Variablen unverändert lassen. admin.html wurde nicht geändert.
+
+
+Korrektur 1.9.14 – Video hat Vorrang: Das vollständige Spiel-Panel wird nicht mehr über dem Videobild eingeblendet. Der GameTik-Spiel-Button schaltet die Spieloptionen unterhalb des Streams ein/aus; die kompakte Punkteanzeige kann im Stream sichtbar bleiben. Videofläche auf Mobilgeräten vergrößert, Video mit object-fit:contain und Chat direkt unter dem Stream kompakter. Live-Funktion muss nach Deployment real getestet werden.
