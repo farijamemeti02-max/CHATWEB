@@ -6,7 +6,7 @@
   const localWebServer = ['localhost', '127.0.0.1'].includes(host) && /^https?:$/.test(location.protocol);
   const API_BASE = window.GAMETIK_API_BASE || ((onRender || localWebServer) ? '' : 'https://chatweb-iajl.onrender.com');
   const apiUrl = path => /^https?:\/\//i.test(path) ? path : API_BASE + path;
-  const mediaUrl = path => path && path.startsWith('/uploads/') ? API_BASE + path : (path || '');
+  const mediaUrl = path => path && (path.startsWith('/uploads/') || path.startsWith('/media/')) ? API_BASE + path : (path || '');
   let token = localStorage.getItem('gametik_token') || '';
   let me = null, socket = null, chatMode = 'public', privateRecipientId = '';
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -6,6 +6,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const { Server } = require('socket.io');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
 
 const app = express();
@@ -52,6 +53,50 @@ const uploadRoot = path.join(dataRoot, 'uploads');
 const stateFile = path.join(dataRoot, 'gametik-state.json');
 const videoDir = path.join(uploadRoot, 'videos');
 const avatarDir = path.join(uploadRoot, 'avatars');
+
+const r2Configured = Boolean(process.env.R2_ENDPOINT && process.env.R2_BUCKET && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+const r2Client = r2Configured ? new S3Client({
+  region: process.env.R2_REGION || 'auto',
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
+}) : null;
+
+function mediaObjectKeyFromUrl(mediaUrl) {
+  if (typeof mediaUrl !== 'string' || !mediaUrl.startsWith('/media/')) return null;
+  const key = mediaUrl.slice('/media/'.length);
+  if (!key || key.split('/').some(part => !part || part === '.' || part === '..')) return null;
+  return key;
+}
+async function persistUploadedFile(file, folder, localDir) {
+  if (!file) return null;
+  if (!r2Configured) return '/uploads/' + (folder === 'avatars' ? 'avatars/' : 'videos/') + file.filename;
+  const key = folder + '/' + file.filename;
+  try {
+    await r2Client.send(new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: await fs.promises.readFile(file.path),
+      ContentType: file.mimetype || 'application/octet-stream'
+    }));
+    await fs.promises.unlink(file.path).catch(() => {});
+    return '/media/' + key;
+  } catch (error) {
+    await fs.promises.unlink(file.path).catch(() => {});
+    throw error;
+  }
+}
+async function deleteStoredMedia(mediaUrl, localDir) {
+  const key = mediaObjectKeyFromUrl(mediaUrl);
+  if (key && r2Configured) {
+    try { await r2Client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET, Key: key })); }
+    catch (error) { console.error('R2 media delete failed:', error.message); }
+    return;
+  }
+  if (typeof mediaUrl === 'string' && mediaUrl.startsWith('/uploads/')) {
+    const filename = path.basename(mediaUrl);
+    if (filename && filename !== '.' && filename !== path.sep) fs.unlink(path.join(localDir, filename), () => {});
+  }
+}
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -219,9 +264,7 @@ function purgeExpiredStories() {
   for (let i = stories.length - 1; i >= 0; i--) {
     const story = stories[i];
     if (Date.parse(story.expires_at) <= now) {
-      if (story.media_url && story.media_url.startsWith('/uploads/videos/')) {
-        fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
-      }
+      if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
       stories.splice(i, 1);
     }
   }
@@ -308,7 +351,9 @@ app.delete('/api/admin/videos/:id', adminAuth, (req, res) => {
   const index = videos.findIndex(v => v.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Video nicht gefunden.' });
   const [video] = videos.splice(index, 1);
-  if (video.video_url) fs.unlink(path.join(videoDir, path.basename(video.video_url)), () => {});
+  if (video.video_url) void deleteStoredMedia(video.video_url, videoDir);
+  if (video.document_url) void deleteStoredMedia(video.document_url, videoDir);
+  if (video.music_url) void deleteStoredMedia(video.music_url, videoDir);
   for (const user of sessions.values()) user.likes?.delete(video.id);
   res.json({ ok: true });
 });
@@ -316,7 +361,7 @@ app.delete('/api/admin/stories/:id', adminAuth, (req, res) => {
   const index = stories.findIndex(story => story.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Story nicht gefunden.' });
   const [story] = stories.splice(index, 1);
-  if (story.media_url) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+  if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
   res.json({ ok: true });
 });
 app.patch('/api/admin/users/:id/block', adminAuth, (req, res) => {
@@ -339,17 +384,40 @@ app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   for (const [recipient, list] of friendRequests) friendRequests.set(recipient, list.filter(r => String(r.fromId) !== id));
   for (const set of friendships.values()) set.delete(id);
   for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); }
-  for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
-  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
+  for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) void deleteStoredMedia(v.video_url, videoDir); if (v.document_url) void deleteStoredMedia(v.document_url, videoDir); if (v.music_url) void deleteStoredMedia(v.music_url, videoDir); }
+  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) void deleteStoredMedia(st.media_url, videoDir); }
   savePersistentState();
   res.json({ ok: true });
 });
 
 function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next); }
+app.get('/media/*', asyncRoute(async (req, res) => {
+  if (!r2Configured) return res.status(404).json({ error: 'Cloudflare R2 ist nicht konfiguriert.' });
+  const key = String(req.params[0] || '');
+  if (!key || key.split('/').some(part => !part || part === '.' || part === '..')) return res.status(400).end();
+  const result = await r2Client.send(new GetObjectCommand({
+    Bucket: process.env.R2_BUCKET,
+    Key: key,
+    ...(req.headers.range ? { Range: req.headers.range } : {})
+  }));
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.setHeader('Accept-Ranges', 'bytes');
+  if (result.ContentType) res.setHeader('Content-Type', result.ContentType);
+  if (result.ContentLength != null) res.setHeader('Content-Length', result.ContentLength);
+  if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
+  if (result.ETag) res.setHeader('ETag', result.ETag);
+  if (result.LastModified) res.setHeader('Last-Modified', result.LastModified.toUTCString());
+  res.status(result.ContentRange ? 206 : 200);
+  if (result.Body && typeof result.Body.pipe === 'function') result.Body.pipe(res);
+  else if (result.Body && typeof result.Body.transformToWebStream === 'function') {
+    const { Readable } = require('stream');
+    Readable.fromWeb(result.Body.transformToWebStream()).pipe(res);
+  } else res.end();
+}));
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', mediaStorage: r2Configured ? 'cloudflare-r2' : 'local-uploads', secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
@@ -489,8 +557,14 @@ app.get('/api/messages/:userId', auth, (req,res) => {
 app.post('/api/me/avatar', auth, (req,res,next) => avatarUpload.single('avatar')(req,res,err => {
   if (err) return next(err);
   if (!req.file) return res.status(400).json({ error: 'Bitte ein Profilbild auswählen.' });
-  req.user.avatar_url = '/uploads/avatars/' + req.file.filename;
-  res.json({ user: publicUser(req.user) });
+  (async () => {
+    const previousAvatar = req.user.avatar_url || null;
+    const newAvatar = await persistUploadedFile(req.file, 'avatars', avatarDir);
+    req.user.avatar_url = newAvatar;
+    if (previousAvatar && previousAvatar !== newAvatar) void deleteStoredMedia(previousAvatar, avatarDir);
+    savePersistentState();
+    res.json({ user: publicUser(req.user) });
+  })().catch(next);
 }));
 app.get('/api/stories', (req, res) => {
   purgeExpiredStories();
@@ -510,15 +584,18 @@ app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(r
   if (type !== 'text' && !req.file) return res.status(400).json({ error: 'Bitte eine Foto- oder Videodatei auswählen.' });
   if (type === 'photo' && !req.file.mimetype.startsWith('image/')) return rejectStory('Für eine Foto-Story bitte ein Bild auswählen.');
   if (type === 'video' && !req.file.mimetype.startsWith('video/')) return rejectStory('Für eine Video-Story bitte ein Video auswählen.');
-  const created = new Date();
-  const story = {
-    id: nextStoryId++, user_id: req.user.id, username: req.user.username,
-    avatar_url: req.user.avatar_url || null, type, caption,
-    media_url: req.file ? '/uploads/videos/' + req.file.filename : null,
-    created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
-  };
-  stories.push(story);
-  res.status(201).json({ story });
+  (async () => {
+    const mediaUrl = req.file ? await persistUploadedFile(req.file, 'videos', videoDir) : null;
+    const created = new Date();
+    const story = {
+      id: nextStoryId++, user_id: req.user.id, username: req.user.username,
+      avatar_url: req.user.avatar_url || null, type, caption,
+      media_url: mediaUrl,
+      created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    };
+    stories.push(story);
+    res.status(201).json({ story });
+  })().catch(next);
 }));
 app.delete('/api/stories/:id', auth, (req, res) => {
   purgeExpiredStories();
@@ -527,7 +604,7 @@ app.delete('/api/stories/:id', auth, (req, res) => {
   if (stories[idx].user_id !== req.user.id) return res.status(403).json({ error: 'Du kannst nur deine eigenen Storys löschen.' });
   const story = stories[idx];
   stories.splice(idx, 1);
-  if (story.media_url && story.media_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+  if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
   res.json({ ok: true });
 });
 
@@ -549,32 +626,37 @@ app.post('/api/videos', auth, (req,res,next) => postUpload.fields([{ name: 'vide
   const musicFile = req.files?.music?.[0];
   const documentFile = req.files?.document?.[0];
   if (!mediaFile && !documentFile) return res.status(400).json({ error: 'Bitte ein Foto, Video oder Dokument auswählen.' });
-  const isPhoto = !!mediaFile && mediaFile.mimetype.startsWith('image/');
-  const video = {
-    id: nextVideoId++, user_id: req.user.id, username: req.user.username,
-    avatar_url: req.user.avatar_url || null,
-    video_url: mediaFile ? '/uploads/videos/' + mediaFile.filename : null,
-    media_type: mediaFile ? (isPhoto ? 'photo' : 'video') : 'document',
-    document_url: documentFile ? '/uploads/videos/' + documentFile.filename : null,
-    document_name: documentFile ? String(documentFile.originalname || 'Anhang').replace(/[\r\n]/g, '').slice(0,180) : null,
-    music_url: musicFile ? '/uploads/videos/' + musicFile.filename : null,
-    music_original_name: musicFile ? String(musicFile.originalname || 'Eigene Musik').slice(0,120) : null,
-    caption: String(req.body.caption || '').trim().slice(0,500),
-    hashtags: String(req.body.hashtags || '').split(/\s+/).map(tag => tag.trim()).filter(tag => /^#[\p{L}\p{N}_]{1,40}$/u.test(tag)).slice(0,10),
-    visibility: String(req.body.visibility || 'public') === 'private' ? 'private' : 'public',
-    created_at: new Date().toISOString(), likes: new Set(), comments: [], reactions: {}, ratings: []
-  };
-  videos.push(video);
-  res.status(201).json({ video: { ...video, likes: undefined, comments: undefined, like_count: 0, comment_count: 0 } });
+  (async () => {
+    const isPhoto = !!mediaFile && mediaFile.mimetype.startsWith('image/');
+    const videoUrl = mediaFile ? await persistUploadedFile(mediaFile, 'videos', videoDir) : null;
+    const documentUrl = documentFile ? await persistUploadedFile(documentFile, 'documents', videoDir) : null;
+    const musicUrl = musicFile ? await persistUploadedFile(musicFile, 'music', videoDir) : null;
+    const video = {
+      id: nextVideoId++, user_id: req.user.id, username: req.user.username,
+      avatar_url: req.user.avatar_url || null,
+      video_url: videoUrl,
+      media_type: mediaFile ? (isPhoto ? 'photo' : 'video') : 'document',
+      document_url: documentUrl,
+      document_name: documentFile ? String(documentFile.originalname || 'Anhang').replace(/[\r\n]/g, '').slice(0,180) : null,
+      music_url: musicUrl,
+      music_original_name: musicFile ? String(musicFile.originalname || 'Eigene Musik').slice(0,120) : null,
+      caption: String(req.body.caption || '').trim().slice(0,500),
+      hashtags: String(req.body.hashtags || '').split(/\s+/).map(tag => tag.trim()).filter(tag => /^#[\p{L}\p{N}_]{1,40}$/u.test(tag)).slice(0,10),
+      visibility: String(req.body.visibility || 'public') === 'private' ? 'private' : 'public',
+      created_at: new Date().toISOString(), likes: new Set(), comments: [], reactions: {}, ratings: []
+    };
+    videos.push(video);
+    res.status(201).json({ video: { ...video, likes: undefined, comments: undefined, like_count: 0, comment_count: 0 } });
+  })().catch(next);
 }));
 app.delete('/api/videos/:id', auth, (req,res) => {
   const idx = videos.findIndex(v => v.id === Number(req.params.id));
   if (idx < 0) return res.status(404).json({ error: 'Beitrag nicht gefunden.' });
   if (videos[idx].user_id !== req.user.id) return res.status(403).json({ error: 'Du kannst nur deine eigenen Beiträge löschen.' });
   const [item] = videos.splice(idx, 1);
-  if (item.video_url && item.video_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.video_url)), () => {});
-  if (item.document_url && item.document_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.document_url)), () => {});
-  if (item.music_url && item.music_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.music_url)), () => {});
+  if (item.video_url) void deleteStoredMedia(item.video_url, videoDir);
+  if (item.document_url) void deleteStoredMedia(item.document_url, videoDir);
+  if (item.music_url) void deleteStoredMedia(item.music_url, videoDir);
   res.json({ ok: true });
 });
 app.post('/api/videos/:id/reaction', auth, (req,res) => {
