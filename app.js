@@ -34,7 +34,6 @@
     {view:'profile', nav:'profile', label:'Profil'}
   ];
   function showView(name, navKey) {
-    document.body.classList.toggle('gt-view-profile', name==='profile');
     ['feed','upload','chat','profile','explore'].forEach(v => { const el=$(v+'View'); if(el) el.classList.toggle('hidden',v!==name); });
     const resolvedNav = navKey || (pageOrder.find(p=>p.view===name)?.nav) || name;
     document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.nav ? b.dataset.nav===resolvedNav : b.dataset.view===name));
@@ -82,9 +81,9 @@
     }
     return `<article class="social-user-card"><button type="button" class="social-profile-open" data-open-user-profile="${id}" aria-label="Profil von @${username} öffnen">${socialAvatar(user)}<span class="social-user-info"><b>@${username}</b><small>${user.followers_count||0} Follower · ${user.following_count||0} folgt</small>${user.bio?`<small>${esc(user.bio)}</small>`:''}<small class="social-profile-hint">Profil ansehen ›</small></span></button><div class="social-user-actions">${actions}</div></article>`;
   }
-  async function openSocialProfile(userId){
-    let user=socialUserCache.get(String(userId));
-    if(!user){user={id:String(userId),username:'Mitglied'};socialUserCache.set(String(userId),user);}
+  function openSocialProfile(userId){
+    const user=socialUserCache.get(String(userId));
+    if(!user)return;
     let modal=document.getElementById('socialProfileModal');
     if(!modal){
       modal=document.createElement('div');modal.id='socialProfileModal';modal.className='social-profile-modal';modal.innerHTML='<div class="social-profile-dialog" role="dialog" aria-modal="true" aria-labelledby="socialProfileTitle"><button type="button" class="social-profile-close" aria-label="Profil schließen">×</button><div id="socialProfileContent"></div></div>';
@@ -92,16 +91,10 @@
       modal.addEventListener('click',e=>{if(e.target===modal||e.target.closest('.social-profile-close'))modal.classList.remove('open');});
       document.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('open');});
     }
-    $('socialProfileContent').innerHTML='<div class="empty">Profil wird geladen …</div>';
+    const avatar=socialAvatar(user);
+    const following=!!user.following, friend=!!user.friend;
+    $('socialProfileContent').innerHTML=`<div class="social-profile-hero">${avatar}<div><span class="muted tiny">GAMETIK COMMUNITY</span><h2 id="socialProfileTitle">@${esc(user.username)}</h2><p>${esc(user.bio||'Noch keine Biografie hinterlegt.')}</p></div></div><div class="social-profile-stats"><div><b>${Number(user.followers_count)||0}</b><span>Follower</span></div><div><b>${Number(user.following_count)||0}</b><span>Folgt</span></div></div><div class="social-profile-actions"><button type="button" data-social-action="follow" data-user-id="${esc(user.id)}">${following?'✓ Folge ich':'＋ Folgen'}</button><button type="button" class="secondary" data-social-action="request" data-user-id="${esc(user.id)}">${friend?'✓ Freunde':'＋ Freundschaft'}</button><button type="button" class="secondary" data-social-action="message" data-user-id="${esc(user.id)}">✉ Nachricht</button></div>`;
     modal.classList.add('open');
-    try {
-      const data=await api('/api/users/'+encodeURIComponent(userId)+'/profile');
-      user={...user,...data.user,following:!!data.following,friend:!!data.friend};socialUserCache.set(String(user.id),user);
-      const avatar=socialAvatar(user);
-      const posts=(data.posts||[]).map(post=>`<button type="button" class="social-profile-post" data-profile-post="${esc(post.id)}" aria-label="Beitrag von @${esc(user.username)} öffnen">${post.video_url?(post.media_type==='photo'?`<img src="${esc(mediaUrl(post.video_url))}" alt="Foto von @${esc(user.username)}" loading="lazy">`:`<span class="social-profile-video">▶ Video</span>`):'<span>Beitrag</span>'}<small>${esc(post.caption||'Beitrag')}</small></button>`).join('');
-      const actionButtons=data.is_self?'':`<button type="button" data-social-action="follow" data-user-id="${esc(user.id)}">${user.following?'✓ Folge ich':'＋ Folgen'}</button><button type="button" class="secondary" data-social-action="request" data-user-id="${esc(user.id)}">${user.friend?'✓ Freunde':'＋ Freundschaft'}</button><button type="button" class="secondary" data-social-action="message" data-user-id="${esc(user.id)}">✉ Nachricht</button>`;
-      $('socialProfileContent').innerHTML=`<div class="social-profile-hero">${avatar}<div><span class="muted tiny">GAMETIK COMMUNITY</span><h2 id="socialProfileTitle">@${esc(user.username)}</h2><p>${esc(user.bio||'Noch keine Biografie hinterlegt.')}</p></div></div><div class="social-profile-stats"><div><b>${Number(user.followers_count)||0}</b><span>Follower</span></div><div><b>${Number(user.following_count)||0}</b><span>Folgt</span></div><div><b>${Number(user.posts_count)||0}</b><span>Beiträge</span></div></div><div class="social-profile-actions">${actionButtons}</div><h3 class="social-profile-posts-title">Beiträge</h3><div class="social-profile-posts">${posts||(data.user.social_visibility!=='public'&&!data.is_self?'<div class="empty">Dieses Profil ist sichtbar, Beiträge sind jedoch privat.</div>':'<div class="empty">Noch keine öffentlichen Beiträge.</div>')}</div>`;
-    } catch(error) { $('socialProfileContent').innerHTML=`<div class="empty">${esc(error.message)}</div>`; }
   }
   document.addEventListener('click',e=>{const trigger=e.target.closest('[data-open-user-profile]');if(trigger){e.preventDefault();openSocialProfile(trigger.dataset.openUserProfile);}});
 
@@ -232,16 +225,6 @@
   }
   cameraEl('cameraPhotoBtn')?.addEventListener('click',()=>openCamera('photo'));
   cameraEl('cameraVideoBtn')?.addEventListener('click',()=>openCamera('video'));
-  cameraEl('cameraGoLive')?.addEventListener('click',async()=>{
-    cameraEl('cameraModal')?.classList.add('hidden');
-    await stopCamera();
-    showView('feed','home');
-    const liveTitle=cameraEl('liveTitle');
-    if(liveTitle && !liveTitle.value.trim()){liveTitle.value='GameTik LIVE';}
-    cameraEl('livePanel')?.scrollIntoView({behavior:'smooth',block:'start'});
-    cameraEl('liveTitle')?.focus({preventScroll:true});
-    cameraEl('cameraStatus') && (cameraEl('cameraStatus').textContent='');
-  });
   cameraEl('cameraClose')?.addEventListener('click',async()=>{cameraEl('cameraModal').classList.add('hidden');await stopCamera();});
   cameraEl('cameraSwitch')?.addEventListener('click',async()=>{cameraState.facing=cameraState.facing==='environment'?'user':'environment';await stopCamera();await openCamera(cameraState.mode);});
   cameraEl('cameraCapture')?.addEventListener('click',()=>{
@@ -257,7 +240,7 @@
     cameraState.chunks=[];cameraState.recorder=new MediaRecorder(cameraState.stream,mime?{mimeType:mime}:undefined);
     cameraState.recorder.ondataavailable=e=>{if(e.data?.size)cameraState.chunks.push(e.data);};
     cameraState.recorder.onstop=()=>{cameraState.recordedBlob=new Blob(cameraState.chunks,{type:cameraState.recorder.mimeType||'video/webm'});cameraEl('cameraUse').classList.remove('hidden');cameraEl('cameraStatus').textContent='Aufnahme beendet. Du kannst sie jetzt verwenden.';cameraEl('cameraRecord').textContent='● Erneut aufnehmen';};
-    cameraState.recorder.start();cameraEl('cameraRecord').textContent='■ Aufnahme stoppen';cameraEl('cameraStatus').textContent='Aufnahme läuft …';window.__gtRecordLimitStop=()=>{if(cameraState.recorder&&cameraState.recorder.state==='recording')cameraState.recorder.stop();};
+    cameraState.recorder.start();cameraEl('cameraRecord').textContent='■ Aufnahme stoppen';cameraEl('cameraStatus').textContent='Aufnahme läuft …';
   });
   cameraEl('cameraUse')?.addEventListener('click',async()=>{if(!cameraState.recordedBlob)return;assignCapturedFile('videoFile',cameraState.recordedBlob,'gametik-video-'+Date.now()+'.webm');cameraEl('cameraStatus').textContent='Video wurde im Upload-Formular ausgewählt.';await stopCamera();cameraEl('cameraModal').classList.add('hidden');});
   cameraEl('cameraModal')?.addEventListener('click',e=>{if(e.target===cameraEl('cameraModal')){cameraEl('cameraModal').classList.add('hidden');stopCamera();}});
@@ -399,7 +382,7 @@
       const list=(d.videos||[]).filter(v=>String(v.visibility||'public')!=='private' || (me&&String(v.user_id)===String(me.id)))
         .filter(v=>!q || (`${v.username} ${v.caption||''} ${(v.hashtags||[]).join(' ')}`).toLowerCase().includes(q));
       if(!list.length){out.innerHTML='<div class="empty">Keine passenden Videos gefunden.</div>';return;}
-      out.innerHTML=list.map(v=>`<article class="video-card"><div class="video-head"><div style="flex:1"><button type="button" class="feed-profile-link" data-open-user-profile="${esc(v.user_id)}">@${esc(v.username)}</button><div class="muted tiny">${new Date(v.created_at).toLocaleString()}</div></div>${me&&String(me.id)!==String(v.user_id)?`<button class="secondary follow-btn" data-user="${v.user_id}">${v.following?'Folge ich':'＋ Folgen'}</button><button class="secondary block-user-btn" data-user="${v.user_id}">🚫 Blockieren</button>`:''}</div>${v.media_type==='photo'?`<img class="feed-photo" src="${esc(mediaUrl(v.video_url))}" alt="Foto von ${esc(v.username)}" style="display:block;width:100%;max-height:70vh;object-fit:contain;background:#05050a">`:`<video src="${esc(mediaUrl(v.video_url))}" controls playsinline preload="metadata"></video>`}<div class="video-meta">${esc(v.caption||'')}<div class="muted tiny">${esc((v.hashtags||[]).join(' '))}</div><div class="actions"><button class="secondary" type="button" onclick="navigator.clipboard?.writeText(location.origin)">Link kopieren</button></div></div></article>`).join('');
+      out.innerHTML=list.map(v=>`<article class="video-card"><div class="video-head"><div style="flex:1"><b>@${esc(v.username)}</b><div class="muted tiny">${new Date(v.created_at).toLocaleString()}</div></div>${me&&String(me.id)!==String(v.user_id)?`<button class="secondary follow-btn" data-user="${v.user_id}">${v.following?'Folge ich':'＋ Folgen'}</button><button class="secondary block-user-btn" data-user="${v.user_id}">🚫 Blockieren</button>`:''}</div>${v.media_type==='photo'?`<img class="feed-photo" src="${esc(mediaUrl(v.video_url))}" alt="Foto von ${esc(v.username)}" style="display:block;width:100%;max-height:70vh;object-fit:contain;background:#05050a">`:`<video src="${esc(mediaUrl(v.video_url))}" controls playsinline preload="metadata"></video>`}<div class="video-meta">${esc(v.caption||'')}<div class="muted tiny">${esc((v.hashtags||[]).join(' '))}</div><div class="actions"><button class="secondary" type="button" onclick="navigator.clipboard?.writeText(location.origin)">Link kopieren</button></div></div></article>`).join('');
     }catch(e){out.innerHTML=`<div class="empty">Suche nicht verfügbar: ${esc(e.message)}</div>`;}
   }
   $('exploreResults')?.addEventListener('click',async e=>{const block=e.target.closest('.block-user-btn');const b=e.target.closest('.follow-btn');if(!b&&!block)return;try{if(!token){$('authModal').classList.remove('hidden');throw Error('Bitte zuerst einen Nickname wählen.');}if(block){if(confirm('Diesen Nutzer blockieren?')){await api('/api/users/'+encodeURIComponent(block.dataset.user)+'/block',{method:'POST'});loadExplore();loadFeed();loadStories();}return;}const d=await api('/api/users/'+encodeURIComponent(b.dataset.user)+'/follow',{method:'POST'});b.textContent=d.following?'Folge ich':'＋ Folgen';}catch(err){alert(err.message);}});
