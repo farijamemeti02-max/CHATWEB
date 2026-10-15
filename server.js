@@ -9,6 +9,16 @@ const nodemailer = require('nodemailer');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { Server } = require('socket.io');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
+const { Pool } = require('pg');
+
+// Neon PostgreSQL: stores the complete serialized GameTik state across Render deploys.
+const dbPool = process.env.DATABASE_URL ? new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_SSL === 'disable' ? false : { rejectUnauthorized: false },
+  max: 3, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000
+}) : null;
+let dbSaveQueue = Promise.resolve();
+let databaseReady = false;
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -135,43 +145,74 @@ const liveRooms = new Map();
 let nextVideoId = 1;
 let nextCommentId = 1;
 function serializeMapOfSets(map) { return [...map.entries()].map(([k,v]) => [k, v instanceof Set ? [...v] : v]); }
+function snapshotPersistentState() {
+  return {
+    accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
+    sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
+    videos, chatMessages, privateMessages, gifts, stories,
+    candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
+    friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
+    nextStoryId, nextVideoId, nextCommentId
+  };
+}
 function savePersistentState() {
+  let json;
   try {
-    const data = {
-      accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
-      sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
-      videos, chatMessages, privateMessages, gifts, stories,
-      candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
-      friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
-      nextStoryId, nextVideoId, nextCommentId
-    };
+    json = JSON.stringify(snapshotPersistentState(), (_key, value) => value instanceof Set ? { __gametikType: 'Set', values: [...value] } : value);
     const tmp = stateFile + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data));
+    fs.writeFileSync(tmp, json);
     fs.renameSync(tmp, stateFile);
-  } catch (e) { console.error('GameTik state could not be saved:', e.message); }
+  } catch (e) { console.error('GameTik local state could not be saved:', e.message); }
+  if (dbPool && json) {
+    // Serialize writes so slower requests cannot overwrite newer state.
+    dbSaveQueue = dbSaveQueue.then(async () => {
+      if (!databaseReady) return;
+      await dbPool.query(`INSERT INTO gametik_state (id, payload, updated_at) VALUES (1, $1::jsonb, NOW()) ON CONFLICT (id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = NOW()`, [json]);
+    }).catch(e => console.error('GameTik PostgreSQL save failed:', e.message));
+  }
 }
-function loadPersistentState() {
-  try {
-    if (!fs.existsSync(stateFile)) return;
-    const d = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-    for (const [k,v] of d.accounts || []) accounts.set(k,v);
-    for (const [k,v] of d.passwordResetTokens || []) if (v && Number(v.expiresAt) > Date.now()) passwordResetTokens.set(k,v);
-    for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
-    for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) { v.push(...(d[k]||[])); }
-    for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
-    for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
-    for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
-    for (const [k,v] of d.friendRequests||[]) friendRequests.set(k,v);
-    for (const [k,v] of d.friendships||[]) friendships.set(k,new Set(v||[]));
-    for (const id of d.adminBlockedUsers||[]) adminBlockedUsers.add(id);
-    nextStoryId=d.nextStoryId||1; nextVideoId=d.nextVideoId||1; nextCommentId=d.nextCommentId||1;
-  } catch (e) { console.error('GameTik state could not be loaded:', e.message); }
+function applyPersistentState(d) {
+  for (const [k,v] of d.accounts || []) accounts.set(k,v);
+  for (const [k,v] of d.passwordResetTokens || []) if (v && Number(v.expiresAt) > Date.now()) passwordResetTokens.set(k,v);
+  for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
+  for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) v.push(...(d[k]||[]));
+  for (const video of videos) {
+    if (!(video.likes instanceof Set)) video.likes = new Set(Array.isArray(video.likes) ? video.likes : []);
+    if (!Array.isArray(video.comments)) video.comments = [];
+    if (!Array.isArray(video.ratings)) video.ratings = [];
+    if (!video.reactions || typeof video.reactions !== 'object') video.reactions = {};
+    for (const [kind, value] of Object.entries(video.reactions)) if (!(value instanceof Set)) video.reactions[kind] = new Set(Array.isArray(value) ? value : []);
+  }
+  for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
+  for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
+  for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
+  for (const [k,v] of d.friendRequests||[]) friendRequests.set(k,v);
+  for (const [k,v] of d.friendships||[]) friendships.set(k,new Set(v||[]));
+  for (const id of d.adminBlockedUsers||[]) adminBlockedUsers.add(id);
+  nextStoryId=d.nextStoryId||1; nextVideoId=d.nextVideoId||1; nextCommentId=d.nextCommentId||1;
 }
-loadPersistentState();
-const persistTimer = setInterval(savePersistentState, 2000);
-if (persistTimer.unref) persistTimer.unref();
-process.on('SIGTERM', savePersistentState);
-process.on('SIGINT', savePersistentState);
+function loadLocalPersistentState() {
+  try { if (fs.existsSync(stateFile)) applyPersistentState(JSON.parse(fs.readFileSync(stateFile, 'utf8'), (_key, value) => value && value.__gametikType === 'Set' ? new Set(value.values || []) : value)); }
+  catch (e) { console.error('GameTik local state could not be loaded:', e.message); }
+}
+async function initializePersistence() {
+  if (!dbPool) {
+    loadLocalPersistentState();
+    console.error('WARN: DATABASE_URL is not set. GameTik is using local JSON storage; data may be lost on Render redeploy.');
+    return;
+  }
+  await dbPool.query(`CREATE TABLE IF NOT EXISTS gametik_state (id integer PRIMARY KEY, payload jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT NOW())`);
+  const result = await dbPool.query('SELECT payload FROM gametik_state WHERE id = 1');
+  if (result.rows.length) {
+    applyPersistentState(typeof result.rows[0].payload === 'string' ? JSON.parse(result.rows[0].payload, (_key, value) => value && value.__gametikType === 'Set' ? new Set(value.values || []) : value) : result.rows[0].payload);
+    console.log('GameTik state loaded from PostgreSQL.');
+  } else {
+    loadLocalPersistentState();
+    await dbPool.query(`INSERT INTO gametik_state (id, payload, updated_at) VALUES (1, $1::jsonb, NOW()) ON CONFLICT (id) DO NOTHING`, [JSON.stringify(snapshotPersistentState())]);
+    console.log('GameTik PostgreSQL state table initialized.');
+  }
+  databaseReady = true;
+}
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
   return { salt, hash };
@@ -249,8 +290,11 @@ function purgeExpiredStories() {
     }
   }
 }
-const storyCleanupTimer = setInterval(purgeExpiredStories, 15 * 60 * 1000);
+const storyCleanupTimer = setInterval(() => { purgeExpiredStories(); savePersistentState(); }, 15 * 60 * 1000);
 if (typeof storyCleanupTimer.unref === 'function') storyCleanupTimer.unref();
+// Safety net: persist state changes from routes/realtime handlers that do not explicitly save.
+const stateFlushTimer = setInterval(savePersistentState, 2000);
+if (typeof stateFlushTimer.unref === 'function') stateFlushTimer.unref();
 
 function getSession(req) {
   const header = req.headers.authorization || '';
@@ -372,7 +416,7 @@ function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,ne
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.status(dbPool && databaseReady ? 200 : 503).json({ ok: Boolean(dbPool && databaseReady), service: 'gametik', mode: dbPool && databaseReady ? 'postgresql' : 'file-backed', storagePath: dataRoot, persistentStorage: Boolean(dbPool && databaseReady), database: dbPool && databaseReady ? 'postgresql-connected' : 'DATABASE_URL-missing-or-not-ready', secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
@@ -605,6 +649,7 @@ app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(r
     created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
   };
   stories.push(story);
+  savePersistentState();
   res.status(201).json({ story });
 }));
 app.delete('/api/stories/:id', auth, (req, res) => {
@@ -652,6 +697,7 @@ app.post('/api/videos', auth, (req,res,next) => postUpload.fields([{ name: 'vide
     created_at: new Date().toISOString(), likes: new Set(), comments: [], reactions: {}, ratings: []
   };
   videos.push(video);
+  savePersistentState();
   res.status(201).json({ video: { ...video, likes: undefined, comments: undefined, like_count: 0, comment_count: 0 } });
 }));
 app.delete('/api/videos/:id', auth, (req,res) => {
@@ -1160,4 +1206,20 @@ app.use((err,_req,res,_next) => {
   const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : (err.status || (err instanceof multer.MulterError ? 400 : 500));
   res.status(status).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Datei zu groß. Videos maximal 35 MB, Profilbilder maximal 3 MB.' : (err.message || 'Interner Fehler.') });
 });
-httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Speicher: ${dataRoot}${dataRoot === requestedDataRoot ? '' : ' (AUSWEICHORDNER – nicht dauerhaft auf Render)'}.`));
+initializePersistence().then(() => {
+  httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Speicherung: ${dbPool && databaseReady ? 'Neon PostgreSQL' : 'lokale JSON-Datei (nicht dauerhaft auf Render)'}.`));
+}).catch(error => {
+  console.error('GameTik konnte die Datenbank nicht initialisieren:', error.message);
+  // Fail closed: avoid serving an apparently healthy app while configured DB is unavailable.
+  process.exit(1);
+});
+async function shutdown(signal) {
+  console.log(`GameTik wird beendet (${signal}); speichere letzten Stand...`);
+  clearInterval(stateFlushTimer);
+  clearInterval(storyCleanupTimer);
+  try { savePersistentState(); await dbSaveQueue; if (dbPool) await dbPool.end(); } catch (e) { console.error('Fehler beim Beenden:', e.message); }
+  process.exit(0);
+}
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
+process.on('beforeExit', () => { if (dbPool) dbPool.end().catch(() => {}); });
