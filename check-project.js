@@ -8,6 +8,7 @@ const html = read('index.html');
 const live = read('live.js');
 const pkg = JSON.parse(read('package.json'));
 const required = [
+  [server.includes("app.set('trust proxy', 1)"), 'Render-Proxy-Vertrauen für korrekte IP-basierte Admin-Sperre fehlt'],
   [server.includes("app.post('/api/live/create'"), 'Live-Stream-Erstellung fehlt'],
   [server.includes("app.post('/api/live/:id/join'"), 'Live-Join-Route fehlt'],
   [server.includes("app.post('/api/live/:id/end'"), 'Live-Ende-Route fehlt'],
