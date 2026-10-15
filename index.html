@@ -847,6 +847,15 @@ input,select,textarea{
     <section id="exploreView" class="panel hidden">
       <h2 class="section-title">⌕ Entdecken</h2>
       <p class="muted tiny">Suche in den aktuell geladenen GameTik-Videos nach Nutzern, Beschreibungen und Hashtags.</p>
+      <div class="gt-discover-categories" role="group" aria-label="Entdecken-Kategorien">
+        <button type="button" class="gt-discover-chip active" data-discover-category="videos">▶ Videos</button>
+        <button type="button" class="gt-discover-chip" data-discover-category="music">♫ Musik suchen</button>
+        <button type="button" class="gt-discover-chip" data-discover-category="images">▧ Bilder</button>
+        <button type="button" class="gt-discover-chip" data-discover-category="gaming">🎮 Gaming</button>
+        <button type="button" class="gt-discover-chip" data-discover-category="travel">✦ Reisen</button>
+        <button type="button" class="gt-discover-chip" data-discover-category="gifts">♔ Geschenke</button>
+      </div>
+      <div id="gtDiscoverNotice" class="gt-discover-notice" aria-live="polite">Entdecke Videos aus der GameTik-Community.</div>
       <input id="exploreSearch" type="search" placeholder="Nutzer, Video oder #Hashtag suchen …" aria-label="GameTik durchsuchen">
       <div class="row" style="flex-wrap:wrap;margin:10px 0">
         <button type="button" class="secondary explore-tag" data-query="#gametik">#gametik</button>
@@ -1263,6 +1272,93 @@ document.addEventListener('DOMContentLoaded',()=>{
  // Keep bottom navigation labels and live state aligned without changing the admin page.
 })();
 </script>
+
+<style id="gametik-navigation-discovery-193">
+/* Fix: .profile-page had display:block!important and overrode .hidden, so the profile leaked into every view. */
+.profile-page.hidden,#profileView.hidden{display:none!important;visibility:hidden!important}
+#profileView:not(.hidden){display:block!important}
+/* Stories are intentionally shown in the profile area, not as a second profile-like section on Home. */
+#feedView .feed-stories{display:none!important}
+.gt-discover-categories{display:flex;gap:7px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:thin;overscroll-behavior-x:contain}
+.gt-discover-chip{flex:0 0 auto;border:1px solid #4c4b70;border-radius:999px;padding:9px 13px;background:linear-gradient(145deg,#101426,#171126);color:#edf3ff;font-size:.88rem;font-weight:800;box-shadow:inset 0 0 0 1px #ffffff06;white-space:nowrap}
+.gt-discover-chip.active{border-color:#a4eaff;background:linear-gradient(110deg,#ff28d2,#925cff 55%,#24dfff);color:#fff;box-shadow:0 0 13px #24dfff30}
+.gt-discover-notice{padding:10px 12px;margin:0 0 10px;border:1px solid #292e49;border-radius:13px;background:linear-gradient(120deg,#101426,#171126);color:#bfc8df;font-size:.88rem}
+.gt-travel-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.gt-travel-card{position:relative;min-height:150px;aspect-ratio:4/5;border:1px solid #4a4b70;border-radius:16px;overflow:hidden;background:#0b1020}
+.gt-travel-card img{width:100%;height:100%;position:absolute;inset:0;object-fit:cover}
+.gt-travel-card span{position:absolute;inset:auto 0 0;padding:28px 10px 10px;color:white;font-weight:850;background:linear-gradient(transparent,#050611e8)}
+@media(max-width:700px){.gt-discover-categories{margin:0 -2px}.gt-discover-chip{padding:8px 11px;font-size:.82rem}.gt-travel-card{min-height:125px}}
+</style>
+<script id="gametik-discovery-navigation-193">
+(function(){
+  function init(){
+    const explore=document.getElementById('exploreView');
+    const results=document.getElementById('exploreResults');
+    const search=document.getElementById('exploreSearch');
+    const notice=document.getElementById('gtDiscoverNotice');
+    if(!explore||!results||explore.dataset.gtDiscoverReady)return;
+    explore.dataset.gtDiscoverReady='1';
+    let category='videos';
+    const messages={videos:'Entdecke Videos aus der GameTik-Community.',music:'Musik entdecken: Suche nach Songtiteln, Künstlernamen oder #Musik im Suchfeld.',images:'Bilder aus der Community werden hier angezeigt, sobald sie als Beiträge geladen sind.',gaming:'Gaming entdecken: Clips, Spielideen und Community-Inhalte.',travel:'Montenegro und die Adriaküste – Reiseinspiration.',gifts:'Geschenke sind für LIVE verfügbar. Öffne einen Stream, um Geschenke zu senden.'};
+    let travel=null;
+    function ensureTravel(){
+      if(travel)return travel;
+      travel=document.createElement('div');travel.className='gt-travel-gallery';travel.id='gtTravelGallery';
+      const places=[
+        ['Küste entdecken','https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=900&q=85'],
+        ['Inseln & Buchten','https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=900&q=85'],
+        ['Meer & Strand','https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=900&q=85'],
+        ['Altstadt & Urlaub','https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=900&q=85']
+      ];
+      places.forEach(([label,src])=>{const card=document.createElement('article');card.className='gt-travel-card';const img=document.createElement('img');img.loading='lazy';img.alt=label;img.src=src;const caption=document.createElement('span');caption.textContent=label;card.append(img,caption);travel.appendChild(card)});
+      return travel;
+    }
+    function apply(){
+      if(notice)notice.textContent=messages[category]||messages.videos;
+      const query=(search?.value||'').trim().toLowerCase();
+      const gallery=ensureTravel();
+      if(category==='travel'){
+        results.classList.add('hidden');gallery.classList.remove('hidden');
+        if(!gallery.isConnected)results.parentNode.insertBefore(gallery,results);
+        return;
+      }
+      gallery.classList.add('hidden');results.classList.remove('hidden');
+      const cards=[...results.children].filter(el=>!el.classList.contains('empty'));
+      let shown=0;
+      cards.forEach(card=>{
+        const text=(card.innerText||card.textContent||'').toLowerCase();
+        const isImage=!!card.querySelector('img') && !card.querySelector('video');
+        const isVideo=!!card.querySelector('video') || /video|clip|▶/.test(text);
+        let match=true;
+        if(category==='images')match=isImage;
+        else if(category==='videos')match=isVideo || !isImage;
+        else if(category==='music')match=/musik|music|song|audio|artist|track|#musik/.test(text);
+        else if(category==='gaming')match=/gaming|game|spiel|gamer|#gaming/.test(text);
+        else if(category==='gifts')match=/geschenk|gift|live/.test(text);
+        if(query)match=match&&text.includes(query);
+        card.classList.toggle('hidden',!match);if(match)shown++;
+      });
+      if(cards.length && shown===0){
+        let empty=results.querySelector('.gt-category-empty');
+        if(!empty){empty=document.createElement('div');empty.className='empty gt-category-empty';results.appendChild(empty)}
+        empty.textContent=category==='images'?'Noch keine passenden Bilder geladen. Lade Bilder über „Erstellen“ hoch.':category==='music'?'Keine passenden Musikbeiträge gefunden. Versuche einen anderen Suchbegriff.':'Keine passenden Beiträge gefunden.';
+      }else results.querySelector('.gt-category-empty')?.remove();
+    }
+    explore.querySelectorAll('[data-discover-category]').forEach(btn=>btn.addEventListener('click',()=>{
+      category=btn.dataset.discoverCategory;
+      explore.querySelectorAll('[data-discover-category]').forEach(b=>b.classList.toggle('active',b===btn));
+      if(search){search.placeholder=category==='music'?'Musik, Künstler oder Song suchen …':'Nutzer, Video oder #Hashtag suchen …';}
+      apply();
+    }));
+    search?.addEventListener('input',apply);
+    const observer=new MutationObserver(()=>{if(category!=='travel')apply()});
+    observer.observe(results,{childList:true,subtree:true});
+    apply();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
 </body>
 </html>
 <style id="gametik-camera-modern-v192">

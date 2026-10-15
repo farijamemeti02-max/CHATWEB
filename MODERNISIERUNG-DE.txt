@@ -7,3 +7,12 @@ GameTik Mobil – Version 1.9.2
 - Admin-Datei bleibt unverändert.
 
 Hinweis: Der Live-Shortcut öffnet den vorhandenen Live-Startablauf. Tatsächliche Live-Übertragung muss nach dem Deploy mit der Live-Dienst-Konfiguration getestet werden.
+
+
+Version 1.9.3 – Navigation und Entdecken
+- Fehler behoben, durch den die Profilansicht trotz Navigation sichtbar bleiben konnte: die CSS-Regel .profile-page hat .hidden überschrieben.
+- Story-Leiste aus Home ausgeblendet; Story-Erstellung bleibt im Profilbereich.
+- Entdecken um kompakte Kategorien für Videos, Musik-Suche, Bilder, Gaming, Reisen und Geschenke ergänzt.
+- Reisebereich enthält responsive Bildkarten als visuelle Reiseinspiration; die Bilder sind externe Unsplash-Bilder und nicht als verifizierte Aufnahmen konkreter Montenegro-Orte gekennzeichnet.
+- Keine Datenbank- oder Cloudflare-R2-Einstellungen geändert. admin.html bleibt unverändert.
+- Statische Prüfung bestätigt keine Live-Funktionstests; Likes-Algorithmus, Geschenke an Freunde und echte Inhaltsfilter über mehrere Datentypen benötigen weitere Backend-/Frontend-Arbeit.
