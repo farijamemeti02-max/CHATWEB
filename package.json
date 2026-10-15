@@ -1,6 +1,6 @@
 {
   "name": "gametik",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "GAMETIK social platform with persistent PostgreSQL state, Cloudflare R2 media, and Brevo HTTPS transactional email",
   "main": "server.js",
   "scripts": {

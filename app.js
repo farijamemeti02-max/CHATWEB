@@ -225,6 +225,16 @@
   }
   cameraEl('cameraPhotoBtn')?.addEventListener('click',()=>openCamera('photo'));
   cameraEl('cameraVideoBtn')?.addEventListener('click',()=>openCamera('video'));
+  cameraEl('cameraGoLive')?.addEventListener('click',async()=>{
+    cameraEl('cameraModal')?.classList.add('hidden');
+    await stopCamera();
+    showView('feed','home');
+    const liveTitle=cameraEl('liveTitle');
+    if(liveTitle && !liveTitle.value.trim()){liveTitle.value='GameTik LIVE';}
+    cameraEl('livePanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    cameraEl('liveTitle')?.focus({preventScroll:true});
+    cameraEl('cameraStatus') && (cameraEl('cameraStatus').textContent='');
+  });
   cameraEl('cameraClose')?.addEventListener('click',async()=>{cameraEl('cameraModal').classList.add('hidden');await stopCamera();});
   cameraEl('cameraSwitch')?.addEventListener('click',async()=>{cameraState.facing=cameraState.facing==='environment'?'user':'environment';await stopCamera();await openCamera(cameraState.mode);});
   cameraEl('cameraCapture')?.addEventListener('click',()=>{

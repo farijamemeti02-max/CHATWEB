@@ -1,10 +1,9 @@
-GameTik – mobile Modernisierung
+GameTik Mobil – Version 1.9.2
 
-Änderungen in dieser Version:
-- Feste, kompakte mobile Schnellnavigation: Home, Entdecken, Erstellen, Posteingang und Profil.
-- Neon-Pink/Blau passend zum bestehenden GameTik-Design.
-- Kompaktere Live-Chat-, Spiel-, Geschenk- und Mixer-Bereiche auf kleinen Bildschirmen.
-- Kameraaufnahme-Limit wählbar: 10, 20, 30 oder 60 Sekunden; Aufnahme stoppt automatisch.
-- Admin-Datei wurde nicht geändert.
+Änderungen dieser Version:
+- In der Kamera-Vorschau gibt es jetzt einen gut sichtbaren „Live starten“-Schnellzugriff. Er führt zum Live-Bereich und fokussiert den Streamtitel; der Nutzer startet die Übertragung danach bewusst über den vorhandenen Live-Start-Button.
+- Kamera-Vorschau und Foto-/Video-Steuerung wurden auf Mobilgeräten kompakter gestaltet.
+- Foto-/Video-Aktionskarten im Erstellen-Bereich wurden modernisiert und verkleinert.
+- Admin-Datei bleibt unverändert.
 
-Wichtig: Diese Änderungen sind lokal geprüft. Bitte nach Deployment auf Render die Navigation, Kamera-Berechtigung und Live-Funktionen auf dem Handy testen. Unread-Badges für Nachrichten/Anfragen benötigen weiterhin echte Zähler aus der jeweiligen Backend-Funktion; die Anzeige wird nicht als bestätigte serverseitige Benachrichtigungslogik ausgegeben.
+Hinweis: Der Live-Shortcut öffnet den vorhandenen Live-Startablauf. Tatsächliche Live-Übertragung muss nach dem Deploy mit der Live-Dienst-Konfiguration getestet werden.

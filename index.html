@@ -995,7 +995,7 @@ input,select,textarea{
     <section class="panel"><h2 class="section-title">Community-Regeln</h2><p class="tiny muted">Respektvoll bleiben. Keine illegalen Inhalte, Belästigung oder fremden privaten Daten. Melde problematische Inhalte dem Betreiber.</p></section>
   </aside>
 </div>
-<div id="cameraModal" class="camera-modal hidden" role="dialog" aria-modal="true" aria-label="GameTik Kamera"><div class="camera-card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><strong id="cameraTitle">GameTik Kamera</strong><button type="button" class="secondary" id="cameraClose">Schließen ✕</button></div><video id="cameraPreview" class="camera-preview" autoplay muted playsinline></video><canvas id="cameraCanvas" hidden></canvas><div id="cameraStatus" class="camera-status">Kamerazugriff wird vorbereitet …</div><div class="camera-tools"><button type="button" class="secondary" id="cameraSwitch">Kamera wechseln</button><button type="button" class="camera-shutter" id="cameraCapture" aria-label="Foto aufnehmen" title="Foto aufnehmen"></button><button type="button" class="secondary hidden" id="cameraRecord">● Aufnahme starten</button><button type="button" class="secondary hidden" id="cameraUse">Aufnahme verwenden</button></div></div></div>
+<div id="cameraModal" class="camera-modal hidden" role="dialog" aria-modal="true" aria-label="GameTik Kamera"><div class="camera-card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><strong id="cameraTitle">GameTik Kamera</strong><button type="button" class="secondary" id="cameraClose">Schließen ✕</button></div><video id="cameraPreview" class="camera-preview" autoplay muted playsinline></video><canvas id="cameraCanvas" hidden></canvas><div id="cameraStatus" class="camera-status">Kamerazugriff wird vorbereitet …</div><div class="camera-tools"><button type="button" class="secondary" id="cameraSwitch">↻ Kamera wechseln</button><button type="button" class="camera-shutter" id="cameraCapture" aria-label="Foto aufnehmen" title="Foto aufnehmen"></button><button type="button" class="secondary hidden" id="cameraRecord">● Aufnahme starten</button><button type="button" class="secondary hidden" id="cameraUse">✓ Aufnahme verwenden</button></div><button type="button" id="cameraGoLive" class="camera-live-launch">🔴 Live starten <span>Direkt aus der Kamera streamen</span></button></div></div>
 <footer>GAMETIK · Deine Welt. Dein Feed. · Bitte teile keine privaten Daten.</footer>
 <div id="storyModal" class="story-modal hidden" role="dialog" aria-modal="true" aria-label="Story ansehen">
   <div class="story-viewer"><div class="story-viewer-head"><div id="storyViewerTitle">GameTik Story</div><button id="storyViewerClose" class="secondary" type="button" aria-label="Story schließen">✕</button></div><div id="storyViewerMedia" class="story-viewer-media"></div><div id="storyViewerFoot" class="story-viewer-foot"></div><div class="row" style="padding:0 12px 12px"><button id="storyPrev" class="secondary" type="button">← Zurück</button><button id="storyNext" type="button" style="margin-left:auto">Weiter →</button></div></div>
@@ -1265,3 +1265,16 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 </body>
 </html>
+<style id="gametik-camera-modern-v192">
+/* GameTik mobile camera: compact controls, prominent live shortcut */
+.camera-card{width:min(560px,100%);max-height:calc(100dvh - 28px);overflow:auto;padding:12px;border-radius:24px;background:radial-gradient(ellipse at 100% 0%,#24dfff18,transparent 45%),radial-gradient(ellipse at 0% 100%,#ff28d21c,transparent 45%),linear-gradient(145deg,#111426,#0a0e1b);border-color:#7961bd;box-shadow:0 0 28px #24dfff18,0 24px 80px #000c}
+.camera-card .camera-preview{max-height:48dvh;aspect-ratio:3/4;border:1px solid #46516e;border-radius:20px}
+.camera-card .camera-tools{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;gap:8px;margin:10px 0}
+.camera-card .camera-tools button{min-width:0;padding:10px 8px;font-size:13px;border-radius:14px}
+.camera-card .camera-shutter{width:58px;height:58px;justify-self:center;border-radius:50%;background:linear-gradient(135deg,#ff28d2,#8b5cff 55%,#24dfff);border:4px solid #fff;box-shadow:0 0 0 3px #24dfff66,0 0 18px #ff28d255}
+.camera-live-launch{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;margin-top:8px;padding:12px 14px;border:1px solid #ff9de8;border-radius:16px;background:linear-gradient(100deg,#ff28d2,#925cff 55%,#24dfff);color:white;font-weight:850;box-shadow:0 0 18px #ff28d233}
+.camera-live-launch span{font-size:12px;font-weight:600;opacity:.92}
+#uploadView .camera-action{min-height:68px;padding:10px 12px;border-radius:17px;background:linear-gradient(130deg,#11182a,#17132a);border-color:#62558e;box-shadow:inset 0 1px #ffffff0c,0 7px 18px #0003}
+#uploadView .camera-action .camera-icon{width:42px;height:42px;border-radius:13px;font-size:21px}
+@media(max-width:520px){.camera-card .camera-preview{max-height:43dvh}.camera-card .camera-tools{grid-template-columns:1fr 58px 1fr}.camera-live-launch{padding:11px}.camera-live-launch span{flex-basis:100%;text-align:center}}
+</style>
