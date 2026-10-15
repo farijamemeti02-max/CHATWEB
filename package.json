@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
+    "check": "node --check server.js && node --check app.js && node --check live.js"
   },
   "engines": {
     "node": "22.x"
@@ -17,7 +17,7 @@
     "multer": "^2.0.2",
     "socket.io": "^4.8.1",
     "livekit-server-sdk": "^2.19.1",
-    "@aws-sdk/client-s3": "^3.883.0",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^6.10.1",
+    "@aws-sdk/client-s3": "^3.800.0"
   }
 }

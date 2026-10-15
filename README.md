@@ -11,17 +11,6 @@ Node.js 20 oder neuer installieren, dann `npm install`, `npm run check` und `npm
 
 Der Express-Startcode ist bereits in `server.js` integriert: `process.env.PORT` wird für Render verwendet, `GET /` liefert die eigentliche GameTik-Startseite und `httpServer.listen(PORT, '0.0.0.0')` startet den HTTP-Server einschließlich Socket.IO. Den einfachen Beispieltext `Hello World!` verwenden wir absichtlich nicht als Startseiten-Antwort, weil dadurch die GameTik-Webseite ersetzt würde.
 
-## Passwort zurücksetzen per E-Mail (Brevo SMTP)
-- In Render unter **Environment** die Variablen `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` setzen. `SMTP_PASS` ist der geheime SMTP-Schlüssel und darf nicht öffentlich geteilt werden.
-- `APP_BASE_URL` muss die vollständige HTTPS-Adresse der veröffentlichten GameTik-Frontendseite sein (z. B. die eigene Netlify-Adresse, ohne abschließenden Pfad).
-- Auf der Anmeldeseite erscheint **Passwort vergessen?**. Der Link ist einmalig und 60 Minuten gültig. Nach erfolgreicher Änderung werden bestehende Sitzungen abgemeldet.
-- E-Mail-Versand kann nur live getestet werden, wenn Render die korrekten SMTP-Daten und `APP_BASE_URL` hat und Brevo den Absender `SMTP_FROM` bestätigt hat.
-
-## Cloudflare R2
-- Der Server nutzt R2 für neue Profilbilder, Story-Medien und Feed-Anhänge, wenn `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID` und `R2_SECRET_ACCESS_KEY` gesetzt sind. `R2_REGION` ist normalerweise `auto`.
-- Wenn R2 nicht vollständig konfiguriert ist, verwendet die Anwendung lokale Uploads; diese sind auf Render ohne Persistent Disk nicht dauerhaft.
-- R2 speichert Medienobjekte, aber nicht automatisch Konten und App-Daten. Dafür bleibt `DATA_DIR` auf einer Render Persistent Disk nötig.
-
 ## Neue Funktionen
 - Feed akzeptiert Foto (JPG/PNG/WebP) oder Video (MP4/WebM/MOV), maximal 35 MB je Datei.
 - Eigene Feed-Beiträge können gelöscht werden; der Server prüft die Eigentümerschaft.

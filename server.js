@@ -6,8 +6,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { Server } = require('socket.io');
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
 
 const app = express();
@@ -54,50 +54,26 @@ const uploadRoot = path.join(dataRoot, 'uploads');
 const stateFile = path.join(dataRoot, 'gametik-state.json');
 const videoDir = path.join(uploadRoot, 'videos');
 const avatarDir = path.join(uploadRoot, 'avatars');
-
-const r2Configured = Boolean(process.env.R2_ENDPOINT && process.env.R2_BUCKET && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
-const r2Client = r2Configured ? new S3Client({
+// Cloudflare R2 is used for avatars so they survive Render deploys/restarts.
+const r2Bucket = process.env.R2_BUCKET_NAME || process.env.R2_BUCKET || '';
+const r2PublicUrl = String(process.env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+const r2Endpoint = process.env.R2_ENDPOINT || (process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '');
+const r2Ready = Boolean(r2Endpoint && r2Bucket && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY && r2PublicUrl);
+const r2 = r2Ready ? new S3Client({
   region: process.env.R2_REGION || 'auto',
-  endpoint: process.env.R2_ENDPOINT,
+  endpoint: r2Endpoint,
   credentials: { accessKeyId: process.env.R2_ACCESS_KEY_ID, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY }
 }) : null;
-
-function mediaObjectKeyFromUrl(mediaUrl) {
-  if (typeof mediaUrl !== 'string' || !mediaUrl.startsWith('/media/')) return null;
-  const key = mediaUrl.slice('/media/'.length);
-  if (!key || key.split('/').some(part => !part || part === '.' || part === '..')) return null;
-  return key;
+// SMTP is initialized lazily so a temporary email outage cannot prevent the app from starting.
+function smtpTransport() {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass || !process.env.SMTP_FROM) throw new Error('SMTP-Konfiguration unvollständig: SMTP_HOST, SMTP_USER, SMTP_PASS und SMTP_FROM prüfen.');
+  const port = Number(process.env.SMTP_PORT || 587);
+  return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
 }
-async function persistUploadedFile(file, folder, localDir) {
-  if (!file) return null;
-  if (!r2Configured) return '/uploads/' + (folder === 'avatars' ? 'avatars/' : 'videos/') + file.filename;
-  const key = folder + '/' + file.filename;
-  try {
-    await r2Client.send(new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: key,
-      Body: await fs.promises.readFile(file.path),
-      ContentType: file.mimetype || 'application/octet-stream'
-    }));
-    await fs.promises.unlink(file.path).catch(() => {});
-    return '/media/' + key;
-  } catch (error) {
-    await fs.promises.unlink(file.path).catch(() => {});
-    throw error;
-  }
-}
-async function deleteStoredMedia(mediaUrl, localDir) {
-  const key = mediaObjectKeyFromUrl(mediaUrl);
-  if (key && r2Configured) {
-    try { await r2Client.send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET, Key: key })); }
-    catch (error) { console.error('R2 media delete failed:', error.message); }
-    return;
-  }
-  if (typeof mediaUrl === 'string' && mediaUrl.startsWith('/uploads/')) {
-    const filename = path.basename(mediaUrl);
-    if (filename && filename !== '.' && filename !== path.sep) fs.unlink(path.join(localDir, filename), () => {});
-  }
-}
+const passwordResetTokens = new Map();
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -139,7 +115,6 @@ app.use(express.static(publicDir, { dotfiles: 'deny', index: false }));
 
 const sessions = new Map();
 const accounts = new Map(); // normalized username -> persistent account data
-const passwordResetTokens = new Map(); // SHA-256 token hash -> { accountKey, expiresAt }
 const adminSessions = new Map();
 const adminLoginAttempts = new Map();
 const videos = [];
@@ -163,8 +138,7 @@ function serializeMapOfSets(map) { return [...map.entries()].map(([k,v]) => [k, 
 function savePersistentState() {
   try {
     const data = {
-      accounts: [...accounts.entries()],
-      passwordResetTokens: [...passwordResetTokens.entries()],
+      accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
       sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
       videos, chatMessages, privateMessages, gifts, stories,
       candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
@@ -181,7 +155,7 @@ function loadPersistentState() {
     if (!fs.existsSync(stateFile)) return;
     const d = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     for (const [k,v] of d.accounts || []) accounts.set(k,v);
-    for (const [k,v] of d.passwordResetTokens || []) passwordResetTokens.set(k,v);
+    for (const [k,v] of d.passwordResetTokens || []) if (v && Number(v.expiresAt) > Date.now()) passwordResetTokens.set(k,v);
     for (const [token,u] of d.sessions || []) sessions.set(token,{...u,likes:new Set(u.likes||[]),following:new Set(u.following||[]),blockedUsers:new Set(u.blockedUsers||[])});
     for (const [k,v] of Object.entries({videos,chatMessages,privateMessages,gifts,stories})) { v.push(...(d[k]||[])); }
     for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
@@ -248,7 +222,7 @@ const postUpload = multer({ storage: videoStorage, limits: { fileSize: MAX_VIDEO
   const message = f.fieldname === 'music' ? 'Erlaubt sind MP3, M4A, AAC, OGG, WAV, WebM und FLAC.' : f.fieldname === 'document' ? 'Dokumentformat nicht erlaubt. Erlaubt: PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, CSV, RTF oder ZIP.' : 'Erlaubt sind gängige Bildformate (JPG, PNG, WebP, GIF, AVIF, BMP) sowie MP4, WebM, MOV, OGV und M4V.';
   cb(allowed ? null : Object.assign(new Error(message), { status: 400 }), allowed);
 }});
-const avatarUpload = multer({ storage: avatarStorage, limits: { fileSize: MAX_AVATAR_BYTES, files: 1 }, fileFilter: (_req, f, cb) => {
+const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_AVATAR_BYTES, files: 1 }, fileFilter: (_req, f, cb) => {
   const allowed = ['image/jpeg', 'image/png', 'image/webp'].includes(f.mimetype);
   cb(allowed ? null : Object.assign(new Error('Erlaubt sind JPG, PNG und WebP.'), { status: 400 }), allowed);
 }});
@@ -268,7 +242,9 @@ function purgeExpiredStories() {
   for (let i = stories.length - 1; i >= 0; i--) {
     const story = stories[i];
     if (Date.parse(story.expires_at) <= now) {
-      if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
+      if (story.media_url && story.media_url.startsWith('/uploads/videos/')) {
+        fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+      }
       stories.splice(i, 1);
     }
   }
@@ -355,9 +331,7 @@ app.delete('/api/admin/videos/:id', adminAuth, (req, res) => {
   const index = videos.findIndex(v => v.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Video nicht gefunden.' });
   const [video] = videos.splice(index, 1);
-  if (video.video_url) void deleteStoredMedia(video.video_url, videoDir);
-  if (video.document_url) void deleteStoredMedia(video.document_url, videoDir);
-  if (video.music_url) void deleteStoredMedia(video.music_url, videoDir);
+  if (video.video_url) fs.unlink(path.join(videoDir, path.basename(video.video_url)), () => {});
   for (const user of sessions.values()) user.likes?.delete(video.id);
   res.json({ ok: true });
 });
@@ -365,7 +339,7 @@ app.delete('/api/admin/stories/:id', adminAuth, (req, res) => {
   const index = stories.findIndex(story => story.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Story nicht gefunden.' });
   const [story] = stories.splice(index, 1);
-  if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
+  if (story.media_url) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
   res.json({ ok: true });
 });
 app.patch('/api/admin/users/:id/block', adminAuth, (req, res) => {
@@ -388,40 +362,17 @@ app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   for (const [recipient, list] of friendRequests) friendRequests.set(recipient, list.filter(r => String(r.fromId) !== id));
   for (const set of friendships.values()) set.delete(id);
   for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); }
-  for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) void deleteStoredMedia(v.video_url, videoDir); if (v.document_url) void deleteStoredMedia(v.document_url, videoDir); if (v.music_url) void deleteStoredMedia(v.music_url, videoDir); }
-  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) void deleteStoredMedia(st.media_url, videoDir); }
+  for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
+  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
   savePersistentState();
   res.json({ ok: true });
 });
 
 function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next); }
-app.get('/media/*', asyncRoute(async (req, res) => {
-  if (!r2Configured) return res.status(404).json({ error: 'Cloudflare R2 ist nicht konfiguriert.' });
-  const key = String(req.params[0] || '');
-  if (!key || key.split('/').some(part => !part || part === '.' || part === '..')) return res.status(400).end();
-  const result = await r2Client.send(new GetObjectCommand({
-    Bucket: process.env.R2_BUCKET,
-    Key: key,
-    ...(req.headers.range ? { Range: req.headers.range } : {})
-  }));
-  res.setHeader('Cache-Control', 'private, max-age=300');
-  res.setHeader('Accept-Ranges', 'bytes');
-  if (result.ContentType) res.setHeader('Content-Type', result.ContentType);
-  if (result.ContentLength != null) res.setHeader('Content-Length', result.ContentLength);
-  if (result.ContentRange) res.setHeader('Content-Range', result.ContentRange);
-  if (result.ETag) res.setHeader('ETag', result.ETag);
-  if (result.LastModified) res.setHeader('Last-Modified', result.LastModified.toUTCString());
-  res.status(result.ContentRange ? 206 : 200);
-  if (result.Body && typeof result.Body.pipe === 'function') result.Body.pipe(res);
-  else if (result.Body && typeof result.Body.transformToWebStream === 'function') {
-    const { Readable } = require('stream');
-    Readable.fromWeb(result.Body.transformToWebStream()).pipe(res);
-  } else res.end();
-}));
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', mediaStorage: r2Configured ? 'cloudflare-r2' : 'local-uploads', secretKey: 'passwords-hashed' }));
+app.get('/api/health', (_req,res) => res.json({ ok: true, service: 'gametik', mode: dataRoot === requestedDataRoot ? 'configured-file-store' : 'fallback-file-store', storagePath: dataRoot, persistentStorage: dataRoot === requestedDataRoot && Boolean(process.env.DATA_DIR), database: 'file-backed', secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
   paypalEnabled: Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET),
@@ -445,82 +396,6 @@ app.post('/api/auth/register', (req,res) => {
   const created=createUser(username,id); savePersistentState();
   res.status(201).json({token:created.token,user:publicUser(created.user)});
 });
-const smtpReady = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM);
-let mailTransporter = null;
-function getMailTransporter() {
-  if (!smtpReady()) throw new Error('SMTP-Konfiguration fehlt. Bitte SMTP_HOST, SMTP_USER, SMTP_PASS und SMTP_FROM in Render prüfen.');
-  if (!mailTransporter) {
-    const port = Number(process.env.SMTP_PORT || 587);
-    mailTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure: port === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-    });
-  }
-  return mailTransporter;
-}
-app.post('/api/auth/forgot-password', asyncRoute(async (req, res) => {
-  const email = String(req.body.email || '').trim().toLowerCase();
-  // Always use the same response so the endpoint does not reveal registered addresses.
-  const generic = { ok: true, message: 'Wenn diese E-Mail registriert ist, erhältst du eine Nachricht mit weiteren Schritten.' };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(200).json(generic);
-  const entry = [...accounts.entries()].find(([, account]) => String(account.email || '').toLowerCase() === email);
-  if (!entry) return res.json(generic);
-  const [accountKey, account] = entry;
-  const rawToken = crypto.randomBytes(32).toString('hex');
-  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
-  const expiresAt = Date.now() + 60 * 60 * 1000;
-  for (const [hash, item] of passwordResetTokens) if (item.accountKey === accountKey || item.expiresAt < Date.now()) passwordResetTokens.delete(hash);
-  passwordResetTokens.set(tokenHash, { accountKey, expiresAt });
-  savePersistentState();
-  const baseUrl = String(process.env.APP_BASE_URL || '').trim().replace(/\/$/, '');
-  if (!baseUrl || !/^https:\/\//i.test(baseUrl)) {
-    passwordResetTokens.delete(tokenHash); savePersistentState();
-    console.error('Passwort-Reset nicht gesendet: APP_BASE_URL fehlt oder ist keine HTTPS-Adresse.');
-    return res.json(generic);
-  }
-  const resetUrl = `${baseUrl}/?resetToken=${encodeURIComponent(rawToken)}`;
-  try {
-    await getMailTransporter().sendMail({
-      from: process.env.SMTP_FROM,
-      to: account.email,
-      subject: 'GAMETIK – Passwort zurücksetzen',
-      text: `Hallo ${account.username},\n\nüber diesen Link kannst du dein GAMETIK-Passwort innerhalb von 60 Minuten zurücksetzen:\n${resetUrl}\n\nWenn du das nicht angefordert hast, ignoriere diese E-Mail.`,
-      html: `<p>Hallo ${String(account.username).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},</p><p>Du kannst dein GAMETIK-Passwort über den folgenden Link innerhalb von <b>60 Minuten</b> zurücksetzen:</p><p><a href="${resetUrl}">Passwort zurücksetzen</a></p><p>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p>`
-    });
-  } catch (error) {
-    passwordResetTokens.delete(tokenHash); savePersistentState();
-    console.error('GAMETIK Passwort-Reset-Mail fehlgeschlagen:', error.message);
-    // Keep the public response generic, but report a service failure so the user can retry.
-    return res.status(503).json({ error: 'Die E-Mail konnte gerade nicht gesendet werden. Bitte später erneut versuchen.' });
-  }
-  res.json(generic);
-}));
-app.post('/api/auth/reset-password', (req, res) => {
-  const token = String(req.body.token || '');
-  const password = String(req.body.password || '');
-  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).json({ error: 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.' });
-  if (password.length < 10 || password.length > 128) return res.status(400).json({ error: 'Das Passwort muss 10–128 Zeichen lang sein.' });
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const record = passwordResetTokens.get(tokenHash);
-  if (!record || record.expiresAt < Date.now()) {
-    if (record) { passwordResetTokens.delete(tokenHash); savePersistentState(); }
-    return res.status(400).json({ error: 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.' });
-  }
-  const account = accounts.get(record.accountKey);
-  if (!account) { passwordResetTokens.delete(tokenHash); savePersistentState(); return res.status(400).json({ error: 'Das Konto wurde nicht gefunden.' }); }
-  const credentials = hashPassword(password);
-  account.passwordSalt = credentials.salt;
-  account.passwordHash = credentials.hash;
-  // Invalidate the used token and all other reset links for this account.
-  for (const [hash, item] of passwordResetTokens) if (item.accountKey === record.accountKey) passwordResetTokens.delete(hash);
-  // Revoke existing login sessions for the account after password change.
-  for (const [sessionToken, user] of sessions) if (String(user.id) === String(account.id)) sessions.delete(sessionToken);
-  savePersistentState();
-  res.json({ ok: true, message: 'Passwort geändert. Du kannst dich jetzt mit dem neuen Passwort anmelden.' });
-});
-
 app.post('/api/auth/login', (req,res) => {
   const identity=String(req.body.identity||req.body.username||'').trim();
   const password=String(req.body.password||'');
@@ -531,6 +406,60 @@ app.post('/api/auth/login', (req,res) => {
   if(existing){ token=existing[0]; user=existing[1]; }
   else ({token,user}=createUser(account.username,account.id));
   savePersistentState(); res.json({token,user:publicUser(user)});
+});
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const email = String(req.body.email || req.body.identity || '').trim().toLowerCase();
+  // Same response whether or not the account exists, to avoid disclosing registered emails.
+  const generic = 'Wenn diese E-Mail zu einem Konto gehört, wird ein Link zum Zurücksetzen gesendet.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Bitte gib eine gültige E-Mail-Adresse ein.' });
+  const account = [...accounts.entries()].find(([, a]) => String(a.email || '').toLowerCase() === email);
+  if (!account) return res.json({ message: generic });
+  const appBase = String(process.env.APP_BASE_URL || '').replace(/\/$/, '');
+  if (!appBase || !/^https:\/\//i.test(appBase)) {
+    console.error('Password reset not sent: APP_BASE_URL is missing or not HTTPS.');
+    return res.status(503).json({ error: 'Passwort-Reset ist noch nicht vollständig konfiguriert: APP_BASE_URL in Render prüfen.' });
+  }
+  try {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    // Remove expired tokens and older tokens for the same account.
+    for (const [k, v] of passwordResetTokens) if (Number(v.expiresAt) <= Date.now() || v.accountKey === account[0]) passwordResetTokens.delete(k);
+    passwordResetTokens.set(tokenHash, { accountKey: account[0], expiresAt: Date.now() + 60 * 60 * 1000 });
+    savePersistentState();
+    const link = `${appBase}/?resetToken=${encodeURIComponent(rawToken)}`;
+    const transporter = smtpTransport();
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: 'GameTik – Passwort zurücksetzen',
+      text: `Du hast das Zurücksetzen deines GameTik-Passworts angefordert. Öffne diesen Link innerhalb von 60 Minuten:\n\n${link}\n\nWenn du die Anfrage nicht gestellt hast, ignoriere diese E-Mail.`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><h2>GameTik – Passwort zurücksetzen</h2><p>Du hast das Zurücksetzen deines Passworts angefordert.</p><p><a href="${link}" style="display:inline-block;padding:12px 18px;background:#8b5cf6;color:#fff;border-radius:8px;text-decoration:none">Neues Passwort festlegen</a></p><p>Der Link ist 60 Minuten gültig und kann nur einmal verwendet werden.</p><p>Wenn du das nicht angefordert hast, ignoriere diese E-Mail.</p></div>`
+    });
+    res.json({ message: generic });
+  } catch (mailError) {
+    console.error('GameTik password reset email failed:', mailError.code || mailError.message);
+    res.status(502).json({ error: 'Die E-Mail konnte nicht gesendet werden. Prüfe SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS und ob SMTP_FROM bei Brevo verifiziert ist.' });
+  }
+});
+app.post('/api/auth/reset-password', (req, res) => {
+  const rawToken = String(req.body.token || '');
+  const password = String(req.body.password || '');
+  if (!/^[a-f0-9]{64}$/i.test(rawToken)) return res.status(400).json({ error: 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.' });
+  if (password.length < 10 || password.length > 128) return res.status(400).json({ error: 'Das neue Passwort muss 10–128 Zeichen lang sein.' });
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const record = passwordResetTokens.get(tokenHash);
+  if (!record || Number(record.expiresAt) <= Date.now()) { passwordResetTokens.delete(tokenHash); savePersistentState(); return res.status(400).json({ error: 'Der Reset-Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.' }); }
+  const account = accounts.get(record.accountKey);
+  if (!account) { passwordResetTokens.delete(tokenHash); savePersistentState(); return res.status(400).json({ error: 'Das Konto wurde nicht gefunden. Bitte wende dich an den Support.' }); }
+  const credentials = hashPassword(password);
+  account.passwordSalt = credentials.salt;
+  account.passwordHash = credentials.hash;
+  accounts.set(record.accountKey, account);
+  for (const [k, v] of passwordResetTokens) if (v.accountKey === record.accountKey) passwordResetTokens.delete(k);
+  // Invalidate sessions for this account after password change.
+  for (const [sessionToken, user] of sessions) if (String(user.id) === String(account.id)) sessions.delete(sessionToken);
+  savePersistentState();
+  res.json({ message: 'Passwort erfolgreich geändert. Bitte melde dich mit dem neuen Passwort an.' });
 });
 app.post('/api/guest', (req,res) => {
   const nickname = String(req.body.nickname || '').trim();
@@ -634,17 +563,21 @@ app.get('/api/messages/:userId', auth, (req,res) => {
   ).slice(-100);
   res.json({ messages });
 });
-app.post('/api/me/avatar', auth, (req,res,next) => avatarUpload.single('avatar')(req,res,err => {
+app.post('/api/me/avatar', auth, (req,res,next) => avatarUpload.single('avatar')(req,res,async err => {
   if (err) return next(err);
   if (!req.file) return res.status(400).json({ error: 'Bitte ein Profilbild auswählen.' });
-  (async () => {
-    const previousAvatar = req.user.avatar_url || null;
-    const newAvatar = await persistUploadedFile(req.file, 'avatars', avatarDir);
-    req.user.avatar_url = newAvatar;
-    if (previousAvatar && previousAvatar !== newAvatar) void deleteStoredMedia(previousAvatar, avatarDir);
+  if (!r2Ready || !r2) return res.status(503).json({ error: 'Cloudflare R2 ist nicht vollständig eingerichtet. Prüfe R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME und R2_PUBLIC_URL in Render.' });
+  try {
+    const ext = safeExtension(req.file.mimetype, req.file.originalname) || '.img';
+    const key = `avatars/${String(req.user.id).replace(/[^a-zA-Z0-9_-]/g, '')}/${crypto.randomUUID()}${ext}`;
+    await r2.send(new PutObjectCommand({ Bucket: r2Bucket, Key: key, Body: req.file.buffer, ContentType: req.file.mimetype, CacheControl: 'public, max-age=31536000, immutable' }));
+    req.user.avatar_url = `${r2PublicUrl}/${key}`;
     savePersistentState();
     res.json({ user: publicUser(req.user) });
-  })().catch(next);
+  } catch (uploadError) {
+    console.error('Cloudflare R2 avatar upload failed:', uploadError.name || uploadError.message);
+    res.status(502).json({ error: 'Profilbild konnte nicht in Cloudflare R2 gespeichert werden. Prüfe Bucket, Schlüssel, öffentliche URL und Berechtigungen.' });
+  }
 }));
 app.get('/api/stories', (req, res) => {
   purgeExpiredStories();
@@ -664,18 +597,15 @@ app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(r
   if (type !== 'text' && !req.file) return res.status(400).json({ error: 'Bitte eine Foto- oder Videodatei auswählen.' });
   if (type === 'photo' && !req.file.mimetype.startsWith('image/')) return rejectStory('Für eine Foto-Story bitte ein Bild auswählen.');
   if (type === 'video' && !req.file.mimetype.startsWith('video/')) return rejectStory('Für eine Video-Story bitte ein Video auswählen.');
-  (async () => {
-    const mediaUrl = req.file ? await persistUploadedFile(req.file, 'videos', videoDir) : null;
-    const created = new Date();
-    const story = {
-      id: nextStoryId++, user_id: req.user.id, username: req.user.username,
-      avatar_url: req.user.avatar_url || null, type, caption,
-      media_url: mediaUrl,
-      created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
-    };
-    stories.push(story);
-    res.status(201).json({ story });
-  })().catch(next);
+  const created = new Date();
+  const story = {
+    id: nextStoryId++, user_id: req.user.id, username: req.user.username,
+    avatar_url: req.user.avatar_url || null, type, caption,
+    media_url: req.file ? '/uploads/videos/' + req.file.filename : null,
+    created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
+  };
+  stories.push(story);
+  res.status(201).json({ story });
 }));
 app.delete('/api/stories/:id', auth, (req, res) => {
   purgeExpiredStories();
@@ -684,7 +614,7 @@ app.delete('/api/stories/:id', auth, (req, res) => {
   if (stories[idx].user_id !== req.user.id) return res.status(403).json({ error: 'Du kannst nur deine eigenen Storys löschen.' });
   const story = stories[idx];
   stories.splice(idx, 1);
-  if (story.media_url) void deleteStoredMedia(story.media_url, videoDir);
+  if (story.media_url && story.media_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
   res.json({ ok: true });
 });
 
@@ -706,37 +636,32 @@ app.post('/api/videos', auth, (req,res,next) => postUpload.fields([{ name: 'vide
   const musicFile = req.files?.music?.[0];
   const documentFile = req.files?.document?.[0];
   if (!mediaFile && !documentFile) return res.status(400).json({ error: 'Bitte ein Foto, Video oder Dokument auswählen.' });
-  (async () => {
-    const isPhoto = !!mediaFile && mediaFile.mimetype.startsWith('image/');
-    const videoUrl = mediaFile ? await persistUploadedFile(mediaFile, 'videos', videoDir) : null;
-    const documentUrl = documentFile ? await persistUploadedFile(documentFile, 'documents', videoDir) : null;
-    const musicUrl = musicFile ? await persistUploadedFile(musicFile, 'music', videoDir) : null;
-    const video = {
-      id: nextVideoId++, user_id: req.user.id, username: req.user.username,
-      avatar_url: req.user.avatar_url || null,
-      video_url: videoUrl,
-      media_type: mediaFile ? (isPhoto ? 'photo' : 'video') : 'document',
-      document_url: documentUrl,
-      document_name: documentFile ? String(documentFile.originalname || 'Anhang').replace(/[\r\n]/g, '').slice(0,180) : null,
-      music_url: musicUrl,
-      music_original_name: musicFile ? String(musicFile.originalname || 'Eigene Musik').slice(0,120) : null,
-      caption: String(req.body.caption || '').trim().slice(0,500),
-      hashtags: String(req.body.hashtags || '').split(/\s+/).map(tag => tag.trim()).filter(tag => /^#[\p{L}\p{N}_]{1,40}$/u.test(tag)).slice(0,10),
-      visibility: String(req.body.visibility || 'public') === 'private' ? 'private' : 'public',
-      created_at: new Date().toISOString(), likes: new Set(), comments: [], reactions: {}, ratings: []
-    };
-    videos.push(video);
-    res.status(201).json({ video: { ...video, likes: undefined, comments: undefined, like_count: 0, comment_count: 0 } });
-  })().catch(next);
+  const isPhoto = !!mediaFile && mediaFile.mimetype.startsWith('image/');
+  const video = {
+    id: nextVideoId++, user_id: req.user.id, username: req.user.username,
+    avatar_url: req.user.avatar_url || null,
+    video_url: mediaFile ? '/uploads/videos/' + mediaFile.filename : null,
+    media_type: mediaFile ? (isPhoto ? 'photo' : 'video') : 'document',
+    document_url: documentFile ? '/uploads/videos/' + documentFile.filename : null,
+    document_name: documentFile ? String(documentFile.originalname || 'Anhang').replace(/[\r\n]/g, '').slice(0,180) : null,
+    music_url: musicFile ? '/uploads/videos/' + musicFile.filename : null,
+    music_original_name: musicFile ? String(musicFile.originalname || 'Eigene Musik').slice(0,120) : null,
+    caption: String(req.body.caption || '').trim().slice(0,500),
+    hashtags: String(req.body.hashtags || '').split(/\s+/).map(tag => tag.trim()).filter(tag => /^#[\p{L}\p{N}_]{1,40}$/u.test(tag)).slice(0,10),
+    visibility: String(req.body.visibility || 'public') === 'private' ? 'private' : 'public',
+    created_at: new Date().toISOString(), likes: new Set(), comments: [], reactions: {}, ratings: []
+  };
+  videos.push(video);
+  res.status(201).json({ video: { ...video, likes: undefined, comments: undefined, like_count: 0, comment_count: 0 } });
 }));
 app.delete('/api/videos/:id', auth, (req,res) => {
   const idx = videos.findIndex(v => v.id === Number(req.params.id));
   if (idx < 0) return res.status(404).json({ error: 'Beitrag nicht gefunden.' });
   if (videos[idx].user_id !== req.user.id) return res.status(403).json({ error: 'Du kannst nur deine eigenen Beiträge löschen.' });
   const [item] = videos.splice(idx, 1);
-  if (item.video_url) void deleteStoredMedia(item.video_url, videoDir);
-  if (item.document_url) void deleteStoredMedia(item.document_url, videoDir);
-  if (item.music_url) void deleteStoredMedia(item.music_url, videoDir);
+  if (item.video_url && item.video_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.video_url)), () => {});
+  if (item.document_url && item.document_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.document_url)), () => {});
+  if (item.music_url && item.music_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(item.music_url)), () => {});
   res.json({ ok: true });
 });
 app.post('/api/videos/:id/reaction', auth, (req,res) => {

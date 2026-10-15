@@ -6,7 +6,7 @@
   const localWebServer = ['localhost', '127.0.0.1'].includes(host) && /^https?:$/.test(location.protocol);
   const API_BASE = window.GAMETIK_API_BASE || ((onRender || localWebServer) ? '' : 'https://chatweb-iajl.onrender.com');
   const apiUrl = path => /^https?:\/\//i.test(path) ? path : API_BASE + path;
-  const mediaUrl = path => path && (path.startsWith('/uploads/') || path.startsWith('/media/')) ? API_BASE + path : (path || '');
+  const mediaUrl = path => path && path.startsWith('/uploads/') ? API_BASE + path : (path || '');
   let token = localStorage.getItem('gametik_token') || '';
   let me = null, socket = null, chatMode = 'public', privateRecipientId = '';
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -162,14 +162,26 @@
   let authMode='register';
   function setAuthMode(mode){authMode=mode;const registering=mode==='register';$('authEmailWrap').classList.toggle('hidden',!registering);$('authEmail').required=registering;$('authUsername').maxLength=registering?24:254;$('authUsername').placeholder=registering?'z. B. Gamer2026':'Benutzername oder E-Mail';$('authPassword').autocomplete=registering?'new-password':'current-password';$('authPassword').placeholder=registering?'Mindestens 10 Zeichen':'Dein Passwort';$('authSubmit').textContent=registering?'Konto erstellen':'Anmelden';$('authModeRegister').classList.toggle('secondary',!registering);$('authModeLogin').classList.toggle('secondary',registering);$('authStatus').textContent='';}
   $('authModeRegister').onclick=()=>setAuthMode('register');$('authModeLogin').onclick=()=>setAuthMode('login');
-  $('forgotPasswordOpen').onclick=()=>{$('authModal').classList.add('hidden');$('forgotPasswordModal').classList.remove('hidden');$('forgotPasswordStatus').textContent='';};
-  $('forgotPasswordClose').onclick=()=>{$('forgotPasswordModal').classList.add('hidden');$('authModal').classList.remove('hidden');};
-  $('forgotPasswordForm').onsubmit=async e=>{e.preventDefault();$('forgotPasswordSubmit').disabled=true;try{const d=await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email:$('forgotPasswordEmail').value.trim()})});status('forgotPasswordStatus',d.message||'Falls die Adresse registriert ist, erhältst du eine E-Mail.',true);}catch(err){status('forgotPasswordStatus',err.message);}finally{$('forgotPasswordSubmit').disabled=false;}};
-  const resetTokenFromUrl=new URLSearchParams(window.location.search).get('resetToken');
-  if(resetTokenFromUrl){$('resetPasswordModal').classList.remove('hidden');}
-  $('resetPasswordForm').onsubmit=async e=>{e.preventDefault();const password=$('resetPasswordValue').value;if(password!==$('resetPasswordConfirm').value){status('resetPasswordStatus','Die Passwörter stimmen nicht überein.');return;}$('resetPasswordSubmit').disabled=true;try{const d=await api('/api/auth/reset-password',{method:'POST',body:JSON.stringify({token:resetTokenFromUrl,password})});status('resetPasswordStatus',d.message||'Passwort wurde geändert.',true);window.history.replaceState({},document.title,window.location.pathname);$('resetPasswordForm').reset();window.setTimeout(()=>{$('resetPasswordModal').classList.add('hidden');$('authModal').classList.remove('hidden');setAuthMode('login');},1200);}catch(err){status('resetPasswordStatus',err.message);}finally{$('resetPasswordSubmit').disabled=false;}};
-
   $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;try{const body=authMode==='register'?{username:$('authUsername').value.trim(),email:$('authEmail').value.trim(),password:$('authPassword').value}:{identity:$('authUsername').value.trim(),password:$('authPassword').value};const d=await api(authMode==='register'?'/api/auth/register':'/api/auth/login',{method:'POST',body:JSON.stringify(body)});token=d.token;localStorage.setItem('gametik_token',token);me=d.user;updateAuthUI();$('authModal').classList.add('hidden');if(socket){socket.disconnect();socket=null;}connectChat();showView('feed');}catch(err){status('authStatus',err.message);}finally{$('authSubmit').disabled=false;}};
+  $('forgotPasswordBtn')?.addEventListener('click',async()=>{
+    const email=authMode==='register' ? $('authEmail').value.trim() : $('authUsername').value.trim();
+    if(!email || !email.includes('@')) { status('authStatus','Bitte gib deine registrierte E-Mail-Adresse in das Feld ein.'); return; }
+    const btn=$('forgotPasswordBtn');btn.disabled=true;
+    try { const d=await api('/api/auth/forgot-password',{method:'POST',body:JSON.stringify({email})});status('authStatus',d.message||'Wenn die E-Mail registriert ist, wurde ein Reset-Link versendet.',true); }
+    catch(err){status('authStatus',err.message);}
+    finally{btn.disabled=false;}
+  });
+  $('resetPasswordForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();const password=$('resetNewPassword').value;const confirm=$('resetConfirmPassword').value;
+    if(password!==confirm){status('resetPasswordStatus','Die Passwörter stimmen nicht überein.');return;}
+    const tokenFromUrl=new URLSearchParams(location.search).get('resetToken')||'';
+    try { const d=await api('/api/auth/reset-password',{method:'POST',body:JSON.stringify({token:tokenFromUrl,password})});status('resetPasswordStatus',d.message,true);history.replaceState({},document.title,location.pathname);$('resetNewPassword').value='';$('resetConfirmPassword').value='';setTimeout(()=>{$('resetPasswordModal').classList.add('hidden');$('authModal').classList.remove('hidden');setAuthMode('login');},900); }
+    catch(err){status('resetPasswordStatus',err.message);}
+  });
+  $('resetPasswordClose')?.addEventListener('click',()=>{$('resetPasswordModal').classList.add('hidden');});
+  const resetTokenAtLoad=new URLSearchParams(location.search).get('resetToken');
+  if(resetTokenAtLoad){$('resetPasswordModal')?.classList.remove('hidden');}
+
   $('logoutBtn').onclick=async()=>{try{if(token)await api('/api/auth/logout',{method:'POST'});}catch(e){}finally{token='';me=null;localStorage.removeItem('gametik_token');if(socket){socket.disconnect();socket=null;}privateRecipientId='';updateAuthUI();loadProfile();showView('feed');$('authModal').classList.remove('hidden');}};
 
   // Real camera preview and capture using the browser camera API.
