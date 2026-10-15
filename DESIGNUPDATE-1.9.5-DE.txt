@@ -1,0 +1,8 @@
+GameTik Designupdate 1.9.5
+
+- PayPal- und Admin-Zugriffskarten mit kompakter Glasoptik und Neon-Verlauf verfeinert.
+- Profil-Krone deutlich verkleinert, besonders auf Mobilgeräten.
+- Foto-/Video-Kameraoptionen kompakter und moderner gestaltet.
+- Kamera-Vorschau und Aufnahme-Buttons mit einheitlichem GameTik-Farbverlauf gestaltet.
+- Bestehende server.js, app.js, live.js und admin.html nicht in ihrer Funktion verändert; nur index.html und Paketversion/Notiz aktualisiert.
+- Statische Projektprüfung: 30 Kernprüfungen bestanden. Live-Kamera und echte Zahlungen müssen auf Render separat getestet werden.
