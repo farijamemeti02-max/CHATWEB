@@ -613,6 +613,25 @@ app.get('/api/users/search', auth, (req, res) => {
     .map(user => ({ ...publicUser(user), following: req.user.following.has(String(user.id)), friend: friendships.get(String(req.user.id))?.has(String(user.id)) || false }));
   res.json({ users });
 });
+// Public profile endpoint for opening another member from search, feed, followers, or messages.
+app.get('/api/users/:id/profile', (req, res) => {
+  const targetId = String(req.params.id || '');
+  const target = [...sessions.values()].find(user => String(user.id) === targetId);
+  if (!target) return res.status(404).json({ error: 'Dieses Profil ist momentan nicht verfügbar.' });
+  const viewer = getSession(req);
+  if (viewer && isBlockedBetween(viewer, targetId)) return res.status(404).json({ error: 'Dieses Profil ist nicht verfügbar.' });
+  const visibility = ['public','friends','private'].includes(target.social_visibility) ? target.social_visibility : (target.social_private === false ? 'public' : 'private');
+  const isSelf = Boolean(viewer && String(viewer.id) === targetId);
+  const isFollowing = Boolean(viewer && viewer.following?.has(targetId));
+  const isFriend = Boolean(viewer && friendships.get(String(viewer.id))?.has(targetId));
+  const canSeePosts = isSelf || visibility === 'public' || (visibility === 'friends' && isFriend);
+  const profile = { ...publicUser(target), following: isFollowing, friend: isFriend };
+  const posts = videos.filter(v => String(v.user_id) === targetId && canSeePosts && (isSelf || v.visibility !== 'private'))
+    .slice().reverse().map(v => ({ id: v.id, username: v.username, user_id: v.user_id, avatar_url: target.avatar_url || null,
+      video_url: v.video_url || null, media_type: v.media_type || 'video', caption: v.caption || '', created_at: v.created_at,
+      like_count: v.likes?.size || 0, comment_count: v.comments?.length || 0, music_url: v.music_url || null }));
+  res.json({ user: profile, posts, is_self: isSelf, following: isFollowing, friend: isFriend });
+});
 app.get('/api/me/social', auth, (req, res) => {
   const meId = String(req.user.id);
   const followers = [...sessions.values()].filter(user => user.id !== meId && user.following?.has(meId) && !isBlockedBetween(req.user, user.id)).map(publicUser);
