@@ -1,0 +1,15 @@
+GameTik – Gesamtprojekt-Update 1.9.79
+
+Umgesetzt:
+- battle-arena.html durch die aktuelle Battle-Arena-Fassung 1.9.78 ersetzt.
+- 3D-Modus mit Babylon.js und 2D-Sicherheitsmodus bei nicht verfügbarem Babylon-CDN übernommen.
+- Vorhandenen Einstieg „Battle Arena 3D“ im GameTik-Spielemenü beibehalten und auf /battle-arena.html geprüft.
+- Gesamtversion auf 1.9.79 gesetzt.
+- Projektprüfung um Arena-Datei, CDN-Fallback, Menü-Einstieg, Karriere, Erfolge und Challenges erweitert.
+- README um Integrations- und Testhinweise ergänzt.
+- admin.html nicht geändert; keine Änderungen an GitHub, Render, Secrets oder externen Konten vorgenommen.
+
+Grenzen:
+- Karriere/XP/Erfolge liegen lokal im Browser und werden nicht mit Neon synchronisiert.
+- Der 2D-Fallback bietet Grundaktionen, nicht sämtliche 3D-Mechaniken.
+- Statische Prüfungen sind kein Ersatz für echten Test auf Android, Browser und Render.
