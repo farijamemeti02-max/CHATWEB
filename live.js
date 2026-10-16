@@ -41,6 +41,47 @@
       }
     } catch {}
   }
+  async function showInlineStreamerProfile() {
+    const panel = $('gtLiveInlineProfile');
+    const messages = $('liveChatMessages');
+    const form = $('liveChatForm');
+    const heading = document.querySelector('#liveChatDock .gt-live-chat-heading');
+    if (!panel || !currentStream) return;
+    panel.classList.remove('hidden');
+    if (messages) messages.classList.add('hidden');
+    if (form) form.classList.add('hidden');
+    if (heading) heading.classList.add('hidden');
+    panel.innerHTML = '<div class="muted">Profil wird geladen …</div>';
+    try {
+      if (!currentStream.hostId) throw new Error('Für diesen Stream ist keine Profil-ID verfügbar.');
+      const response = await fetch(apiBase + '/api/users/' + encodeURIComponent(currentStream.hostId) + '/profile', {headers: localStorage.getItem('gametik_token') ? {Authorization:'Bearer '+localStorage.getItem('gametik_token')} : {}});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Profil konnte nicht geladen werden.');
+      const user = data.user || {};
+      const avatar = user.avatar_url ? `<img class="gt-inline-profile-avatar" src="${esc(user.avatar_url)}" alt="Profilbild von ${esc(user.username || currentStream.hostUsername || 'Nutzer')}" referrerpolicy="no-referrer">` : '<div class="gt-inline-profile-avatar" style="display:grid;place-items:center;font-size:28px;background:#15172a">👤</div>';
+      panel.innerHTML = `<div class="gt-inline-profile-head">${avatar}<div><div class="gt-inline-profile-name">${esc(user.username || currentStream.hostUsername || 'LIVE-Nutzer')}</div><div class="muted tiny">${esc(user.gender || 'GameTik-Mitglied')}</div></div></div><div class="gt-inline-profile-stats"><span><b>${Number(user.followers_count || 0)}</b> Follower</span><span><b>${Number(user.following_count || 0)}</b> Folgt</span><span><b>${Number(user.posts_count || 0)}</b> Beiträge</span></div><div class="gt-inline-profile-bio">${esc(user.bio || 'Keine Biografie angegeben.')}</div><button type="button" class="secondary gt-inline-profile-close" id="gtInlineProfileBack">← Zurück zum Live-Chat</button>`;
+      $('gtInlineProfileBack')?.addEventListener('click', closeInlineStreamerProfile);
+    } catch (error) {
+      panel.innerHTML = `<div>${esc(error.message || 'Profil konnte nicht geladen werden.')}</div><button type="button" class="secondary gt-inline-profile-close" id="gtInlineProfileBack">← Zurück zum Live-Chat</button>`;
+      $('gtInlineProfileBack')?.addEventListener('click', closeInlineStreamerProfile);
+    }
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function closeInlineStreamerProfile() {
+    $('gtLiveInlineProfile')?.classList.add('hidden');
+    $('liveChatMessages')?.classList.remove('hidden');
+    $('liveChatForm')?.classList.remove('hidden');
+    document.querySelector('#liveChatDock .gt-live-chat-heading')?.classList.remove('hidden');
+  }
+  function bindLiveProfileTap() {
+    const avatar = document.querySelector('#gtLiveProfilePill .gt-live-profile-avatar');
+    if (!avatar || avatar.dataset.profileTapBound === '1') return;
+    avatar.dataset.profileTapBound = '1';
+    avatar.setAttribute('role','button'); avatar.setAttribute('tabindex','0'); avatar.setAttribute('aria-label','Profil des Live-Streamers im unteren Bereich öffnen');
+    avatar.addEventListener('click', showInlineStreamerProfile);
+    avatar.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showInlineStreamerProfile(); } });
+  }
+
   function chatLine(username, body, time = new Date().toISOString(), gift = false) {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
@@ -54,8 +95,11 @@
     if (overlay) {
       const line = document.createElement('div'); line.className = 'live-overlay-line';
       line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
+      const overlayNearBottom = overlay.scrollHeight - overlay.scrollTop - overlay.clientHeight < 36;
       overlay.appendChild(line);
-      while (overlay.children.length > 5) overlay.firstElementChild.remove();
+      while (overlay.children.length > 40) overlay.firstElementChild.remove();
+      // Follow new messages unless the viewer has deliberately scrolled up to read older chat.
+      if (overlayNearBottom) overlay.scrollTop = overlay.scrollHeight;
       setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
     }
   }
@@ -211,9 +255,9 @@
     currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.add('hidden'); $('liveAudioToggle')?.setAttribute('aria-expanded','false'); if ($('liveAudioToggleIcon')) $('liveAudioToggleIcon').textContent = '＋'; $('liveAudioToggle')?.closest('#liveAudioMixerLauncher')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
-    updateLiveProfileAvatar(currentStream).catch(()=>{});
+    updateLiveProfileAvatar(currentStream).then(bindLiveProfileTap).catch(()=>{}); setTimeout(bindLiveProfileTap, 100); setTimeout(bindLiveProfileTap, 500);
     $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; if ($('liveEndTopBtn')) { $('liveEndTopBtn').classList.toggle('hidden', role !== 'host'); $('liveEndTopBtn').disabled = role !== 'host'; } $('liveStartBtn').classList.toggle('hidden', role === 'host');
-    $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
+    $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; closeInlineStreamerProfile(); if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
     refreshCandyBalance(); liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
     room = new window.LivekitClient.Room({adaptiveStream: true, dynacast: true});
     room.on(window.LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => renderTrack(track, participant));

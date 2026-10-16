@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.40",
-  "description": "GAMETIK LIVE: chat auto-scroll with manual scroll preservation, host profile avatar in live pill, candy gift burst overlay, persistent candy gift picker",
+  "version": "1.9.41",
+  "description": "GAMETIK LIVE: inline streamer profile in lower chat panel and scrollable on-stream chat",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
