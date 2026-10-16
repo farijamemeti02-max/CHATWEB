@@ -1780,18 +1780,17 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(max-height:700px){#liveVideoStage{height:88svh!important;min-height:500px!important;max-height:900px!important}}
 </style>
 
-
-<style id="gametik-live-likes-right-and-score-stripe-1920">
-/* 1.9.20: getippte Likes rechts im Stream; Duell-Streifen bleibt pink/tuerkis sichtbar. */
-#liveFloatingHearts{z-index:8!important;pointer-events:none!important;overflow:hidden!important}
-#liveFloatingHearts .gametik-float-heart{left:var(--heart-x,82%)!important;bottom:14%!important;font-size:clamp(25px,6vw,48px)!important;animation:gametik-heart-rise-right 1.7s ease-out forwards!important;filter:drop-shadow(0 0 7px #ff38c8)!important}
-@keyframes gametik-heart-rise-right{0%{transform:translate3d(-50%,0,0) scale(.65);opacity:0}12%{opacity:1}100%{transform:translate3d(-50%,-220px,0) scale(1.2);opacity:0}}
-#liveVideoOverlay .gt-stream-duel-hud{z-index:5!important}
-#liveVideoOverlay .gt-stream-duel-teams{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
-#liveVideoOverlay .gt-stream-duel-host{background:linear-gradient(100deg,#ff168e,#ff35c9)!important}
-#liveVideoOverlay .gt-stream-duel-community{background:linear-gradient(100deg,#18bfff,#25e7ff)!important}
-#liveVideoOverlay .gt-stream-duel-meter{height:5px!important;display:flex!important;overflow:hidden!important;border:0!important;border-radius:999px!important;background:#25dfff!important;box-shadow:0 0 10px #ff36c944!important}
-#liveVideoOverlay #liveDuelHostFill{background:linear-gradient(90deg,#ff168e,#ff35c9)!important}
-#liveVideoOverlay #liveDuelCommunityFill{background:linear-gradient(90deg,#18bfff,#25e7ff)!important}
-@media(max-width:600px){#liveFloatingHearts .gametik-float-heart{font-size:34px!important}#liveVideoOverlay .gt-stream-duel-meter{height:4px!important}}
+<style id="gametik-live-video-dominant-v1922">
+/* 1.9.22: The camera/video is the main element and fills the entire LIVE stage. */
+#liveVideoStage{position:relative!important;width:100%!important;height:min(92svh,1120px)!important;min-height:620px!important;max-height:1120px!important;overflow:hidden!important;background:#03040a!important;isolation:isolate!important}
+#liveVideoGrid{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;background:#03040a!important}
+#liveVideoGrid>div[id^="participant-"]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#03040a!important}
+#liveVideoGrid>div[id^="participant-"]>video{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;background:#03040a!important;border:0!important;border-radius:0!important}
+#liveVideoGrid>div[id^="participant-"]>div{position:absolute!important;z-index:3!important;left:8px!important;bottom:8px!important;top:auto!important;width:auto!important;height:auto!important;max-width:70%!important;padding:5px 8px!important;border:1px solid #ffffff25!important;border-radius:10px!important;background:#080a16b8!important;color:#fff!important;font-size:11px!important}
+#liveVideoOverlay{z-index:4!important}
+#gtLiveActionRail{z-index:8!important;right:5px!important;top:48%!important;gap:8px!important}
+#gtLiveActionRail button{width:40px!important;height:40px!important;min-height:40px!important}
+#gtLiveActionRail #gtLiveGameAction{width:46px!important;height:46px!important;min-height:46px!important}
+@media(max-width:600px){#liveVideoStage{height:92svh!important;min-height:620px!important;max-height:1120px!important;margin:2px 0 5px!important}#liveVideoGrid>div[id^="participant-"]>video{object-fit:cover!important;object-position:center center!important}#liveVideoOverlay{padding:8px 48px 7px 7px!important}#gtLiveActionRail{right:4px!important;top:47%!important;gap:7px!important}#gtLiveActionRail button{width:37px!important;height:37px!important;min-height:37px!important}#gtLiveActionRail #gtLiveGameAction{width:42px!important;height:42px!important;min-height:42px!important}}
+@media(max-height:700px){#liveVideoStage{height:88svh!important;min-height:500px!important;max-height:900px!important}}
 </style>

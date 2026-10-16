@@ -1,0 +1,9 @@
+GameTik LIVE 1.9.22 – Korrektur des zu kleinen Kamerabildes
+
+- Der eigentliche Video-Track und seine Teilnehmerkarte füllen nun den gesamten LIVE-Videobereich.
+- Entfernt wurde die Begrenzung des Videos auf maximal 52vh, die zuvor zu einem kleinen Bild mit großem schwarzen Leerraum führte.
+- Video nutzt object-fit: cover, damit der Stream den verfügbaren Bereich ausfüllt; je nach Kameraformat kann dabei am Rand etwas Bild abgeschnitten werden.
+- Profil, Zuschauerzahl, Aktionsleiste und Duell-Anzeige bleiben als Overlay über dem Video.
+- Nur index.html und live.js wurden angepasst. admin.html bleibt unverändert.
+- Syntax- und Projektprüfung erfolgreich: 30 Kernprüfungen.
+- Nicht auf Render veröffentlicht; Browser-/Gerätetest nach Deployment erforderlich.
