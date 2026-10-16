@@ -30,6 +30,18 @@
       setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
     }
   }
+  function showGift3D(gift) {
+    const stage = $('liveVideoStage') || $('liveStage');
+    if (!stage) return;
+    const name = String(gift?.gift || 'Geschenk');
+    const icon = /herz|heart/i.test(name) ? '💖' : /stern|star/i.test(name) ? '🌟' : /rose|blume/i.test(name) ? '🌹' : /feuer|fire/i.test(name) ? '🔥' : /krone|crown/i.test(name) ? '👑' : /diamant|diamond|kristall/i.test(name) ? '💎' : /auto|car|wagen/i.test(name) ? '🏎️' : /bonbon|süß|candy|lolli/i.test(name) ? '🍬' : /phönix|phoenix/i.test(name) ? '🪽' : '🎁';
+    stage.classList.add('gt-gift3d-stage');
+    const layer = document.createElement('div'); layer.className = 'gt-gift3d-burst'; layer.setAttribute('aria-live','polite');
+    const object = document.createElement('div'); object.className = 'gt-gift3d-object'; object.textContent = icon;
+    const title = document.createElement('div'); title.className = 'gt-gift3d-title'; title.textContent = `${String(gift?.username || 'Ein Nutzer')} sendet ${name}${Number(gift?.amount)>1?' × '+Number(gift.amount):''}`;
+    layer.append(object,title); stage.appendChild(layer);
+    setTimeout(()=>{layer.classList.add('gt-gift3d-out');setTimeout(()=>layer.remove(),650)},3400);
+  }
   function showFloatingHeart() {
     const container = $('liveFloatingHearts'); if (!container) return;
     const heart = document.createElement('span'); heart.className = 'gametik-float-heart'; heart.textContent = ['❤️','💖','💗','💕'][Math.floor(Math.random()*4)];
@@ -201,7 +213,7 @@
       chatSocket = window.io(apiBase || undefined, {auth: localStorage.getItem('gametik_token') ? {token: localStorage.getItem('gametik_token')} : {guestLiveRoomId: currentStream.id}});
       chatSocket.on('connect', () => chatSocket.emit('live:join-chat', {roomId: currentStream.id}, result => { if (result?.error) liveStatus(result.error); }));
       chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at); });
-      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); playGameJingle('gift'); });
+      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) { chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); showGift3D(gift); } playGameJingle('gift'); });
       chatSocket.on('live:game-state', event => { if (event.roomId === currentStream?.id) renderGame(event.game); });
       chatSocket.on('live:like-count', data => { if (data.roomId === currentStream?.id) { liveLikeCount = Number(data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; } });
       chatSocket.on('live:ended', event => { if (event.id === currentStream?.id) { liveStatus('Der Stream wurde beendet.'); leaveStream(false); refreshStreams(); } });
