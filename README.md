@@ -195,3 +195,8 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die Arena enthält Trainingskampf, Touch-Steuerung, Schwierigkeitswahl, Pause/Neustart, Kampfstatistik, Challenges, Karriere-XP und Erfolge. Karrierewerte werden lokal in diesem Browser gespeichert und nicht serverübergreifend synchronisiert.
 - Diese Integration wurde statisch geprüft. Ein echter Android-/Browser-Test, ein Test auf Render und eine Prüfung aller Geräte-/CDN-Konstellationen sind nicht erfolgt. `admin.html` bleibt unverändert.
 
+
+
+## Battle Arena Start-Fix 1.9.80
+
+Wenn die Babylon.js-Bibliothek geladen wird, die 3D-Engine aber beim Erzeugen des WebGL-Renderers scheitert, wechselt die Arena jetzt automatisch über `?mode=2d` in den spielbaren 2D-Sicherheitsmodus. Der Modus kann auch direkt mit `battle-arena.html?mode=2d` geöffnet werden.
