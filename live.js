@@ -81,7 +81,12 @@
     applyCameraEffect();
   }
   function renderGame(game) {
+    const wasActive = !!currentGame?.active;
     currentGame = game || {active:false, endsAt:null, hostPoints:0, communityPoints:0, winner:null};
+    if (currentGame.active && !wasActive) {
+      const vs = $('liveDuelVs');
+      if (vs) { vs.classList.remove('gt-vs-flash'); void vs.offsetWidth; vs.classList.add('gt-vs-flash'); setTimeout(() => vs.classList.remove('gt-vs-flash'), 1250); }
+    }
     $('liveGameHostPoints').textContent = String(Number(currentGame.hostPoints || 0)); if ($('liveDuelHostScore')) $('liveDuelHostScore').textContent = String(Number(currentGame.hostPoints || 0));
     $('liveGameCommunityPoints').textContent = String(Number(currentGame.communityPoints || 0)); if ($('liveDuelCommunityScore')) $('liveDuelCommunityScore').textContent = String(Number(currentGame.communityPoints || 0));
     const hostScore = Math.max(0, Number(currentGame.hostPoints || 0)); const communityScore = Math.max(0, Number(currentGame.communityPoints || 0)); const scoreTotal = hostScore + communityScore; const hostShare = scoreTotal ? (hostScore / scoreTotal) * 100 : 50; const communityShare = scoreTotal ? (communityScore / scoreTotal) * 100 : 50; if ($('liveDuelHostFill')) $('liveDuelHostFill').style.width = `${hostShare}%`; if ($('liveDuelCommunityFill')) $('liveDuelCommunityFill').style.width = `${communityShare}%`; if ($('liveDuelLead')) $('liveDuelLead').textContent = hostScore === communityScore ? '🤝 Gleichstand' : hostScore > communityScore ? '⚡ Streamer-Team führt' : '💗 Community-Team führt'; if ($('liveDuelTimer') && $('liveGameTimer')) $('liveDuelTimer').textContent = $('liveGameTimer').textContent;
