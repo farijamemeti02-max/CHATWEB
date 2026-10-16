@@ -16,35 +16,26 @@
   let currentStream = null, currentRole = '', room = null, chatSocket = null, countTimer = null, gameUiTimer = null, liveLikeCount = 0, audioMuted = false, hostMicMuted = false, currentGame = null, audioContext = null, micSource = null, micStream = null, micDestination = null, micGain = null, reverbGain = null, dryGain = null, delayNode = null, delayFeedback = null, delayGain = null, micCompressor = null, voiceFilter = null, processedAudioTrack = null, micPublished = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function liveStatus(message) { $('liveStageStatus').textContent = message; }
-  let pendingOwnOverlayBody = '';
-  function addOverlayChatLine(username, body) {
-    const overlay = $('liveOverlayChat');
-    if (!overlay) return;
-    const key = `${String(username)}\u0000${String(body)}`;
-    if ([...overlay.children].some(node => node.dataset.messageKey === key)) return;
-    const line = document.createElement('div'); line.className = 'live-overlay-line'; line.dataset.messageKey = key;
-    line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
-    overlay.appendChild(line);
-    while (overlay.children.length > 5) overlay.firstElementChild.remove();
-    overlay.scrollTop = overlay.scrollHeight;
-  }
   function chatLine(username, body, time = new Date().toISOString(), gift = false) {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
     el.innerHTML = `<b>${esc(username)}</b> ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
     $('liveChatMessages').appendChild(el); $('liveChatMessages').scrollTop = $('liveChatMessages').scrollHeight;
-    if (pendingOwnOverlayBody && String(body) === pendingOwnOverlayBody) {
-      pendingOwnOverlayBody = '';
-    } else {
-      addOverlayChatLine(username, body);
+    const overlay = $('liveOverlayChat');
+    if (overlay) {
+      const line = document.createElement('div'); line.className = 'live-overlay-line';
+      line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
+      overlay.appendChild(line);
+      while (overlay.children.length > 5) overlay.firstElementChild.remove();
+      setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
     }
   }
   function showFloatingHeart() {
     const container = $('liveFloatingHearts'); if (!container) return;
     const heart = document.createElement('span'); heart.className = 'gametik-float-heart'; heart.textContent = ['❤️','💖','💗','💕'][Math.floor(Math.random()*4)];
-    heart.style.setProperty('--heart-x', `${70 + Math.random()*19}%`);
-    heart.setAttribute('aria-hidden','true');
-    container.appendChild(heart); setTimeout(() => heart.remove(), 1900);
+    // Likes steigen wie in der Vorlage auf der rechten Seite des Streams auf.
+    heart.style.setProperty('--heart-x', `${76 + Math.random()*10}%`);
+    container.appendChild(heart); setTimeout(() => heart.remove(), 1700);
   }
   let candyBalanceCache = 0, soundContext = null, lastAnnouncedWinner = null;
   async function refreshCandyBalance() {
@@ -78,13 +69,13 @@
     let card = document.getElementById(key);
     if (!card) {
       card = document.createElement('div'); card.id = key;
-      card.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;min-height:0;background:#03040a;border:0;border-radius:0;overflow:hidden';
-      const label = document.createElement('div'); label.textContent = participant.name || participant.identity; label.style.cssText = 'position:absolute;z-index:3;left:8px;bottom:8px;padding:5px 8px;border:1px solid #ffffff25;border-radius:10px;background:#080a16b8;backdrop-filter:blur(8px);font-size:11px;color:#fff';
+      card.style.cssText = 'min-height:150px;background:#07070d;border:1px solid #38384e;border-radius:12px;overflow:hidden;position:relative';
+      const label = document.createElement('div'); label.textContent = participant.name || participant.identity; label.style.cssText = 'padding:6px 9px;background:#141421;font-size:12px';
       card.appendChild(label); grid.appendChild(card);
     }
     const element = track.attach();
     if (track.kind === window.LivekitClient.Track.Kind.Audio) element.muted = audioMuted;
-    element.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;max-height:none;min-height:0;object-fit:cover;object-position:center center;background:#03040a;display:block;border-radius:0';
+    element.style.cssText = 'width:100%;max-height:52vh;min-height:130px;object-fit:contain;background:#05050a;display:block';
     if (track.kind === window.LivekitClient.Track.Kind.Audio) element.style.display = 'none';
     card.appendChild(element);
     applyCameraEffect();
@@ -340,9 +331,7 @@
   $('liveChatForm').addEventListener('submit', event => {
     event.preventDefault(); const body = $('liveChatInput').value.trim();
     if (!currentStream || !chatSocket || !body) return;
-    pendingOwnOverlayBody = body;
-    addOverlayChatLine('Du', body);
-    chatSocket.emit('live:chat', {roomId:currentStream.id, body}, result => { if (result?.error) { pendingOwnOverlayBody = ''; $('liveGiftStatus').textContent = result.error; } else $('liveChatInput').value = ''; });
+    chatSocket.emit('live:chat', {roomId:currentStream.id, body}, result => { if (result?.error) $('liveGiftStatus').textContent = result.error; else $('liveChatInput').value = ''; });
   });
   document.querySelectorAll('.live-gift').forEach(button => button.addEventListener('click', async () => {
     if (!currentStream) return;
@@ -393,23 +382,22 @@
     finally { setTimeout(()=>{button.disabled=false;},500); }
   }));
   refreshCandyBalance();
-  function getLiveViewerId() {
-    const key = 'gametik_live_viewer_id';
-    let id = localStorage.getItem(key) || '';
-    if (!/^[a-zA-Z0-9_-]{12,100}$/.test(id)) {
-      id = 'viewer_' + (window.crypto?.randomUUID ? crypto.randomUUID().replace(/-/g, '') : Math.random().toString(36).slice(2) + Date.now().toString(36));
-      localStorage.setItem(key, id);
-    }
-    return id;
-  }
   async function sendLiveLike() {
     if (!currentStream) return;
     showFloatingHeart();
-    // Visible local feedback immediately; the server response updates the shared total.
-    const likeCount = $('liveLikeCount');
-    if (likeCount) { likeCount.classList.remove('gt-like-pop'); void likeCount.offsetWidth; likeCount.classList.add('gt-like-pop'); }
-    try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/like`, {method:'POST', body:JSON.stringify({viewerId:getLiveViewerId()})}); liveLikeCount = Number(data.likes || liveLikeCount); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; if (data.pointsEarned === 1) { const status=$('liveGiftStatus'); if (status) status.textContent=`❤️ +1 Duell-Punkt (${data.viewerLikePoints}/10 für dich)`; } else if (data.gameActive && data.viewerLikePoints >= 10) { const status=$('liveGiftStatus'); if (status) status.textContent='❤️ Likes zählen weiter – deine 10 Duell-Punkte sind ausgeschöpft.'; } }
-    catch (error) { const status = $('liveGiftStatus'); if (status) status.textContent = error.message; }
+    const likeButton = $('liveLikeBtn');
+    if (likeButton) { likeButton.classList.add('gt-like-tapped'); setTimeout(() => likeButton.classList.remove('gt-like-tapped'), 180); }
+    try {
+      let viewerId = localStorage.getItem('gametik_live_viewer_id');
+      if (!viewerId) { viewerId = (window.crypto?.randomUUID ? crypto.randomUUID() : `viewer-${Date.now()}-${Math.random().toString(36).slice(2)}`); localStorage.setItem('gametik_live_viewer_id', viewerId); }
+      const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/like`, {method:'POST', body:JSON.stringify({viewerId})});
+      liveLikeCount = Number(data.likes ?? liveLikeCount);
+      const countEl = $('liveLikeCount');
+      if (countEl) countEl.textContent = `❤️ ${liveLikeCount.toLocaleString()} Likes`;
+      if (data.game) renderGame(data.game);
+      if (data.pointsAwarded) { const hint = $('liveOverlayHint'); if (hint) hint.textContent = `❤️ +${data.pointsAwarded} Duell-Punkt`; }
+      else if (data.game?.active) { const hint = $('liveOverlayHint'); if (hint) hint.textContent = '❤️ Like gezählt · Like-Punktelimit erreicht'; }
+    } catch (error) { const status = $('liveGiftStatus'); if (status) status.textContent = `Like konnte nicht gezählt werden: ${error.message}`; }
   }
   $('liveLikeBtn')?.addEventListener('click', sendLiveLike);
   $('liveVideoStage')?.addEventListener('click', event => {

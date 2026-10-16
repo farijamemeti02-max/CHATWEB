@@ -902,7 +902,7 @@ body.gt-view-profile .gt-premium-nav{display:flex!important}
 #liveVideoOverlay{padding:12px 62px 12px 10px!important;background:linear-gradient(180deg,#060614a8 0%,transparent 20%,transparent 65%,#02030ae8 100%)!important}
 #liveVideoOverlay .gt-live-metrics{position:absolute!important;top:14px!important;right:64px!important;z-index:6!important;gap:6px!important}
 #liveVideoOverlay .gt-live-metric{min-height:34px!important;padding:7px 10px!important;background:#080a1ccc!important;border-color:#8b9ab866!important;font-size:12px!important}
-#liveVideoOverlay .gt-live-likes{display:none!important}
+#liveVideoOverlay .gt-live-likes{display:inline-flex!important;align-items:center!important;gap:5px!important;visibility:visible!important;opacity:1!important}
 #gtLiveProfilePill{position:absolute;z-index:7;top:10px;left:9px;max-width:calc(100% - 160px);display:flex;align-items:center;gap:8px;padding:5px 7px 5px 5px;border-radius:999px;background:linear-gradient(110deg,#08091beF,#11142ce8);border:1px solid transparent;background-clip:padding-box;box-shadow:0 0 0 1px #ff36c966,0 0 18px #ff2fc42b,0 0 16px #24dfff22;pointer-events:auto;backdrop-filter:blur(12px)}
 .gt-live-profile-avatar{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 35% 25%,#4d285b,#101326 70%);border:2px solid #ff43cf;box-shadow:0 0 10px #ff35c777;font-size:20px}
 .gt-live-profile-copy{display:flex;flex-direction:column;min-width:0;color:white;line-height:1.15}.gt-live-profile-copy b{font-size:clamp(11px,2.6vw,15px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gt-live-profile-copy small{font-size:10px;color:#f7d8fa;margin-top:3px;white-space:nowrap}
@@ -1676,7 +1676,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoOverlay{padding:10px 48px 8px 9px!important;background:linear-gradient(180deg,#03040a40 0%,transparent 22%,transparent 70%,#03040a20 100%)!important}
 #liveVideoOverlay .gt-live-metrics{position:absolute!important;top:10px!important;right:8px!important;display:flex!important;gap:0!important;align-items:flex-start!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
 #liveVideoOverlay .gt-live-metric{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:2px 0!important;min-height:0!important;color:#fff!important;font-size:12px!important;font-weight:850!important;text-shadow:0 1px 6px #000,0 0 12px #000!important}
-#liveVideoOverlay .gt-live-viewers{display:inline-flex!important;align-items:center!important;gap:4px!important}#liveVideoOverlay .gt-live-viewers>span:first-child,#liveVideoOverlay .gt-live-viewers .gt-live-metric-label,#liveVideoOverlay .gt-live-likes{display:none!important}
+#liveVideoOverlay .gt-live-viewers{display:inline-flex!important;align-items:center!important;gap:4px!important}#liveVideoOverlay .gt-live-viewers>span:first-child,#liveVideoOverlay .gt-live-viewers .gt-live-metric-label,#liveVideoOverlay .gt-live-likes{display:inline-flex!important;align-items:center!important;gap:5px!important;visibility:visible!important;opacity:1!important}
 #gtLiveProfilePill{max-width:calc(100% - 90px)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;background:#0b0d19a8!important;border:1px solid #ffffff18!important;border-radius:999px!important}
 #gtLiveFollowButton{border:0!important;border-radius:999px!important;background:linear-gradient(110deg,#ff38c8,#8b5cff 48%,#21d4fd)!important;color:#fff!important;box-shadow:0 0 14px #a23cff38!important;font-weight:850!important}
 #gtLiveActionRail{right:7px!important;top:48%!important;transform:translateY(-30%)!important;gap:10px!important}#gtLiveActionRail button{width:43px!important;height:43px!important;min-height:43px!important;padding:0!important;border:1px solid #ffffff26!important;border-radius:50%!important;background:linear-gradient(145deg,#25283cbf,#090b18c9)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;box-shadow:inset 0 1px #ffffff24,0 5px 15px #0006!important;color:#fff!important;font-size:18px!important;transition:transform .16s ease,box-shadow .16s ease!important}
@@ -1686,21 +1686,6 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveChatDock{gap:5px!important;margin:4px 0 7px!important;padding:7px!important;border-radius:16px!important;background:linear-gradient(145deg,#111525,#090d19)!important;border:1px solid #ffffff12!important}#liveChatMessages{height:clamp(70px,12svh,112px)!important;min-height:65px!important;max-height:112px!important}#liveChatForm{gap:6px!important}#liveChatForm #liveChatInput{min-height:40px!important;border-radius:999px!important;background:#080c17!important;border:1px solid #ffffff20!important}#liveChatForm button{min-height:40px!important;border-radius:999px!important;background:linear-gradient(110deg,#ff38c8,#8b5cff 50%,#21d4fd)!important;border:0!important;color:white!important;box-shadow:0 0 12px #a23cff2b!important}#liveChatQuickActions{margin:5px 0 8px!important;padding:5px!important;border-radius:14px!important;background:#0b0f1bd9!important;border:1px solid #ffffff10!important}#liveChatQuickActions #liveGamePanel{padding:6px!important;margin:0 0 5px!important}#liveChatQuickActions #liveCandyPanel{padding:6px!important}#liveChatQuickActions #livePaidGifts .live-gift{min-height:38px!important;padding:4px 6px!important;border-radius:12px!important;font-size:12px!important}
 @media(max-width:600px){#liveVideoStage{height:88svh!important;min-height:560px!important;max-height:940px!important;border-radius:12px!important}#liveVideoGrid video{object-fit:contain!important;object-position:center center!important}#liveVideoOverlay{padding:8px 47px 6px 7px!important}#liveVideoOverlay .gt-live-metrics{top:8px!important;right:7px!important}#liveVideoOverlay .gt-live-metric{font-size:11px!important}#gtLiveProfilePill{top:7px!important;left:6px!important;max-width:calc(100% - 72px)!important;gap:4px!important;padding:3px!important}.gt-live-profile-avatar{width:32px!important;height:32px!important;flex-basis:32px!important}#gtLiveFollowButton{font-size:10px!important;padding:5px 7px!important}#gtLiveActionRail{right:5px!important;top:46%!important;gap:8px!important}#gtLiveActionRail button{width:37px!important;height:37px!important;min-height:37px!important;font-size:16px!important}#gtLiveActionRail button small{font-size:7px!important}#gtLiveActionRail #gtLiveGameAction{width:41px!important;height:41px!important;min-height:41px!important}#gtLiveActionRail #gtLiveGameAction svg{width:27px!important;height:21px!important}#liveOverlayChat{left:6px!important;right:46px!important;max-height:27%!important;margin-bottom:4px!important}#liveOverlayChat .live-overlay-line{font-size:11px!important;padding:3px 6px!important}#liveVideoOverlay .gt-stream-duel-hud{left:6px!important;right:46px!important;bottom:5px!important}#liveVideoOverlay .gt-stream-duel-team{padding:2px 5px!important}#liveVideoOverlay .gt-stream-duel-team strong{font-size:12px!important}#liveChatMessages{height:70px!important;min-height:60px!important;max-height:90px!important}}
 @media(max-height:700px){#liveVideoStage{height:82svh!important;min-height:430px!important;max-height:760px!important}}@media(prefers-reduced-motion:reduce){#gtLiveActionRail button{transition:none!important}}
-</style>
-
-
-<style id="gametik-live-feedback-overlay-v1923">
-/* 1.9.23: visible floating likes and chat messages directly over the live camera. */
-#liveFloatingHearts{z-index:12!important;position:absolute!important;inset:0!important;overflow:hidden!important;pointer-events:none!important}
-#liveFloatingHearts .gametik-float-heart{z-index:12!important;position:absolute!important;left:var(--heart-x,78%)!important;bottom:18%!important;font-size:clamp(32px,8vw,58px)!important;line-height:1!important;animation:gametik-heart-rise 1.9s ease-out forwards!important;filter:drop-shadow(0 0 9px #ff2ac8) drop-shadow(0 2px 5px #000)!important}
-#liveVideoOverlay{z-index:10!important}
-#liveOverlayChat{position:absolute!important;left:8px!important;right:54px!important;bottom:58px!important;top:auto!important;width:auto!important;max-width:calc(100% - 66px)!important;max-height:38%!important;margin:0!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:flex-start!important;overflow:hidden!important;pointer-events:none!important;mask-image:linear-gradient(to bottom,transparent 0%,#000 8%,#000 100%)!important}
-#liveOverlayChat .live-overlay-line{display:block!important;width:fit-content!important;max-width:100%!important;overflow-wrap:anywhere!important;margin:2px 0!important;padding:5px 9px!important;border:0!important;border-left:2px solid #ff38c8!important;border-radius:8px!important;background:linear-gradient(90deg,rgba(5,7,16,.76),rgba(5,7,16,.24))!important;color:#fff!important;font-size:clamp(12px,3.2vw,15px)!important;line-height:1.28!important;text-shadow:0 1px 5px #000!important;backdrop-filter:blur(3px)!important;animation:gtChatMessageIn .2s ease-out both!important}
-#liveOverlayHint{opacity:.8!important}
-#liveLikeCount.gt-like-pop{animation:gtLikePop .38s ease-out!important}
-@keyframes gtLikePop{0%{transform:scale(1)}45%{transform:scale(1.22);filter:drop-shadow(0 0 9px #ff2ac8)}100%{transform:scale(1)}}
-@keyframes gtChatMessageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:600px){#liveOverlayChat{left:7px!important;right:47px!important;bottom:55px!important;max-width:calc(100% - 56px)!important;max-height:36%!important}#liveOverlayChat .live-overlay-line{font-size:12px!important;padding:4px 7px!important}#liveFloatingHearts .gametik-float-heart{bottom:20%!important;font-size:38px!important}}
 </style>
 
 </body>
@@ -1795,25 +1780,69 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(max-height:700px){#liveVideoStage{height:88svh!important;min-height:500px!important;max-height:900px!important}}
 </style>
 
-<style id="gametik-live-video-dominant-v1922">
-/* 1.9.22: The camera/video is the main element and fills the entire LIVE stage. */
-#liveVideoStage{position:relative!important;width:100%!important;height:min(92svh,1120px)!important;min-height:620px!important;max-height:1120px!important;overflow:hidden!important;background:#03040a!important;isolation:isolate!important}
-#liveVideoGrid{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;background:#03040a!important}
-#liveVideoGrid>div[id^="participant-"]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#03040a!important}
-#liveVideoGrid>div[id^="participant-"]>video{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;background:#03040a!important;border:0!important;border-radius:0!important}
-#liveVideoGrid>div[id^="participant-"]>div{position:absolute!important;z-index:3!important;left:8px!important;bottom:8px!important;top:auto!important;width:auto!important;height:auto!important;max-width:70%!important;padding:5px 8px!important;border:1px solid #ffffff25!important;border-radius:10px!important;background:#080a16b8!important;color:#fff!important;font-size:11px!important}
-#liveVideoOverlay{z-index:4!important}
-#gtLiveActionRail{z-index:8!important;right:5px!important;top:48%!important;gap:8px!important}
-#gtLiveActionRail button{width:40px!important;height:40px!important;min-height:40px!important}
-#gtLiveActionRail #gtLiveGameAction{width:46px!important;height:46px!important;min-height:46px!important}
-@media(max-width:600px){#liveVideoStage{height:92svh!important;min-height:620px!important;max-height:1120px!important;margin:2px 0 5px!important}#liveVideoGrid>div[id^="participant-"]>video{object-fit:cover!important;object-position:center center!important}#liveVideoOverlay{padding:8px 48px 7px 7px!important}#gtLiveActionRail{right:4px!important;top:47%!important;gap:7px!important}#gtLiveActionRail button{width:37px!important;height:37px!important;min-height:37px!important}#gtLiveActionRail #gtLiveGameAction{width:42px!important;height:42px!important;min-height:42px!important}}
-@media(max-height:700px){#liveVideoStage{height:88svh!important;min-height:500px!important;max-height:900px!important}}
+
+<style id="gametik-live-likes-right-and-score-stripe-1920">
+/* 1.9.20: getippte Likes rechts im Stream; Duell-Streifen bleibt pink/tuerkis sichtbar. */
+#liveFloatingHearts{z-index:8!important;pointer-events:none!important;overflow:hidden!important}
+#liveFloatingHearts .gametik-float-heart{left:var(--heart-x,82%)!important;bottom:14%!important;font-size:clamp(25px,6vw,48px)!important;animation:gametik-heart-rise-right 1.7s ease-out forwards!important;filter:drop-shadow(0 0 7px #ff38c8)!important}
+@keyframes gametik-heart-rise-right{0%{transform:translate3d(-50%,0,0) scale(.65);opacity:0}12%{opacity:1}100%{transform:translate3d(-50%,-220px,0) scale(1.2);opacity:0}}
+#liveVideoOverlay .gt-stream-duel-hud{z-index:5!important}
+#liveVideoOverlay .gt-stream-duel-teams{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+#liveVideoOverlay .gt-stream-duel-host{background:linear-gradient(100deg,#ff168e,#ff35c9)!important}
+#liveVideoOverlay .gt-stream-duel-community{background:linear-gradient(100deg,#18bfff,#25e7ff)!important}
+#liveVideoOverlay .gt-stream-duel-meter{height:5px!important;display:flex!important;overflow:hidden!important;border:0!important;border-radius:999px!important;background:#25dfff!important;box-shadow:0 0 10px #ff36c944!important}
+#liveVideoOverlay #liveDuelHostFill{background:linear-gradient(90deg,#ff168e,#ff35c9)!important}
+#liveVideoOverlay #liveDuelCommunityFill{background:linear-gradient(90deg,#18bfff,#25e7ff)!important}
+@media(max-width:600px){#liveFloatingHearts .gametik-float-heart{font-size:34px!important}#liveVideoOverlay .gt-stream-duel-meter{height:4px!important}}
 </style>
 
+<style id="gametik-live-gifts-refined-1-9-21">
+/* LIVE-Geschenke: kompakte Leiste direkt oberhalb des Duell-Punktebalkens */
+#gtLiveGiftDrawer{
+  left:8px!important;right:52px!important;bottom:43px!important;top:auto!important;
+  width:auto!important;max-height:none!important;height:auto!important;overflow:visible!important;
+  padding:8px 9px!important;border:1px solid rgba(164,115,255,.42)!important;border-radius:15px!important;
+  background:linear-gradient(145deg,rgba(13,16,31,.94),rgba(7,10,21,.92))!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.28),0 0 12px rgba(173,88,255,.09)!important;
+  -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+}
+#gtLiveGiftDrawer .gt-gift-drawer-head{margin:0 0 6px!important;font-size:11px!important;font-weight:750!important;color:#edf2ff!important;letter-spacing:.01em!important}
+#gtLiveGiftDrawer .gt-gift-drawer-head button{min-height:25px!important;padding:3px 8px!important;font-size:10px!important;border:1px solid rgba(174,145,255,.42)!important;background:rgba(18,21,39,.8)!important;box-shadow:none!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;width:100%!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift,
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .gift{
+  box-sizing:border-box!important;min-width:0!important;width:100%!important;min-height:66px!important;height:66px!important;
+  padding:6px 3px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;
+  border-radius:11px!important;border:1px solid rgba(171,183,221,.25)!important;
+  background:linear-gradient(145deg,rgba(26,31,51,.82),rgba(13,16,29,.9))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.07)!important;color:#f4f6ff!important;
+  font-size:10px!important;line-height:1.15!important;font-weight:700!important;text-align:center!important;white-space:normal!important;
+}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Herz"]{border-color:rgba(255,86,164,.45)!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Stern"]{border-color:rgba(91,211,255,.43)!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Krone"]{border-color:rgba(178,129,255,.48)!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .gt-real-gift-icon,
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .gt-real-gift-icon img,
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons img{width:25px!important;height:25px!important;min-width:25px!important;flex:0 0 25px!important;object-fit:contain!important;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] span{display:block!important;max-width:100%!important;font-size:10px!important;line-height:1.15!important;overflow-wrap:anywhere!important;text-align:center!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] .gift-price,
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] small{font-size:9px!important;font-weight:650!important;color:#bfc9e3!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Herz"] img{filter:drop-shadow(0 0 5px rgba(255,67,151,.22))!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Stern"] img{filter:drop-shadow(0 0 5px rgba(61,211,255,.22))!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift="Krone"] img{filter:drop-shadow(0 0 5px rgba(170,104,255,.24))!important}
+@media(max-width:480px){
+ #gtLiveGiftDrawer{left:6px!important;right:49px!important;bottom:42px!important;padding:7px!important;border-radius:13px!important}
+ #gtLiveGiftDrawer #gtLiveGiftDrawerButtons{gap:4px!important}
+ #gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift,#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .gift{height:60px!important;min-height:60px!important;padding:4px 2px!important;gap:2px!important;border-radius:9px!important;font-size:9px!important}
+ #gtLiveGiftDrawer #gtLiveGiftDrawerButtons img{width:22px!important;height:22px!important;min-width:22px!important;flex-basis:22px!important}
+ #gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] span{font-size:9px!important}
+ #gtLiveGiftDrawer .gt-gift-drawer-head{font-size:10px!important}
+}
+</style>
 
-<style id="gametik-live-transparent-chat-v1924">
-/* LIVE chat messages are text overlays, not cards or framed boxes. */
-#liveOverlayChat .live-overlay-line{background:transparent!important;background-image:none!important;border:0!important;border-left:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;padding:2px 0!important;margin:2px 0!important;text-shadow:0 1px 3px #000,0 0 8px #000!important}
-#liveOverlayChat .live-overlay-line b{color:#fff!important;text-shadow:0 1px 3px #000,0 0 8px #000!important}
-#liveVideoOverlay .gt-live-metric-number{font-variant-numeric:tabular-nums!important}
+<style id="gt-live-like-counter-fix-1-9-25">
+#liveVideoOverlay .gt-live-metrics{display:flex!important;align-items:center!important;gap:8px!important;pointer-events:none!important}
+#liveVideoOverlay #liveLikeCount{display:inline-flex!important;align-items:center!important;white-space:nowrap!important;padding:5px 9px!important;border-radius:999px!important;background:rgba(14,8,24,.42)!important;color:#fff!important;font-size:12px!important;font-weight:800!important;text-shadow:0 1px 4px #000!important;border:1px solid rgba(255,75,215,.32)!important}
+#liveLikeBtn.gt-like-tapped{transform:scale(.94);filter:drop-shadow(0 0 9px #ff38b8)}
+#liveLikeBtn{transition:transform .12s ease,filter .12s ease}
 </style>
