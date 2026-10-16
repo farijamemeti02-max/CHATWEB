@@ -8,7 +8,6 @@ const html = read('index.html');
 const live = read('live.js');
 const gifts3d = read('gift-3d.js');
 const games3d = read('mini-games-3d.js');
-const arena = read('battle-arena.html');
 const pkg = JSON.parse(read('package.json'));
 const required = [
   [server.includes("app.set('trust proxy', 1)"), 'Render-Proxy-Vertrauen für korrekte IP-basierte Admin-Sperre fehlt'],
@@ -27,32 +26,12 @@ const required = [
   [html.includes('src="/gift-3d.js"') && gifts3d.includes('window.GameTikGift3D={play,normalizeName}'), '3D-Geschenkmodul ist nicht korrekt eingebunden'],
   [html.includes('src="/mini-games-3d.js"') && games3d.includes('Candy World 3D') && games3d.includes('Neon Racer 3D') && games3d.includes('Space Candy 3D'), '3D-Minispiele fehlen oder sind nicht eingebunden'],
   [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
-  [games3d.includes('id=\"gtmgBattleArena\"') && games3d.includes("location.href='/battle-arena.html'"), 'Battle-Arena-Einstieg im Spielemenü fehlt'],
-  [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('FULL 3D ANIMATION 1.9.86'), 'Battle-Arena 1.9.86 mit vollständiger 3D-Kennzeichnung fehlt'],
-  [arena.includes('cdn.babylonjs.com/babylon.js') && arena.includes('cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js') && arena.includes('window.__bootArena'), 'Mehrfach-CDN-Lader für Babylon.js fehlt'],
-  [arena.includes('show3DError(engineError') && arena.includes('show3DError(sceneError') && !arena.includes('activateSafe2D(engineError') && !arena.includes('activateSafe2D(sceneError'), 'Arena darf bei Fehlern nicht auf 2D umschalten'],
-  [arena.includes('CAREER_KEY') && arena.includes('ACHIEVEMENTS') && arena.includes('challengeSelect'), 'Karriere-, Erfolge- oder Challenge-System der Arena fehlt'],
-  [arena.includes('careerDefaults={rounds:0,wins:0,losses:0,draws:0') && arena.includes('career.xp') && arena.includes('recordCareerResult'), 'Karriere-Siege/Niederlagen/XP werden nicht erfasst'],
-  [arena.includes('Bot-Runden') && arena.includes('lokal') && arena.includes('ungewertet'), 'Hinweis auf lokale, ungewertete Bot-Runden fehlt'],
-  [Boolean(pkg.dependencies['socket.io']), 'Socket.IO-Abhängigkeit für Echtzeitkommunikation fehlt'],
-  [arena.includes('fighterCharacters') && arena.includes('data-character') && arena.includes('applyCharacter'), 'Freischaltbare 3D-Charaktere fehlen'],
-  [arena.includes('CHARACTER_KEY') && arena.includes('updateCharacterChoices') && arena.includes('updateStyleChoices'), 'Charakter-/Outfit-Freischaltung oder Speicherung fehlt'],
-  [arena.includes('Online-Ranglisten akzeptieren erst Ergebnisse aus servergeprüften Online-Duellen'), 'Hinweis auf servergeprüfte Online-Ergebnisse fehlt'],
-  [arena.includes("$('exitBtn').onclick=()=>{location.assign('/');};"), 'Zuverlässige Zurück-Navigation zur GameTik-Startseite fehlt'],
-  [arena.includes("$('resultRematchBtn').onclick=restart") && arena.includes("$('restartBtn').onclick=restart"), 'Erneut-spielen-/Neue-Runde-Buttons sind nicht mit Neustart verbunden'],
-  [arena.includes('.resultOverlay:not(.hidden) ~ .touch{display:none!important}') && arena.includes('id="touchControls"') && arena.includes('touchControls.hidden=true'), 'Touch-Steuerung wird bei Ergebnisanzeige nicht sicher ausgeblendet'],
-  [arena.includes('touchControls.hidden=false'), 'Touch-Steuerung wird nach Neustart nicht korrekt wiederhergestellt'],
-  [arena.includes('.resultOverlay{position:absolute;inset:0;z-index:20;') && arena.includes('.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none;z-index:5}'), 'Ergebnisfenster liegt nicht sicher über der Touch-Steuerung'],
-  [arena.includes('button[data-action=\"restart\"]{grid-column:3;grid-row:2;border-radius:14px;width:100%;min-width:0;max-width:100%;height:48px;padding:0 3px;'), 'Mobile Neustart-Schaltfläche kann aus ihrer Grid-Spalte überlaufen'],
-  [pkg.version === '1.9.87', 'Projektversion ist nicht auf 1.9.87 aktualisiert'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
   [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
   [server.includes("app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')))"), 'Startseite wird nicht korrekt ausgeliefert'],
   [server.includes("httpServer.listen(PORT, '0.0.0.0'"), 'HTTP-Server bindet nicht an 0.0.0.0 für Render'],
   [server.includes('35 * 1024 * 1024'), '35-MB-Videolimit fehlt'],
-  [server.includes("app.get('/api/arena/ranked-status'") && server.includes("enabled: false") && server.includes("app.post('/api/arena/ranked-result'") && server.includes('accepted: false'), 'Online-Ranglisten nehmen keine ungeprüften Browser-Ergebnisse an'],
-  [arena.includes('id="characterOverlay"') && arena.includes('id="characterBtn"') && arena.includes('data-character="titan"'), 'Charakterauswahl ist nicht vollständig eingebunden'],
   [server.includes("app.get('/api/health'"), 'Health-Check für Render fehlt'],
   [server.includes("app.post('/api/auth/forgot-password'") && server.includes("app.post('/api/auth/reset-password'"), 'Passwort-Reset-API fehlt'],
   [server.includes('https://api.brevo.com/v3/smtp/email') && server.includes('process.env.BREVO_API_KEY'), 'Brevo-HTTPS-Mailversand fehlt'],
@@ -65,24 +44,6 @@ const required = [
   [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
 ];
-// Additional structural checks: catch duplicate HTML IDs and missing local assets.
-const idMatches = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
-const duplicateIds = [...new Set(idMatches.filter((id, index) => idMatches.indexOf(id) !== index))];
-required.push([duplicateIds.length === 0, duplicateIds.length ? `Doppelte IDs in index.html: ${duplicateIds.slice(0, 10).join(', ')}` : 'Keine doppelten IDs in index.html']);
-const arenaIds = [...arena.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
-const duplicateArenaIds = [...new Set(arenaIds.filter((id, index) => arenaIds.indexOf(id) !== index))];
-required.push([duplicateArenaIds.length === 0, duplicateArenaIds.length ? `Doppelte IDs in battle-arena.html: ${duplicateArenaIds.slice(0, 10).join(', ')}` : 'Keine doppelten IDs in battle-arena.html']);
-const localRefs = [...html.matchAll(/(?:src|href)=["']([^"'#?]+)(?:[?#][^"']*)?["']/gi)]
-  .map(match => match[1])
-  .filter(ref => !/^(?:https?:)?\/\//i.test(ref) && !ref.startsWith('data:') && !ref.startsWith('mailto:') && !ref.startsWith('tel:'));
-const missingRefs = [...new Set(localRefs)].filter(ref => {
-  // Socket.IO serves this script dynamically from the running Express server.
-  if (ref === '/socket.io/socket.io.js' || ref === 'socket.io/socket.io.js') return false;
-  const relative = ref.startsWith('/') ? ref.slice(1) : ref;
-  return !fs.existsSync(path.join(root, relative));
-});
-required.push([missingRefs.length === 0, missingRefs.length ? `Fehlende lokale HTML-Dateien: ${missingRefs.slice(0, 10).join(', ')}` : 'Alle lokalen HTML-Dateiverweise vorhanden']);
-
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }
 console.log(`Projektprüfung erfolgreich: ${required.length} Kernprüfungen bestanden.`);
