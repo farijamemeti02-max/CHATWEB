@@ -10,3 +10,6 @@ Prüfung:
 - node --check server.js, app.js, live.js, gift-3d.js und mini-games-3d.js: bestanden.
 - scripts/check-project.js: 33 Kernprüfungen bestanden.
 - Kein echter Browser-/Render-Live-Test wurde in dieser Umgebung ausgeführt. Bitte vor dem Ersetzen ein Backup erstellen und nach dem Deployment ein echtes LIVE-Duell testen.
+
+
+Update 1.9.36: Während eines laufenden Duells wird die doppelte untere Punktetabelle ausgeblendet. Die obere 3D-Duelltafel ist auf Mobilgeräten schmaler und flacher.
