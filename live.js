@@ -393,13 +393,22 @@
     finally { setTimeout(()=>{button.disabled=false;},500); }
   }));
   refreshCandyBalance();
+  function getLiveViewerId() {
+    const key = 'gametik_live_viewer_id';
+    let id = localStorage.getItem(key) || '';
+    if (!/^[a-zA-Z0-9_-]{12,100}$/.test(id)) {
+      id = 'viewer_' + (window.crypto?.randomUUID ? crypto.randomUUID().replace(/-/g, '') : Math.random().toString(36).slice(2) + Date.now().toString(36));
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
   async function sendLiveLike() {
     if (!currentStream) return;
     showFloatingHeart();
     // Visible local feedback immediately; the server response updates the shared total.
     const likeCount = $('liveLikeCount');
     if (likeCount) { likeCount.classList.remove('gt-like-pop'); void likeCount.offsetWidth; likeCount.classList.add('gt-like-pop'); }
-    try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/like`, {method:'POST', body:'{}'}); liveLikeCount = Number(data.likes || liveLikeCount); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; }
+    try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/like`, {method:'POST', body:JSON.stringify({viewerId:getLiveViewerId()})}); liveLikeCount = Number(data.likes || liveLikeCount); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; if (data.pointsEarned === 1) { const status=$('liveGiftStatus'); if (status) status.textContent=`❤️ +1 Duell-Punkt (${data.viewerLikePoints}/10 für dich)`; } else if (data.gameActive && data.viewerLikePoints >= 10) { const status=$('liveGiftStatus'); if (status) status.textContent='❤️ Likes zählen weiter – deine 10 Duell-Punkte sind ausgeschöpft.'; } }
     catch (error) { const status = $('liveGiftStatus'); if (status) status.textContent = error.message; }
   }
   $('liveLikeBtn')?.addEventListener('click', sendLiveLike);

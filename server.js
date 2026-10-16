@@ -1053,7 +1053,7 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
   gifts.push(giftRecord);
   if (saved.liveRoomId) {
     const liveRoom = liveRooms.get(saved.liveRoomId);
-    const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[saved.gift] || 0;
+    const giftPoints = ({ Herz: 100, Stern: 200, Feuer: 300, Krone: 500 })[saved.gift] || 0;
     if (liveRoom?.game?.active && giftPoints > 0 && Date.now() < liveRoom.game.endsAt) {
       liveRoom.game.hostPoints = Math.min(1000000000, Number(liveRoom.game.hostPoints || 0) + giftPoints);
       io.to('live:' + saved.liveRoomId).emit('live:game-state', { roomId: saved.liveRoomId, game: liveRoom.game });
@@ -1122,7 +1122,7 @@ app.post('/api/live/create', auth, asyncRoute(async (req, res) => {
   const title = String(req.body.title || '').trim().slice(0, 100) || `${req.user.username} ist live`;
   const id = crypto.randomUUID();
   const roomName = `gametik-${id.replace(/-/g, '')}`;
-  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live', likes: 0, likedBy: new Set(), game: { active: false, endsAt: null, hostPoints: 0, communityPoints: 0, winner: null }, gameTimer: null };
+  const room = { id, roomName, title, hostId: String(req.user.id), hostUsername: req.user.username, startedAt: new Date().toISOString(), status: 'live', likes: 0, likedBy: new Set(), likePointsByViewer: new Map(), game: { active: false, endsAt: null, hostPoints: 0, communityPoints: 0, winner: null }, gameTimer: null };
   const access = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, { identity: String(req.user.id), name: req.user.username, ttl: '1h' });
   access.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true, canPublishData: true });
   const token = await access.toJwt();
@@ -1142,11 +1142,32 @@ app.post('/api/live/:id/guest-join', asyncRoute(async (req, res) => {
 app.post('/api/live/:id/like', (req, res) => {
   const room = liveRooms.get(String(req.params.id));
   if (!room || room.status !== 'live') return res.status(404).json({ error: 'Dieser Live-Stream ist nicht mehr aktiv.' });
-  // Anonymous likes are intentionally counted as taps; add rate limiting before public production launch.
+  // A stable client-generated viewer key allows guest viewers to use likes without an account.
+  // It is only a lightweight fairness guard; production anti-abuse should additionally use auth/rate limits.
+  const viewerId = String(req.body?.viewerId || '').trim().slice(0, 100);
+  if (!/^[a-zA-Z0-9_-]{12,100}$/.test(viewerId)) return res.status(400).json({ error: 'Viewer-ID fehlt. Bitte Stream neu laden.' });
   room.likes = Math.min(1000000000, Number(room.likes || 0) + 1);
-  // Likes animate the LIVE but do not decide the candy duel winner.
-  io.to('live:' + room.id).emit('live:like-count', { roomId: room.id, likes: room.likes });
-  res.json({ ok: true, likes: room.likes });
+  let pointsEarned = 0;
+  let personalLikePoints = 0;
+  const game = room.game;
+  if (game?.active && Date.now() < Number(game.endsAt || 0)) {
+    if (!(room.likePointsByViewer instanceof Map)) room.likePointsByViewer = new Map();
+    personalLikePoints = Number(room.likePointsByViewer.get(viewerId) || 0);
+    if (personalLikePoints < 10) {
+      pointsEarned = 1;
+      personalLikePoints += 1;
+      room.likePointsByViewer.set(viewerId, personalLikePoints);
+      game.communityPoints = Math.min(1000000000, Number(game.communityPoints || 0) + 1);
+      io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game });
+    }
+    // Bound memory use during very large streams; do not remove active viewer counters early.
+    if (room.likePointsByViewer.size > 50000) {
+      const firstKey = room.likePointsByViewer.keys().next().value;
+      if (firstKey !== undefined && firstKey !== viewerId) room.likePointsByViewer.delete(firstKey);
+    }
+  }
+  io.to('live:' + room.id).emit('live:like-count', { roomId: room.id, likes: room.likes, pointsEarned, viewerLikePoints: personalLikePoints });
+  res.json({ ok: true, likes: room.likes, pointsEarned, viewerLikePoints: personalLikePoints, likePointsLimit: 10, gameActive: Boolean(game?.active && Date.now() < Number(game.endsAt || 0)) });
 });
 app.post('/api/live/:id/join', auth, asyncRoute(async (req, res) => {
   if (!livekitConfigured()) return res.status(503).json({ error: 'Live ist noch nicht eingerichtet. Bitte LiveKit-Zugangsdaten in Render konfigurieren.' });
@@ -1164,6 +1185,7 @@ app.post('/api/live/:id/game/start', auth, (req, res) => {
   const seconds = Math.max(30, Math.min(600, Number(req.body.seconds) || 180));
   if (room.gameTimer) clearTimeout(room.gameTimer);
   room.game = { active: true, endsAt: Date.now() + seconds * 1000, hostPoints: 0, communityPoints: 0, winner: null };
+  room.likePointsByViewer = new Map();
   io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game });
   room.gameTimer = setTimeout(() => {
     if (!room.game?.active) return;
