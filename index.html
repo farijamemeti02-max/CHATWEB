@@ -1666,7 +1666,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   const make=(id,icon,label,action)=>{const b=document.createElement('button');b.type='button';b.id=id;b.setAttribute('aria-label',label);b.innerHTML='<span aria-hidden="true">'+icon+'</span><small>'+label+'</small>';b.addEventListener('click',action);rail.appendChild(b);return b;};
   make('gtLiveLikeAction','♥','Like',()=>document.getElementById('liveLikeBtn')?.click()||stage.dispatchEvent(new CustomEvent('gametik-live-like',{bubbles:true})));
   make('gtLiveCommentAction','☰','Chat',()=>{chatInput?.focus({preventScroll:true});document.getElementById('liveChatDock')?.scrollIntoView({behavior:'smooth',block:'nearest'});});
-  make('gtLiveGiftAction','🎁','Geschenke',()=>{const drawer=document.getElementById('gtLiveGiftDrawer');if(drawer)drawer.hidden=!drawer.hidden;});
+  make('gtLiveGiftAction','🎁','Geschenke',()=>{const drawer=document.getElementById('gtLiveGiftDrawer');const messages=document.getElementById('liveChatMessages');if(drawer){drawer.hidden=!drawer.hidden;const action=document.getElementById('gtLiveGiftAction');action?.setAttribute('aria-expanded',String(!drawer.hidden));if(!drawer.hidden&&messages){messages.scrollTop=messages.scrollHeight;}}});
   make('gtLiveGameAction','<svg viewBox="0 0 64 44" aria-hidden="true" focusable="false"><path d="M14 9h36c6 0 10 4 12 11l2 11c1 6-5 9-10 5L43 27H21L10 36C5 40-1 37 0 31l2-11C4 13 8 9 14 9Z" fill="#e8edf7" stroke="#8fa6d8" stroke-width="2"/><path d="M15 16v12M9 22h12" stroke="#1b2340" stroke-width="3" stroke-linecap="round"/><circle cx="47" cy="18" r="3" fill="#ff3c9e"/><circle cx="53" cy="24" r="3" fill="#20dfff"/><circle cx="43" cy="25" r="3" fill="#b18cff"/></svg>','Spiel',()=>document.getElementById('gtLiveGameToggle')?.click());
   make('gtLiveShareAction','↗','Teilen',()=>document.getElementById('liveShareBtn')?.click());
   const profile=document.createElement('div');profile.id='gtLiveProfilePill';profile.innerHTML='<span class="gt-live-profile-avatar">👑</span><span class="gt-live-profile-copy"><b id="gtLiveProfileName">GameTik LIVE</b><small>🔥 LIVE Duell</small></span><button type="button" id="gtLiveFollowButton">＋ Folgen</button>';profile.querySelector('#gtLiveFollowButton').addEventListener('click',()=>{const b=profile.querySelector('#gtLiveFollowButton');const following=b.dataset.following==='1';b.dataset.following=following?'0':'1';b.textContent=following?'＋ Folgen':'✓ Folgst du';document.getElementById('liveFollowBtn')?.click();});overlay.appendChild(profile);
@@ -1677,20 +1677,21 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   if(gamePanel){gamePanel.style.display='none';gamePanel.dataset.gtOriginalParent=gamePanel.parentElement?.id||'';}
   if(gifts&&!document.getElementById('gtLiveGiftDrawer')){
    const drawer=document.createElement('section');drawer.id='gtLiveGiftDrawer';drawer.hidden=true;drawer.setAttribute('aria-label','LIVE-Geschenke');
-   const head=document.createElement('div');head.className='gt-gift-drawer-head';head.innerHTML='<span>🎁 Geschenke senden</span><button type="button" class="secondary" aria-label="Geschenke schließen">Schließen ✕</button>';head.querySelector('button').addEventListener('click',()=>drawer.hidden=true);drawer.appendChild(head);
+   const head=document.createElement('div');head.className='gt-gift-drawer-head';head.innerHTML='<span>🎁 Geschenke senden</span><button type="button" class="secondary" aria-label="Geschenke schließen">Schließen ✕</button>';head.querySelector('button').addEventListener('click',()=>{drawer.hidden=true;document.getElementById('gtLiveGiftAction')?.setAttribute('aria-expanded','false');});drawer.appendChild(head);
    const clone=gifts.cloneNode(true);clone.id='gtLiveGiftDrawerButtons';clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));clone.querySelectorAll('.danger').forEach(el=>el.remove());clone.querySelectorAll('button').forEach(el=>{if(/stream verlassen|live beenden/i.test(el.textContent||''))el.remove();});clone.style.display='grid';clone.style.gridTemplateColumns='repeat(4,minmax(0,1fr))';clone.style.gap='5px';
-   // The visible drawer proxies clicks to the original controls so payment and gift logic stays unchanged.
-   clone.querySelectorAll('[data-gift]').forEach(btn=>btn.addEventListener('click',()=>{const original=gifts.querySelector('[data-gift="'+btn.getAttribute('data-gift')+'"]');if(original)original.click();}));
+   drawer.appendChild(clone);
+   // Proxy visible gift buttons to the original controls so payment and gift logic stays unchanged.
+   clone.querySelectorAll('[data-gift]').forEach(btn=>btn.addEventListener('click',()=>{const original=gifts.querySelector('[data-gift="'+btn.getAttribute('data-gift')+'"]');if(original)original.click();drawer.hidden=true;document.getElementById('gtLiveGiftAction')?.setAttribute('aria-expanded','false');}));
    const candySource=document.getElementById('liveCandyPanel');
    if(candySource){
     const candyTitle=document.createElement('div');candyTitle.className='gt-gift-drawer-subhead';candyTitle.textContent='🍬 Kostenlose Süßigkeiten';drawer.appendChild(candyTitle);
     const candyGrid=document.createElement('div');candyGrid.id='gtLiveGiftDrawerCandy';candyGrid.className='gt-live-gift-candy';
-    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();});candyGrid.appendChild(b);});
+    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();drawer.hidden=true;document.getElementById('gtLiveGiftAction')?.setAttribute('aria-expanded','false');});candyGrid.appendChild(b);});
     drawer.appendChild(candyGrid);
    }
-   // Keep the picker below the Live-Chat, never over the camera or score bar.
-   const chatDock=document.getElementById('liveChatDock');
-   if(chatDock&&chatDock.parentElement)chatDock.insertAdjacentElement('afterend',drawer);else stage.insertAdjacentElement('afterend',drawer);
+   // Place the picker inside the blue-marked message area. It is hidden until the gift button is tapped.
+   const messageBox=document.getElementById('liveChatMessages');
+   if(messageBox)messageBox.appendChild(drawer);else{const chatDock=document.getElementById('liveChatDock');if(chatDock)chatDock.insertBefore(drawer,document.getElementById('liveChatForm'));}
   }
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initGameTikImmersiveLive,{once:true});else initGameTikImmersiveLive();
@@ -2061,3 +2062,21 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+
+<style id="gametik-live-gifts-inside-message-box-1939">
+/* Gift picker stays hidden until the gift action is tapped, then lives inside the message area. */
+#liveChatMessages{position:relative!important;box-sizing:border-box!important;}
+#liveChatMessages #gtLiveGiftDrawer{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:block!important;width:100%!important;max-width:none!important;max-height:none!important;height:auto!important;box-sizing:border-box!important;overflow:visible!important;margin:2px 0!important;padding:6px!important;border:1px solid rgba(155,92,255,.48)!important;border-radius:11px!important;background:linear-gradient(135deg,rgba(14,17,34,.98),rgba(20,12,38,.98))!important;box-shadow:0 0 10px rgba(155,92,255,.12)!important;backdrop-filter:blur(10px)!important;}
+#liveChatMessages #gtLiveGiftDrawer[hidden]{display:none!important}
+#liveChatMessages #gtLiveGiftDrawer .gt-gift-drawer-head{margin:0 0 5px!important;font-size:10px!important;line-height:1.2!important}
+#liveChatMessages #gtLiveGiftDrawer .gt-gift-drawer-head button{min-height:23px!important;padding:2px 7px!important;font-size:9px!important}
+#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;margin:0!important}
+#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:42px!important;min-height:42px!important;padding:2px!important;gap:1px!important;border-radius:8px!important;font-size:9px!important;}
+#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons .gt-real-gift-icon,
+#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons img{width:19px!important;height:19px!important;min-width:19px!important;flex-basis:19px!important;}
+#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] span{font-size:8px!important;line-height:1.05!important}
+#liveChatMessages #gtLiveGiftDrawer .gt-gift-drawer-subhead{margin:5px 0 3px!important;font-size:9px!important}
+#liveChatMessages #gtLiveGiftDrawer .gt-live-gift-candy{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}
+#liveChatMessages #gtLiveGiftDrawer .gt-live-gift-candy button{height:28px!important;min-height:28px!important;padding:2px!important;font-size:9px!important;border-radius:7px!important}
+@media(max-width:480px){#liveChatMessages{height:clamp(90px,17svh,150px)!important;min-height:90px!important;max-height:150px!important;overflow-y:auto!important}#liveChatMessages #gtLiveGiftDrawer{padding:5px!important}#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:38px!important;min-height:38px!important}}
+</style>
