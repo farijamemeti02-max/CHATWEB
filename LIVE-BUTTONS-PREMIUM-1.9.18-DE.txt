@@ -1,8 +1,0 @@
-GameTik LIVE 1.9.18 – Premium-Aktionsbuttons
-
-Änderung:
-- Like, Chat, Geschenke und Teilen rechts am LIVE-Video mit hochwertiger Glasoptik, feinen Neon-Akzenten, klarer Tiefe und sanften Interaktionen.
-- Kompakte runde Touch-Flächen bleiben auf Smartphones erreichbar.
-- Großes Hochformatvideo und Chat-vor-Geschenken-Reihenfolge bleiben erhalten.
-
-Hinweis: CSS/JavaScript-Prüfungen bestätigen keine echte LiveKit-, Kamera-, Chat- oder PayPal-Verbindung. Nach dem Deployment auf Render bitte auf einem Smartphone testen.
