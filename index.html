@@ -1678,11 +1678,19 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   if(gifts&&!document.getElementById('gtLiveGiftDrawer')){
    const drawer=document.createElement('section');drawer.id='gtLiveGiftDrawer';drawer.hidden=true;drawer.setAttribute('aria-label','LIVE-Geschenke');
    const head=document.createElement('div');head.className='gt-gift-drawer-head';head.innerHTML='<span>🎁 Geschenke senden</span><button type="button" class="secondary" aria-label="Geschenke schließen">Schließen ✕</button>';head.querySelector('button').addEventListener('click',()=>drawer.hidden=true);drawer.appendChild(head);
-   const clone=gifts.cloneNode(true);clone.id='gtLiveGiftDrawerButtons';clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));clone.style.display='grid';clone.style.gridTemplateColumns='repeat(4,minmax(0,1fr))';clone.style.gap='5px';
-   // Keep original gift buttons as the functional source: clicking a visible drawer gift activates the matching original button.
+   const clone=gifts.cloneNode(true);clone.id='gtLiveGiftDrawerButtons';clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));clone.querySelectorAll('.danger').forEach(el=>el.remove());clone.querySelectorAll('button').forEach(el=>{if(/stream verlassen|live beenden/i.test(el.textContent||''))el.remove();});clone.style.display='grid';clone.style.gridTemplateColumns='repeat(4,minmax(0,1fr))';clone.style.gap='5px';
+   // The visible drawer proxies clicks to the original controls so payment and gift logic stays unchanged.
    clone.querySelectorAll('[data-gift]').forEach(btn=>btn.addEventListener('click',()=>{const original=gifts.querySelector('[data-gift="'+btn.getAttribute('data-gift')+'"]');if(original)original.click();}));
-   clone.querySelectorAll('[data-amount]').forEach(btn=>btn.addEventListener('click',()=>{const original=gifts.parentElement?.querySelector('[data-amount="'+btn.getAttribute('data-amount')+'"]');if(original)original.click();}));
-   drawer.appendChild(clone);stage.appendChild(drawer);
+   const candySource=document.getElementById('liveCandyPanel');
+   if(candySource){
+    const candyTitle=document.createElement('div');candyTitle.className='gt-gift-drawer-subhead';candyTitle.textContent='🍬 Kostenlose Süßigkeiten';drawer.appendChild(candyTitle);
+    const candyGrid=document.createElement('div');candyGrid.id='gtLiveGiftDrawerCandy';candyGrid.className='gt-live-gift-candy';
+    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();});candyGrid.appendChild(b);});
+    drawer.appendChild(candyGrid);
+   }
+   // Keep the picker below the Live-Chat, never over the camera or score bar.
+   const chatDock=document.getElementById('liveChatDock');
+   if(chatDock&&chatDock.parentElement)chatDock.insertAdjacentElement('afterend',drawer);else stage.insertAdjacentElement('afterend',drawer);
   }
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initGameTikImmersiveLive,{once:true});else initGameTikImmersiveLive();
@@ -1776,6 +1784,22 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @keyframes gtBrandStartFlash{0%{filter:brightness(1);transform:scale(1)}35%{filter:brightness(1.8);transform:scale(1.06);box-shadow:0 0 0 4px #ffffff66,0 0 30px #ff2bc8,0 0 35px #20dfff}100%{filter:brightness(1);transform:scale(1)}}
 @media(max-width:600px){#liveVideoOverlay .gt-stream-duel-teams{grid-template-columns:minmax(0,1fr) 38px minmax(0,1fr)!important}#liveVideoOverlay .gt-stream-duel-vs{width:37px!important;height:35px!important;font-size:19px!important;margin:0 -1px!important}#gtLiveDuelStartButton{font-size:10px!important;padding:6px 13px!important;margin:5px auto 4px!important}#liveVideoOverlay .gt-stream-duel-team{padding:7px 5px!important;font-size:clamp(9px,2.6vw,12px)!important}}
 @media(prefers-reduced-motion:reduce){#liveVideoOverlay .gt-stream-duel-vs,#gtLiveDuelStartButton{animation:none!important}}
+</style>
+
+
+<style id="gametik-live-gift-drawer-under-chat-v1938">
+/* Gift picker belongs under the Live-Chat and must not cover the live camera. */
+#gtLiveGiftDrawer{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:block!important;width:min(100%,640px)!important;max-width:640px!important;margin:8px auto 10px!important;padding:8px 9px!important;max-height:none!important;height:auto!important;overflow:visible!important;z-index:2!important;border:1px solid rgba(164,115,255,.42)!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(13,16,31,.97),rgba(7,10,21,.97))!important;box-shadow:0 5px 16px rgba(0,0,0,.22),0 0 10px rgba(173,88,255,.08)!important}
+#gtLiveGiftDrawer[hidden]{display:none!important}
+#gtLiveGiftDrawer .gt-gift-drawer-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin:0 0 6px!important;font-size:12px!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:52px!important;min-height:52px!important;padding:3px!important;gap:2px!important;border-radius:9px!important;font-size:9px!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons img{width:20px!important;height:20px!important;min-width:20px!important;flex-basis:20px!important}
+#gtLiveGiftDrawer #gtLiveGiftDrawerButtons [data-gift] span{font-size:9px!important;line-height:1.05!important}
+#gtLiveGiftDrawer .gt-gift-drawer-subhead{font-size:10px!important;font-weight:800!important;color:#c9d6f4!important;margin:7px 0 4px!important}
+#gtLiveGiftDrawer .gt-live-gift-candy{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+#gtLiveGiftDrawer .gt-live-gift-candy button{min-width:0!important;min-height:34px!important;height:34px!important;padding:3px!important;border-radius:8px!important;font-size:10px!important;background:linear-gradient(120deg,#171b32,#10172b)!important;color:#fff!important;border:1px solid rgba(79,218,255,.35)!important;box-shadow:none!important}
+@media(max-width:480px){#gtLiveGiftDrawer{margin:6px 0 8px!important;padding:7px!important}#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:48px!important;min-height:48px!important}#gtLiveGiftDrawer .gt-live-gift-candy button{font-size:9px!important}}
 </style>
 
 </body>
