@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090b16">
-<title>GameTik Battle Arena — Animation Upgrade 1.9.44</title>
+<title>GameTik Battle Arena — Sci-Fi Armour Upgrade 1.9.46</title>
 <style>
 :root{color-scheme:dark;--pink:#ff35c8;--blue:#20d9ff;--silver:#e7edf7}*{box-sizing:border-box}body{margin:0;background:#060812;color:#fff;font-family:Inter,system-ui,Arial,sans-serif;overflow:hidden}.shell{height:100dvh;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 0,#192443 0,#080a15 55%,#03040a 100%)}header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid #ffffff1c;background:#080b16e8;z-index:3}.brand{font-weight:1000;letter-spacing:.08em;font-size:clamp(15px,3vw,22px);text-shadow:0 0 16px #21d9ff66}.brand span{color:var(--pink)}.pill{border:1px solid #ffffff28;border-radius:99px;padding:7px 10px;color:#d9e4ff;font-size:12px}.arena{position:relative;flex:1;min-height:0;overflow:hidden}#renderCanvas{width:100%;height:100%;display:block;touch-action:none;outline:none}.hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(10px,2.4vw,24px);background:linear-gradient(#050711a8,transparent 24%,transparent 65%,#05071170)}.fighters{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}.fighter{min-width:0;max-width:430px}.fighter.right{justify-self:end;text-align:right}.name{font-size:clamp(11px,2vw,16px);font-weight:900;letter-spacing:.08em;text-transform:uppercase}.health{height:12px;margin-top:7px;background:#ffffff1c;border:1px solid #ffffff42;transform:skewX(-12deg);overflow:hidden;box-shadow:0 0 12px #0008}.health>i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff35c8,#ff7ee8);transition:width .16s}.right .health>i{margin-left:auto;background:linear-gradient(90deg,#20d9ff,#6f8bff)}.vs{font-size:clamp(22px,4vw,42px);font-weight:1000;font-style:italic;color:#fff;text-shadow:0 0 10px var(--pink),0 0 24px var(--blue);align-self:center}.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:#d4dcf3;margin-top:5px}.centerMessage{position:absolute;top:43%;left:50%;transform:translate(-50%,-50%);font-weight:1000;font-size:clamp(22px,5vw,52px);letter-spacing:.12em;text-align:center;text-shadow:0 0 18px #20d9ff,0 0 36px #ff35c8;white-space:normal;width:90%;pointer-events:none}.bottom{display:flex;justify-content:space-between;align-items:end;gap:12px}.hint{max-width:520px;color:#d5def6;font-size:clamp(10px,1.7vw,13px);line-height:1.5;text-shadow:0 2px 8px #000}.controls{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto}.btn{border:1px solid #ffffff42;border-radius:12px;background:#10162bde;color:white;font-weight:850;padding:10px 13px;min-height:42px;cursor:pointer;box-shadow:0 5px 20px #0005}.btn.primary{background:linear-gradient(110deg,#ff35c8,#8c55ff 55%,#20d9ff);border-color:#ffffff7a}.btn:active{transform:scale(.97)}.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none}.pad{display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px;pointer-events:auto}.pad button,.attackset button{border:1px solid #ffffff55;background:#10162bd9;color:#fff;border-radius:14px;font-weight:900;touch-action:none;min-width:44px;min-height:44px}.pad button:nth-child(1){grid-column:2}.pad button:nth-child(2){grid-column:1;grid-row:2}.pad button:nth-child(3){grid-column:2;grid-row:2}.pad button:nth-child(4){grid-column:3;grid-row:2}.attackset{display:flex;gap:6px;flex-wrap:wrap;justify-content:end;max-width:190px;pointer-events:auto}.attackset button{border-radius:50%;width:54px;height:54px;background:linear-gradient(140deg,#ff35c8aa,#20264c);box-shadow:0 0 16px #ff35c833}.attackset button:nth-child(2){background:linear-gradient(140deg,#20d9ffaa,#20264c)}.attackset button:nth-child(3){background:linear-gradient(140deg,#9c6dffaa,#20264c)}.foot{padding:7px 12px;color:#7e8aa9;font-size:10px;text-align:center;border-top:1px solid #ffffff12}.hidden{display:none!important}@media(max-width:700px){header{padding:8px 10px}.pill{font-size:10px}.touch{display:flex}.hint{max-width:42%;margin-bottom:3px}.controls .desktop{display:none}.health{height:9px}.fighters{gap:7px}.name{font-size:10px}.vs{font-size:24px}.meta{font-size:10px}.bottom{align-items:center}}@media(min-width:701px){.touch{display:none}}
 /* Mobile refinement: preserve the existing arena and game logic while separating
@@ -49,12 +49,107 @@
 }
 </style>
 </head><body><div class="shell"><header><div class="brand">GAME<span>TIK</span> <span style="color:#fff">/ BATTLE ARENA</span></div><div style="display:flex;gap:8px;align-items:center"><span class="pill" id="modeTag">VS COMPUTER · TRAINING</span><button class="btn" id="exitBtn">← Zurück</button></div></header>
-<main class="arena"><canvas id="renderCanvas" aria-label="3D-Kampfarena"></canvas><div class="hud"><div class="fighters"><div class="fighter"><div class="name">PLAYER 01</div><div class="health"><i id="playerHealth"></i></div><div class="meta"><span id="playerStatus">BEREIT</span><span id="playerHpText">100 / 100</span></div></div><div class="vs">VS</div><div class="fighter right"><div class="name">AI CHALLENGER</div><div class="health"><i id="enemyHealth"></i></div><div class="meta"><span id="enemyHpText">100 / 100</span><span id="enemyStatus">ANALYSE</span></div></div></div><div class="centerMessage" id="centerMessage">BATTLE ARENA</div><div class="bottom"><div class="hint" id="helpText">WASD bewegen · J leichter Schlag · K schwerer Schlag · L blocken · Leertaste ausweichen<br>Prototyp: lokale Trainingsrunde gegen Computergegner.</div><div class="controls"><button class="btn desktop" id="blockBtn">🛡 Blocken (L)</button><button class="btn desktop" id="dodgeBtn">↗ Ausweichen (Space)</button><button class="btn primary" id="restartBtn">↻ Neue Runde</button></div></div></div><div class="touch"><div class="pad"><button data-move="forward" aria-label="Vorwärts">▲</button><button data-move="left" aria-label="Links">◀</button><button data-move="back" aria-label="Rückwärts">▼</button><button data-move="right" aria-label="Rechts">▶</button></div><div class="attackset"><button data-action="light">SCHLAG</button><button data-action="heavy">TRITT</button><button data-action="block">BLOCK</button><button data-action="dodge">DODGE</button></div></div></main><div class="foot">GAME TIK BATTLE ARENA · ANIMATION UPGRADE 1.9.44 · KEINE KÄUFE ODER ECHTGELDGEWINNE</div></div>
+<main class="arena"><canvas id="renderCanvas" aria-label="3D-Kampfarena"></canvas><div class="hud"><div class="fighters"><div class="fighter"><div class="name">PLAYER 01</div><div class="health"><i id="playerHealth"></i></div><div class="meta"><span id="playerStatus">BEREIT</span><span id="playerHpText">100 / 100</span></div></div><div class="vs">VS</div><div class="fighter right"><div class="name">AI CHALLENGER</div><div class="health"><i id="enemyHealth"></i></div><div class="meta"><span id="enemyHpText">100 / 100</span><span id="enemyStatus">ANALYSE</span></div></div></div><div class="centerMessage" id="centerMessage">BATTLE ARENA</div><div class="bottom"><div class="hint" id="helpText">WASD bewegen · J leichter Schlag · K schwerer Schlag · L blocken · Leertaste ausweichen<br>Prototyp: lokale Trainingsrunde gegen Computergegner.</div><div class="controls"><button class="btn desktop" id="blockBtn">🛡 Blocken (L)</button><button class="btn desktop" id="dodgeBtn">↗ Ausweichen (Space)</button><button class="btn primary" id="restartBtn">↻ Neue Runde</button></div></div></div><div class="touch"><div class="pad"><button data-move="forward" aria-label="Vorwärts">▲</button><button data-move="left" aria-label="Links">◀</button><button data-move="back" aria-label="Rückwärts">▼</button><button data-move="right" aria-label="Rechts">▶</button></div><div class="attackset"><button data-action="light">SCHLAG</button><button data-action="heavy">TRITT</button><button data-action="block">BLOCK</button><button data-action="dodge">DODGE</button></div></div></main><div class="foot">GAME TIK BATTLE ARENA · FIGHTER APPEARANCE UPDATE 1.9.45 · KEINE KÄUFE ODER ECHTGELDGEWINNE</div></div>
 <script src="https://cdn.babylonjs.com/babylon.js"></script><script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script><script>
 (()=>{'use strict';const $=id=>document.getElementById(id);const canvas=$('renderCanvas');if(!window.BABYLON){$('centerMessage').textContent='3D-ENGINE NICHT GELADEN';$('helpText').textContent='Bitte Internetverbindung prüfen und die Seite neu laden.';return}const B=window.BABYLON;const engine=new B.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:true,antialias:true,powerPreference:'high-performance'},true);engine.setHardwareScalingLevel(Math.min(1.35,Math.max(1,(window.devicePixelRatio||1)/1.5)));let scene,camera,player,enemy,roundOver=false,startedAt=0,lastAI=0,keys=new Set(),touchMove=new Set(),blocking=false,playerDodging=0,enemyDodging=0,shake=0,flash=0;const state={player:{hp:100,max:100,stun:0,attack:0,cool:0,energy:100,combo:0},enemy:{hp:100,max:100,stun:0,attack:0,cool:0,energy:100,combo:0}};
 function mat(name,color,metal=0.2,rough=.4,emissive=null){const m=new B.PBRMaterial(name,scene);m.albedoColor=B.Color3.FromHexString(color);m.metallic=metal;m.roughness=rough;if(emissive)m.emissiveColor=B.Color3.FromHexString(emissive);return m}
-function buildFighter(name,x,colors){const root=new B.TransformNode(name+'Root',scene);root.position.x=x;const skin=mat(name+'Skin',colors.skin,.05,.68),cloth=mat(name+'Suit',colors.suit,.42,.3),armor=mat(name+'Armor',colors.armor,.82,.2),glow=mat(name+'Glow',colors.glow,.4,.2,colors.glow);const parts={};function box(id,size,pos,material,diam){let mesh;if(diam)mesh=B.MeshBuilder.CreateSphere(name+id,{diameter:diam,segments:16},scene);else mesh=B.MeshBuilder.CreateBox(name+id,{width:size[0],height:size[1],depth:size[2]},scene);mesh.position=new B.Vector3(...pos);mesh.material=material;mesh.parent=root;parts[id]=mesh;return mesh}function capsule(id,height,diam,pos,material){const mesh=B.MeshBuilder.CreateCapsule(name+id,{height,radius:diam/2,tessellation:12,subdivisions:4},scene);mesh.position=new B.Vector3(...pos);mesh.material=material;mesh.parent=root;parts[id]=mesh;return mesh}
-box('hips',[.58,.35,.34],[0,1.03,0],cloth);capsule('torso',.92,.66,[0,1.66,0],cloth);box('chestPlate',[.52,.42,.13],[0,1.8,-.29],armor);box('belt',[.62,.12,.37],[0,1.26,0],armor);box('beltGlow',[.26,.045,.025],[0,1.26,-.205],glow);box('neck',[.22,.18,.22],[0,2.15,0],skin);box('head',[.43,.53,.4],[0,2.48,0],skin);box('hair',[.46,.16,.43],[0,2.74,.015],armor);box('visor',[.32,.075,.025],[0,2.53,-.207],glow);const shoulderL=box('shoulderL',[.32,.3,.34],[-.48,1.98,0],armor),shoulderR=box('shoulderR',[.32,.3,.34],[.48,1.98,0],armor);capsule('armL',.72,.23,[-.53,1.55,0],skin);capsule('armR',.72,.23,[.53,1.55,0],skin);box('gloveL',[.26,.25,.28],[-.54,1.16,-.04],glow);box('gloveR',[.26,.25,.28],[.54,1.16,-.04],glow);capsule('thighL',.67,.27,[-.2,.72,0],cloth);capsule('thighR',.67,.27,[.2,.72,0],cloth);capsule('shinL',.57,.22,[-.2,.31,-.015],armor);capsule('shinR',.57,.22,[.2,.31,-.015],armor);box('bootL',[.3,.16,.46],[-.2,.1,-.07],glow);box('bootR',[.3,.16,.46],[.2,.1,-.07],glow);const shadow=B.MeshBuilder.CreateDisc(name+'Shadow',{radius:.68,tessellation:32},scene);shadow.rotation.x=Math.PI/2;shadow.position.y=.025;shadow.parent=root;const sm=new B.StandardMaterial(name+'ShadowMat',scene);sm.diffuseColor=new B.Color3(0,0,0);sm.alpha=.32;shadow.material=sm;return {root,parts,colors,baseX:x,phase:Math.random()*8}}
+function buildFighter(name,x,colors){
+const root=new B.TransformNode(name+'Root',scene);root.position.x=x;
+// Full sci-fi combat armour built from native Babylon.js meshes (no external model dependency).
+const skin=mat(name+'UnderSuit',colors.suit||'#101827',.42,.38),
+      cloth=mat(name+'ArmourBody','#111a2a',.72,.3),
+      armor=mat(name+'ArmourPlates','#27364d',.84,.22),
+      armorEdge=mat(name+'ArmourEdges','#aabbd2',.88,.19),
+      armorBlack=mat(name+'ArmourBlack','#090f1c',.9,.2),
+      glow=mat(name+'NeonEnergy',colors.glow,.48,.19,colors.glow),
+      glowDim=mat(name+'NeonTrim',colors.glow,.36,.25,colors.glow),
+      faceShield=mat(name+'VisorGlass','#07101c',.82,.14),
+      detail=mat(name+'ArmourDetail','#536781',.8,.24);
+const parts={};
+function box(id,size,pos,material,parent=root){const mesh=B.MeshBuilder.CreateBox(name+id,{width:size[0],height:size[1],depth:size[2]},scene);mesh.position=new B.Vector3(...pos);mesh.material=material;mesh.parent=parent;if(parent===root)parts[id]=mesh;return mesh}
+function ellipsoid(id,diam,pos,material,scale=[1,1,1],parent=root){const mesh=B.MeshBuilder.CreateSphere(name+id,{diameter:diam,segments:24},scene);mesh.scaling=new B.Vector3(...scale);mesh.position=new B.Vector3(...pos);mesh.material=material;mesh.parent=parent;if(parent===root)parts[id]=mesh;return mesh}
+function capsule(id,height,diam,pos,material,parent=root){const mesh=B.MeshBuilder.CreateCapsule(name+id,{height,radius:diam/2,tessellation:20,subdivisions:6},scene);mesh.position=new B.Vector3(...pos);mesh.material=material;mesh.parent=parent;if(parent===root)parts[id]=mesh;return mesh}
+// Waist and torso: dark undersuit with layered plated chest and neon reactor.
+ellipsoid('hips',.64,[0,1.03,0],cloth,[.9,.5,.65]);
+capsule('torso',1.02,.7,[0,1.67,0],skin);
+const torso=parts.torso;
+ellipsoid('chestPlate',.72,[0,.09,-.13],armor,[.9,.72,.52],torso);
+ellipsoid('chestCore',.18,[0,.12,-.285],glow,[.76,1,.35],torso);
+for(const side of [-1,1]){
+  const p=ellipsoid('chestShoulderPlate'+side,.34,[side*.205,.28,-.22],armorEdge,[.95,.64,.36],torso);p.rotation.z=side*-.12;
+  const seam=box('chestSeam'+side,[.035,.31,.026],[side*.19,-.005,-.302],glow,torso);seam.rotation.z=side*.16;
+  const rib=ellipsoid('ribPlate'+side,.27,[side*.255,-.13,-.145],armorBlack,[.65,.9,.48],torso);rib.rotation.z=side*.18;
+}
+box('chestLowerPlate',[.34,.12,.055],[0,-.22,-.285],armorEdge,torso);
+ellipsoid('neckSeal',.28,[0,2.16,0],armorBlack,[.9,.6,.9]);
+// Closed helmet replacing the human head, with a luminous horizontal visor and side modules.
+ellipsoid('head',.55,[0,2.48,0],armorBlack,[.9,1.05,.83]);
+const head=parts.head;
+ellipsoid('helmetCrown',.44,[0,.155,.005],armor,[1,.47,.9],head);
+ellipsoid('helmetBrow',.40,[0,.055,-.13],armorEdge,[1.04,.23,.43],head);
+box('visorGlass',[.335,.105,.045],[0,-.005,-.212],faceShield,head);
+box('visorGlow',[.31,.028,.018],[0,-.006,-.243],glow,head);
+for(const side of [-1,1]){
+  const ear=ellipsoid('helmetSide'+side,.16,[side*.205,.005,-.01],armor,[.72,1.12,.85],head);ear.rotation.z=side*-.1;
+  box('helmetSideLight'+side,[.025,.12,.025],[side*.222,.005,-.105],glow,head);
+  const jaw=ellipsoid('helmetJaw'+side,.2,[side*.105,-.12,-.125],armor,[.78,.55,.52],head);jaw.rotation.z=side*.15;
+}
+ellipsoid('helmetChin',.23,[0,-.16,-.11],armorBlack,[.9,.42,.52],head);
+box('helmetTopStripe',[.04,.12,.025],[0,.19,-.135],glow,head);
+// Waist belt and hard-shell side guards.
+ellipsoid('belt',.63,[0,1.28,0],armorBlack,[.94,.2,.68]);
+ellipsoid('beltBuckle',.2,[0,1.28,-.23],armorEdge,[1,.72,.34]);
+box('beltGlow',[.13,.035,.022],[0,1.28,-.305],glow);
+for(const side of [-1,1]){
+  const hip=ellipsoid('hipGuard'+side,.31,[side*.29,.98,-.06],armor,[.72,1.1,.5]);hip.rotation.z=side*.22;
+  const hipLine=box('hipGlow'+side,[.025,.19,.02],[side*.3,.99,-.205],glow);hipLine.rotation.z=side*.2;
+}
+// Shoulder pauldrons and armoured arms. Existing animated part names are preserved.
+const shoulderL=ellipsoid('shoulderL',.38,[-.47,1.96,0],armor,[1.12,.82,1]);
+const shoulderR=ellipsoid('shoulderR',.38,[.47,1.96,0],armor,[1.12,.82,1]);
+for(const [side,shoulder] of [['L',shoulderL],['R',shoulderR]]){
+  const cap=ellipsoid('shoulderCap'+side,.30,[0,.035,-.055],armorEdge,[1.02,.48,.82],shoulder);
+  const stripe=box('shoulderStripe'+side,[.18,.028,.025],[0,.05,-.17],glow,shoulder);
+  stripe.rotation.z=side==='L'?.12:-.12;
+}
+const armL=capsule('armL',.61,.235,[-.51,1.62,0],skin);
+const armR=capsule('armR',.61,.235,[.51,1.62,0],skin);
+for(const [side,arm] of [['L',armL],['R',armR]]){
+  const bicep=ellipsoid('bicepArmour'+side,.28,[0,.04,-.045],armor,[.92,1.15,.72],arm);bicep.rotation.z=side==='L'?.1:-.1;
+  capsule('forearm'+side,.43,.185,[0,-.22,-.008],skin,arm);
+  const guard=ellipsoid('forearmGuard'+side,.25,[0,-.22,-.087],armorEdge,[.9,1.1,.48],arm);guard.rotation.z=side==='L'?.08:-.08;
+  box('forearmNeon'+side,[.035,.27,.022],[0,-.22,-.207],glow,arm);
+  const wrist=ellipsoid('wristGuard'+side,.205,[0,-.365,-.005],armorBlack,[.94,.36,.92],arm);
+  const glove=ellipsoid('glove'+side,.255,[0,-.425,-.055],armor,[.82,.82,.86],arm);parts['glove'+side]=glove;
+  for(let i=0;i<3;i++)ellipsoid('knuckle'+side+i,.052,[(-.035+i*.035),.025,-.086],armorEdge,[.88,.72,.5],glove);
+  ellipsoid('thumb'+side,.085,[side==='L'?.075:-.075,-.018,-.035],armorEdge,[.68,.82,.65],glove);
+}
+// A compact neon energy blade matches the reference art. It is decorative; existing hit logic remains unchanged.
+const swordHilt=box('energySwordHilt',[.075,.20,.07],[.025,-.12,-.04],armorBlack,parts.gloveR);swordHilt.rotation.z=-.25;
+const swordGuard=box('energySwordGuard',[.22,.045,.055],[.015,-.22,-.045],armorEdge,parts.gloveR);swordGuard.rotation.z=-.25;
+const swordBlade=box('energySwordBlade',[.07,.67,.028],[-.065,-.52,-.05],glow,parts.gloveR);swordBlade.rotation.z=.30;
+const swordEdge=box('energySwordEdge',[.018,.61,.012],[-.098,-.51,-.068],armorEdge,parts.gloveR);swordEdge.rotation.z=.30;
+// Armoured thighs, knee guards, greaves and boots, each following the existing animation parts.
+const thighL=capsule('thighL',.68,.275,[-.2,.72,0],cloth),thighR=capsule('thighR',.68,.275,[.2,.72,0],cloth);
+for(const [side,thigh] of [['L',thighL],['R',thighR]]){
+  const plate=ellipsoid('thighPlate'+side,.29,[0,.015,-.087],armor,[.88,1.22,.48],thigh);plate.rotation.z=side==='L'?.07:-.07;
+  box('thighStripe'+side,[.025,.22,.018],[0,.01,-.22],glow,thigh);
+}
+ellipsoid('kneeL',.22,[-.2,.47,-.08],armorEdge,[.9,.78,.52]);ellipsoid('kneeR',.22,[.2,.47,-.08],armorEdge,[.9,.78,.52]);
+ellipsoid('kneeGlowL',.065,[-.2,.47,-.143],glow,[.8,1,.4]);ellipsoid('kneeGlowR',.065,[.2,.47,-.143],glow,[.8,1,.4]);
+const shinL=capsule('shinL',.57,.22,[-.2,.31,-.015],armorBlack),shinR=capsule('shinR',.57,.22,[.2,.31,-.015],armorBlack);
+for(const [side,shin] of [['L',shinL],['R',shinR]]){
+  ellipsoid('greave'+side,.22,[0,.005,-.075],armor,[.85,1.16,.5],shin);
+  box('greaveLight'+side,[.028,.28,.02],[0,.005,-.188],glow,shin);
+}
+const bootL=ellipsoid('bootL',.46,[-.2,.105,-.07],armor,[.65,.35,1]);
+const bootR=ellipsoid('bootR',.46,[.2,.105,-.07],armor,[.65,.35,1]);
+for(const [side,boot] of [['L',bootL],['R',bootR]]){
+  box('sole'+side,[.27,.035,.39],[0,-.054,.005],glow,boot);
+  box('toeStripe'+side,[.19,.025,.025],[0,.005,-.17],glow,boot);
+}
+const shadow=B.MeshBuilder.CreateDisc(name+'Shadow',{radius:.68,tessellation:48},scene);shadow.rotation.x=Math.PI/2;shadow.position.y=.025;shadow.parent=root;const sm=new B.StandardMaterial(name+'ShadowMat',scene);sm.diffuseColor=new B.Color3(0,0,0);sm.alpha=.32;shadow.material=sm;
+return {root,parts,colors,baseX:x,phase:Math.random()*8}}
 function createScene(){scene=new B.Scene(engine);scene.clearColor=new B.Color4(.018,.025,.055,1);scene.fogMode=B.Scene.FOGMODE_EXP2;scene.fogDensity=.018;scene.fogColor=new B.Color3(.018,.025,.055);camera=new B.ArcRotateCamera('arenaCamera',-Math.PI/2,1.13,8.8,new B.Vector3(0,1.2,0),scene);camera.lowerRadiusLimit=7;camera.upperRadiusLimit=11;camera.wheelPrecision=70;camera.inputs.removeByType('FreeCameraMouseInput');camera.attachControl(canvas,true);camera.panningSensibility=0;camera.lowerBetaLimit=.85;camera.upperBetaLimit=1.32;scene.activeCamera=camera;const hemi=new B.HemisphericLight('ambient',new B.Vector3(0,1,0),scene);hemi.intensity=.72;const key=new B.DirectionalLight('key',new B.Vector3(-.5,-1,.7),scene);key.position=new B.Vector3(-4,8,-5);key.intensity=2.1;const pink=new B.PointLight('pinkRim',new B.Vector3(-3,3,1),scene);pink.diffuse=B.Color3.FromHexString('#ff35c8');pink.intensity=48;pink.range=9;const blue=new B.PointLight('blueRim',new B.Vector3(3,3,1),scene);blue.diffuse=B.Color3.FromHexString('#20d9ff');blue.intensity=48;blue.range=9;
 const floor=B.MeshBuilder.CreateGround('arenaFloor',{width:14,height:10,subdivisions:2},scene);floor.position.y=0;floor.material=mat('floorMat','#10162a',.72,.28);const grid=B.MeshBuilder.CreateGround('arenaGrid',{width:14,height:10,subdivisions:1},scene);grid.position.y=.012;const gm=new B.GridMaterial('gridMat',scene);gm.majorUnitFrequency=5;gm.minorUnitVisibility=.32;gm.gridRatio=1;gm.backFaceCulling=false;gm.mainColor=B.Color3.FromHexString('#0a0d1b');gm.lineColor=B.Color3.FromHexString('#293e64');gm.opacity=.58;grid.material=gm;
 for(let i=0;i<2;i++){const ring=B.MeshBuilder.CreateTorus('arenaRing'+i,{diameter:5.6-i*.65,thickness:.025, tessellation:100},scene);ring.position.y=.03+i*.008;ring.rotation.x=Math.PI/2;ring.material=mat('ringMat'+i,i?'#20d9ff':'#ff35c8',.7,.24,i?'#0b6a89':'#6d1259')}
