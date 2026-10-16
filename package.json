@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.25",
-  "description": "GAMETIK social platform with public member profile navigation and profile posts",
+  "version": "1.9.27",
+  "description": "GAMETIK social platform with 3D WebGL LIVE gift animations",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
