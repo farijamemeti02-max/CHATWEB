@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.44",
-  "description": "GAMETIK: Battle Arena 3D prototype with improved combat animation and tactical AI guard",
+  "version": "1.9.87",
+  "description": "GAMETIK social platform with mobile humanoid combat fighters and dynamic 3D Battle Arena",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
