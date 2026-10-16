@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.32",
-  "description": "GAMETIK platform with immersive LIVE camera view, 3D duel VS and score bar, static 3D UI depth, animated WebGL LIVE gifts and 3D mini-games",
+  "version": "1.9.33",
+  "description": "GAMETIK platform with immersive LIVE camera view, metallic 3D duel VS start flash, live score bar, static 3D UI depth, animated WebGL LIVE gifts and 3D mini-games",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

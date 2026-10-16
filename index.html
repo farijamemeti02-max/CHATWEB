@@ -1249,7 +1249,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(endedHost&&endedCommunity){endedHost.style.width='50%';endedCommunity.style.width='50%';}
     }
   }
-  start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;setTimeout(sync,80);setTimeout(sync,350);});
+  start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;hud.classList.remove('gt-duel-start-flash');void hud.offsetWidth;hud.classList.add('gt-duel-start-flash');setTimeout(()=>hud.classList.remove('gt-duel-start-flash'),1250);setTimeout(sync,80);setTimeout(sync,350);});
   stop?.addEventListener('click',()=>setTimeout(sync,80));
   [timer,host,community,result,start,stop].forEach(el=>{if(el)new MutationObserver(sync).observe(el,{childList:true,subtree:true,characterData:true,attributes:true});});
   if(duration)duration.addEventListener('change',()=>{initial=Number(duration.value||180);total=initial;sync();});
@@ -1736,6 +1736,24 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 
 <script src="/gift-3d.js" defer></script>
 <script src="/mini-games-3d.js" defer></script>
+
+
+<style id="gametik-live-duel-3d-flash-1933">
+/* 1.9.33: more sculpted VS and a one-shot light burst on real duel start. */
+#gtDuelHud{z-index:12!important;transform-style:preserve-3d!important}
+.gt-duel-hud-card{position:relative!important;overflow:visible!important;transform-style:preserve-3d!important}
+.gt-duel-vs{position:relative!important;isolation:isolate!important;font-size:clamp(24px,6vw,36px)!important;font-weight:1000!important;letter-spacing:-.1em!important;line-height:1!important;text-shadow:1px 1px 0 #fff,2px 3px 0 #7b1f93,4px 5px 0 #17102b,0 0 8px #ff38c8,0 0 17px #21d4fd!important;-webkit-text-stroke:.6px rgba(255,255,255,.7)!important;filter:drop-shadow(0 4px 0 #17102b) drop-shadow(0 0 7px #ff38c8) drop-shadow(0 0 13px #21d4fd)!important;transform:translateZ(26px) rotate(-8deg)!important}
+.gt-duel-vs:before{content:"";position:absolute;z-index:-1;inset:-7px -5px;border-radius:50%;background:conic-gradient(from 25deg,transparent,#ff38c8aa,transparent,#21d4fdaa,transparent);filter:blur(5px);opacity:.6}
+.gt-duel-progress{height:15px!important;border:1px solid #ffffffb5!important;box-shadow:inset 0 3px 6px #000c,0 0 8px #fff5,0 0 17px #21d4fd66!important}
+#gtDuelHostFill3D{box-shadow:inset 0 2px 0 #fff9,inset 0 -3px 5px #6b064d88,0 0 12px #ff38c8!important}
+#gtDuelCommunityFill3D{box-shadow:inset 0 2px 0 #fff9,inset 0 -3px 5px #063a8b88,0 0 12px #21d4fd!important}
+#gtDuelHud.gt-duel-start-flash .gt-duel-hud-card:after{content:"";position:absolute;z-index:5;inset:-12px;border-radius:22px;pointer-events:none;background:linear-gradient(105deg,transparent 25%,#fff0 38%,#fff 48%,#ff38c8 52%,#21d4fd 57%,transparent 70%);mix-blend-mode:screen;filter:blur(3px);animation:gtDuelStartSweep 1.05s ease-out both}
+#gtDuelHud.gt-duel-start-flash .gt-duel-vs{animation:gtDuelVsImpact 1.05s cubic-bezier(.2,.8,.2,1) both!important}
+@keyframes gtDuelStartSweep{0%{opacity:0;transform:translateX(-35%) scale(.96)}22%{opacity:1}100%{opacity:0;transform:translateX(35%) scale(1.03)}}
+@keyframes gtDuelVsImpact{0%{transform:translateZ(26px) rotate(-18deg) scale(.35);filter:brightness(3) drop-shadow(0 0 25px #fff)}45%{transform:translateZ(48px) rotate(5deg) scale(1.3);filter:brightness(1.8) drop-shadow(0 0 18px #ff38c8) drop-shadow(0 0 24px #21d4fd)}100%{transform:translateZ(26px) rotate(-8deg) scale(1);filter:drop-shadow(0 4px 0 #17102b) drop-shadow(0 0 7px #ff38c8) drop-shadow(0 0 13px #21d4fd)}}
+@media(prefers-reduced-motion:reduce){#gtDuelHud.gt-duel-start-flash .gt-duel-hud-card:after,#gtDuelHud.gt-duel-start-flash .gt-duel-vs{animation:none!important}}
+</style>
+
 </body>
 </html>
 <style id="gametik-camera-modern-v192">
