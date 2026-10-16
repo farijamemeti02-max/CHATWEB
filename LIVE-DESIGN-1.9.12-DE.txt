@@ -1,9 +1,0 @@
-GameTik LIVE – Designupdate 1.9.12
-
-- Live-Video bekommt mehr Fläche auf Smartphone und Desktop.
-- Kommentare liegen links im Stream-Overlay; kompakte Aktionsbuttons sind rechts ausgerichtet, sofern sie im Overlay als Aktionsgruppe markiert sind.
-- Chat-Verlauf und Eingabefeld befinden sich direkt unter dem Stream.
-- Geschenke, Spiele und Live-Steuerung wurden kompakter angeordnet.
-- Farben bleiben im GameTik-Neonstil (Pink, Violett, Türkis).
-
-Wichtig: CSS- und statische Prüfungen bestätigen keine tatsächliche LiveKit-Verbindung, Zahlungen oder Echtzeit-Kommunikation. Diese müssen nach dem Deployment getestet werden.
