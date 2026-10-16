@@ -1,0 +1,10 @@
+GameTik – Update 1.9.81
+
+Korrekturen an der Battle Arena:
+- „← Zurück“ führt zuverlässig zur GameTik-Startseite, statt von der zufälligen Browser-Historie abzuhängen.
+- Die Touch-Steuerung passt den Button „NEU“ in die mobile Grid-Spalte ein; die Mindestbreite kann die Nachbarbuttons nicht mehr überdecken.
+- Beim eingeblendeten Runden-Ergebnis werden die Touch-Steuerungen ausgeblendet, damit „DODGE“ nicht über „NOCH EINMAL“ liegt.
+- Der Zurück-Button bleibt auf schmalen Smartphone-Bildschirmen oben rechts sichtbar; die Kopfzeile darf umbrechen.
+- admin.html wurde nicht verändert.
+
+Prüfung: Syntax- und Projektprüfungen werden nach den Änderungen ausgeführt. Ein echter Smartphone-/Browser-End-to-End-Test ist nicht automatisch erfolgt.

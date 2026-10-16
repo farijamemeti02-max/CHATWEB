@@ -1,3 +1,11 @@
+## Update 1.9.82 – Battle-Arena-Touchsteuerung
+
+- Beim Ergebnisdialog wird die mobile Touch-Steuerung explizit ausgeblendet und liegt auch per Ebenenreihenfolge hinter dem Ergebnisfenster.
+- Nach „Noch einmal“ wird die Touch-Steuerung wieder eingeblendet.
+- Der 2D-Sicherheitsmodus blendet die Steuerung bei Rundenende ebenfalls aus und stellt sie nach einem Neustart wieder her.
+- „← Zurück“ navigiert zur GameTik-Startseite.
+- `npm run check` und zusätzliche Syntax-/HTML-/SVG-Prüfungen wurden ausgeführt. Ein echter Smartphone-/Render-/PayPal-/LiveKit-End-to-End-Test ist nicht Teil dieser statischen Prüfungen.
+
 # GameTik – Foto/Video, Storys, Reaktionen und Bewertungen
 
 ## Dateien
@@ -188,3 +196,10 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die vorhandenen Geschenk-Schaltflächen und deren Zahlungs-/Versandlogik bleiben die funktionale Quelle. Die 3D-Animation ist ein visueller Effekt und bestätigt keine Zahlung.
 - Three.js wird beim ersten Geschenk dynamisch von jsDelivr geladen; dafür ist eine Internetverbindung nötig. Wenn die Bibliothek nicht erreichbar ist, bleibt der bestehende Geschenkbereich nutzbar.
 - `admin.html` wurde nicht geändert.
+
+## Battle Arena – Projektintegration 1.9.79
+- `battle-arena.html` nutzt die Arena-Fassung 1.9.78 mit 3D-Modus über Babylon.js und einem vereinfachten 2D-Fallback, falls die externe 3D-Bibliothek nicht geladen werden kann.
+- Der Einstieg „Battle Arena 3D“ bleibt im vorhandenen GameTik-3D-Spielemenü und öffnet `/battle-arena.html`.
+- Die Arena enthält Trainingskampf, Touch-Steuerung, Schwierigkeitswahl, Pause/Neustart, Kampfstatistik, Challenges, Karriere-XP und Erfolge. Karrierewerte werden lokal in diesem Browser gespeichert und nicht serverübergreifend synchronisiert.
+- Diese Integration wurde statisch geprüft. Ein echter Android-/Browser-Test, ein Test auf Render und eine Prüfung aller Geräte-/CDN-Konstellationen sind nicht erfolgt. `admin.html` bleibt unverändert.
+
