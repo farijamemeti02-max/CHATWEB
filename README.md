@@ -1,35 +1,9 @@
-## Update 1.9.87 – Abgleich der hochgeladenen Dateien
-
-- Die hochgeladenen Dateien `server.js`, `README.md`, `paypal.html`, `package.json`, `check-project.js` sowie die Live-, Profil-, Punkte- und Testanweisungen wurden mit dem bestehenden Projektstand abgeglichen. Neuere vorhandene Funktionen wurden nicht durch ältere Upload-Fassungen überschrieben.
-- Karriere: Siege, Niederlagen, Unentschieden, XP, Erfolge und Level bleiben lokal im Browser gespeichert.
-- Charaktere Nova, Frost, Phantom und Titan werden nach Level freigeschaltet; kosmetische Outfits sind getrennt.
-- Socket.IO bleibt als Echtzeit-Abhängigkeit erhalten. Online-Duelle und LIVE-Zuschauer sind noch nicht implementiert.
-- Online-Ranglisten bleiben deaktiviert; ungeprüfte, clientseitig gemeldete Ergebnisse werden vom Server abgelehnt.
-- `admin.html` bleibt unverändert.
-
-## Update 1.9.86 – Battle Arena: Charaktere und sichere Online-Ergebnisse
-
-- Neue Charakterauswahl mit vier freischaltbaren 3D-Varianten; kosmetische Outfits bleiben separat.
-- Online-Ranglisten sind absichtlich deaktiviert, bis ein serverautoritatives Online-Duell-Backend die Ergebnisse überprüft.
-- `admin.html` bleibt unverändert.
-
-## Update 1.9.83 – Battle-Arena-Touchsteuerung
-
-- Beim Ergebnisdialog wird die mobile Touch-Steuerung explizit ausgeblendet und liegt auch per Ebenenreihenfolge hinter dem Ergebnisfenster.
-- Nach „Noch einmal“ wird die Touch-Steuerung wieder eingeblendet.
-- Der 2D-Sicherheitsmodus blendet die Steuerung bei Rundenende ebenfalls aus und stellt sie nach einem Neustart wieder her.
-- „← Zurück“ navigiert zur GameTik-Startseite.
-- `npm run check` und zusätzliche Syntax-/HTML-/SVG-Prüfungen wurden ausgeführt. Ein echter Smartphone-/Render-/PayPal-/LiveKit-End-to-End-Test ist nicht Teil dieser statischen Prüfungen.
-
 # GameTik – Foto/Video, Storys, Reaktionen und Bewertungen
 
 ## Dateien
-- `index.html` – GameTik-Frontend
+- `index.html` – Frontend
 - `app.js` – Frontend-Logik
-- `server.js` – Express API und Socket.IO
-- `battle-arena.html` – Babylon.js-3D-Arena mit Karriere, Charakteren und Outfits
-- `live.js`, `gift-3d.js`, `mini-games-3d.js` – LIVE- und 3D-Spielmodule
-- `check-project.js` und `scripts/check-project.js` – Projektprüfungen
+- `server.js` – Express API
 - `package.json` – Start und Syntaxprüfung
 
 ## Lokal prüfen
@@ -214,31 +188,3 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die vorhandenen Geschenk-Schaltflächen und deren Zahlungs-/Versandlogik bleiben die funktionale Quelle. Die 3D-Animation ist ein visueller Effekt und bestätigt keine Zahlung.
 - Three.js wird beim ersten Geschenk dynamisch von jsDelivr geladen; dafür ist eine Internetverbindung nötig. Wenn die Bibliothek nicht erreichbar ist, bleibt der bestehende Geschenkbereich nutzbar.
 - `admin.html` wurde nicht geändert.
-
-## Battle Arena – Projektintegration 1.9.79
-- `battle-arena.html` nutzt die Arena-Fassung 1.9.78 mit 3D-Modus über Babylon.js und einem vereinfachten 2D-Fallback, falls die externe 3D-Bibliothek nicht geladen werden kann.
-- Der Einstieg „Battle Arena 3D“ bleibt im vorhandenen GameTik-3D-Spielemenü und öffnet `/battle-arena.html`.
-- Die Arena enthält Trainingskampf, Touch-Steuerung, Schwierigkeitswahl, Pause/Neustart, Kampfstatistik, Challenges, Karriere-XP und Erfolge. Karrierewerte werden lokal in diesem Browser gespeichert und nicht serverübergreifend synchronisiert.
-- Diese Integration wurde statisch geprüft. Ein echter Android-/Browser-Test, ein Test auf Render und eine Prüfung aller Geräte-/CDN-Konstellationen sind nicht erfolgt. `admin.html` bleibt unverändert.
-
-
-
-## Battle Arena 1.9.83 – Start-Fallback
-Wenn Babylon.js zwar geladen wird, WebGL aber auf dem Gerät nicht initialisiert werden kann oder die 3D-Szene beim Start fehlschlägt, startet jetzt ein eigenständiger 2D-Sicherheitsmodus mit sichtbaren Kämpfern, Timer und Grundsteuerung. Die 3D-Ansicht muss weiterhin auf echten Geräten getestet werden.
-
-
-## Battle Arena 1.9.85 – Full 3D
-Die Battle Arena lädt Babylon.js über mehrere CDN-Quellen, bevor sie startet. Es gibt keinen automatischen Wechsel in eine 2D-Spielansicht. Wenn WebGL oder alle CDNs ausfallen, wird ein klarer 3D-Fehlerhinweis angezeigt. Die Arena nutzt weiterhin prozedural aufgebaute 3D-Kämpfer und ihre Animations-/Kampfschleife.
-
-
-## Battle Arena 3D – Charaktere, Outfits und Online-Ergebnisse (1.9.86)
-
-- Vier Charaktervarianten sind in der 3D-Arena verfügbar: Nova (Level 1), Frost (Level 2), Phantom (Level 4) und Titan (Level 6). Die Auswahl wird lokal im Browser gespeichert.
-- Kosmetische Outfits bleiben separat wählbar und schalten sich über Level frei. Charaktere geben keinen Schadensbonus.
-- Siege, Niederlagen, Unentschieden, XP, Karriere und Erfolge aus Bot-Runden bleiben lokale, ungewertete Fortschritte. Browserdaten werden nicht als vertrauenswürdige Online-Ergebnisse behandelt.
-- Die Arena nutzt weiterhin Babylon.js für echte 3D-Grafik. Online-Duelle und die LIVE-Zuschauerfunktion sind eine spätere Ausbaustufe. Eine Online-Rangliste darf erst Ergebnisse zählen, wenn ein serverautoritatives Duell-Backend den Ausgang bestätigt; clientseitig gemeldete Siege dürfen nicht als verifiziert gelten.
-- `admin.html` wurde nicht geändert.
-
-## Serverprüfung der Arena-Ergebnisse
-
-Die Endpunkte `/api/arena/ranked-status` und `/api/arena/ranked-result` sind absichtlich geschlossen: Ranglisten sind deaktiviert und der Server lehnt clientseitig gemeldete Ergebnisse ab. Erst wenn Online-Duelle serverautoritativ simuliert und abgeschlossen werden, darf der Server Siege, Niederlagen und XP für eine Online-Rangliste vergeben. Das verhindert, dass Browserdaten allein als verifizierte Ergebnisse gelten.
