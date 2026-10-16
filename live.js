@@ -95,11 +95,11 @@
     if (overlay) {
       const line = document.createElement('div'); line.className = 'live-overlay-line';
       line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
+      // Keep a viewer who is reading older messages in place; otherwise follow the newest line.
       const overlayNearBottom = overlay.scrollHeight - overlay.scrollTop - overlay.clientHeight < 36;
       overlay.appendChild(line);
-      while (overlay.children.length > 40) overlay.firstElementChild.remove();
-      // Follow new messages unless the viewer has deliberately scrolled up to read older chat.
-      if (overlayNearBottom) overlay.scrollTop = overlay.scrollHeight;
+      while (overlay.children.length > 80) overlay.firstElementChild.remove();
+      if (overlayNearBottom) requestAnimationFrame(() => { overlay.scrollTop = overlay.scrollHeight; });
       setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
     }
   }
