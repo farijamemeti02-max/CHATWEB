@@ -1206,7 +1206,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const hud=document.createElement('div');
   hud.id='gtDuelHud';
   hud.setAttribute('aria-live','polite');
-  hud.innerHTML='<div class="gt-duel-hud-card"><div class="gt-duel-hud-top"><span><i class="gt-duel-live-dot"></i>GAMETIK DUELL</span><span class="gt-duel-clock" id="gtDuelHudClock">03:00</span></div><div class="gt-duel-scoreline"><div class="gt-duel-team"><div class="gt-duel-team-name">🎁 STREAMER</div><div class="gt-duel-score" id="gtDuelHudHost">0</div></div><div class="gt-duel-vs">VS</div><div class="gt-duel-team community"><div class="gt-duel-team-name">🍬 COMMUNITY</div><div class="gt-duel-score" id="gtDuelHudCommunity">0</div></div></div><div class="gt-duel-progress"><div id="gtDuelProgressFill"></div></div></div>';
+  hud.innerHTML='<div class="gt-duel-hud-card"><div class="gt-duel-hud-top"><span><i class="gt-duel-live-dot"></i>GAMETIK LIVE-DUELL</span><span class="gt-duel-clock" id="gtDuelHudClock">03:00</span></div><div class="gt-duel-scoreline"><div class="gt-duel-team"><div class="gt-duel-team-name">🎁 DU</div><div class="gt-duel-score" id="gtDuelHudHost">0</div></div><div class="gt-duel-vs" id="gtDuelHudVs">VS</div><div class="gt-duel-team community"><div class="gt-duel-team-name">🍬 GEGNER</div><div class="gt-duel-score" id="gtDuelHudCommunity">0</div></div></div><div class="gt-duel-progress" aria-label="Punktefortschritt"><div id="gtDuelHostFill3D"></div><div id="gtDuelCommunityFill3D"></div></div></div>';
   stage.appendChild(hud);
   const start=document.getElementById('liveGameStart');
   const stop=document.getElementById('liveGameStop');
@@ -1227,8 +1227,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     const cp=document.getElementById('gtDuelHudCommunity');
     if(hp)hp.textContent=(host?.textContent||'0').trim();
     if(cp)cp.textContent=(community?.textContent||'0').trim();
-    const fill=document.getElementById('gtDuelProgressFill');
-    if(fill)fill.style.width=Math.max(0,Math.min(100,initial?total/initial*100:0))+'%';
+    const fillHost=document.getElementById('gtDuelHostFill3D');
+    const fillCommunity=document.getElementById('gtDuelCommunityFill3D');
+    const hostScore=Math.max(0,Number(host?.textContent||0));
+    const communityScore=Math.max(0,Number(community?.textContent||0));
+    const scoreTotal=hostScore+communityScore;
+    const hostShare=scoreTotal?hostScore/scoreTotal*100:50;
+    if(fillHost)fillHost.style.width=hostShare+'%';
+    if(fillCommunity)fillCommunity.style.width=(100-hostShare)+'%';
+    const vs=document.getElementById('gtDuelHudVs');
+    if(vs){vs.classList.toggle('gt-vs-host-lead',hostScore>communityScore);vs.classList.toggle('gt-vs-community-lead',communityScore>hostScore);vs.classList.toggle('gt-vs-tie',hostScore===communityScore);}
     const isRunning=!!(stop&&!stop.classList.contains('hidden')) ||
       /läuft|running|gestartet|runde läuft/i.test(result?.textContent||'');
     running=isRunning;
@@ -1236,7 +1244,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     stage.classList.toggle('gt-duel-running',isRunning);
     if(!isRunning&&/gewonnen|unentschieden|beendet|abgelaufen/i.test(result?.textContent||'')){
       hud.classList.add('gt-duel-visible');
-      if(fill)fill.style.width='0%';
+      const endedHost=document.getElementById('gtDuelHostFill3D');
+      const endedCommunity=document.getElementById('gtDuelCommunityFill3D');
+      if(endedHost&&endedCommunity){endedHost.style.width='50%';endedCommunity.style.width='50%';}
     }
   }
   start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;setTimeout(sync,80);setTimeout(sync,350);});
@@ -1883,4 +1893,38 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoOverlay #liveLikeCount{display:inline-flex!important;align-items:center!important;white-space:nowrap!important;padding:5px 9px!important;border-radius:999px!important;background:rgba(14,8,24,.42)!important;color:#fff!important;font-size:12px!important;font-weight:800!important;text-shadow:0 1px 4px #000!important;border:1px solid rgba(255,75,215,.32)!important}
 #liveLikeBtn.gt-like-tapped{transform:scale(.94);filter:drop-shadow(0 0 9px #ff38b8)}
 #liveLikeBtn{transition:transform .12s ease,filter .12s ease}
+</style>
+
+
+<style id="gametik-live-immersive-3d-duel-v1932">
+/* Mobile LIVE: the camera feed is the main content, with minimal empty space. */
+#liveVideoStage{position:relative!important;width:100%!important;height:min(91svh,1000px)!important;min-height:570px!important;max-height:1000px!important;overflow:hidden!important;border-radius:16px!important;background:#020208!important;isolation:isolate!important}
+#liveVideoGrid{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;display:block!important;overflow:hidden!important;background:#020208!important}
+#liveVideoGrid>[id^="participant-"]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;border:0!important;border-radius:0!important;background:#020208!important;overflow:hidden!important}
+#liveVideoGrid>[id^="participant-"]>div:first-child{position:absolute!important;left:10px!important;top:76px!important;z-index:2!important;max-width:58%!important;padding:4px 8px!important;border-radius:99px!important;background:#080b19b8!important;font-size:11px!important}
+#liveVideoGrid video{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;background:#020208!important;border-radius:0!important}
+#liveVideoOverlay{position:absolute!important;inset:0!important;z-index:5!important;padding:10px 60px 12px 10px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(4,4,12,.56),transparent 19%,transparent 62%,rgba(0,0,0,.50))!important}
+#liveVideoOverlay .gt-live-metrics{align-self:flex-start!important;max-width:100%!important;gap:5px!important}
+#gtLiveActionRail{position:absolute!important;z-index:9!important;right:7px!important;top:20%!important;bottom:auto!important;display:flex!important;flex-direction:column!important;gap:12px!important}
+#gtLiveActionRail button{width:54px!important;height:54px!important;min-height:54px!important;border-radius:50%!important;border:1px solid rgba(255,255,255,.48)!important;background:linear-gradient(145deg,#24103b,#090b1a 68%)!important;box-shadow:inset 0 2px 5px #ffffff30,0 0 14px #ff38c866,0 0 24px #21d4fd22!important}
+#gtLiveActionRail button:nth-child(even){box-shadow:inset 0 2px 5px #ffffff30,0 0 14px #21d4fd77!important}
+#gtLiveActionRail button small{font-size:9px!important}
+#gtDuelHud{position:absolute!important;z-index:8!important;left:18px!important;right:68px!important;top:auto!important;bottom:76px!important;display:none!important;pointer-events:none!important;perspective:900px!important}
+#gtDuelHud.gt-duel-visible{display:block!important}
+.gt-duel-hud-card{max-width:none!important;padding:9px 12px 12px!important;border:1px solid #c5b8ff8a!important;border-radius:18px!important;background:linear-gradient(135deg,rgba(5,8,24,.84),rgba(23,8,35,.76))!important;box-shadow:0 12px 26px #0009,0 0 15px #ff38c866,0 0 24px #21d4fd44,inset 0 1px #ffffff55!important;backdrop-filter:blur(8px)!important;transform:rotateX(3deg)!important}
+.gt-duel-hud-top{font-size:10px!important;letter-spacing:.09em!important;margin-bottom:6px!important}
+.gt-duel-scoreline{grid-template-columns:1fr 52px 1fr!important;gap:7px!important}
+.gt-duel-team{padding:5px 8px!important;border-radius:12px!important;background:linear-gradient(145deg,#101b39e8,#070b19ed)!important;border:1px solid #27d8ffb0!important;box-shadow:inset 0 1px #ffffff28,0 0 12px #21d4fd33!important}
+.gt-duel-team.community{background:linear-gradient(145deg,#35102ee8,#100819ed)!important;border-color:#ff38c8c9!important;box-shadow:inset 0 1px #ffffff28,0 0 12px #ff38c833!important}
+.gt-duel-team-name{font-size:10px!important;font-weight:900!important;letter-spacing:.04em!important}
+.gt-duel-score{font-size:clamp(20px,5vw,30px)!important;text-shadow:0 0 12px currentColor!important}
+.gt-duel-vs{display:grid!important;place-items:center!important;min-height:43px!important;font-size:23px!important;font-style:italic!important;font-weight:1000!important;letter-spacing:-.08em!important;color:#fff!important;background:linear-gradient(135deg,#ff38c8 0%,#a855f7 48%,#21d4fd 100%)!important;background-clip:text!important;-webkit-background-clip:text!important;-webkit-text-fill-color:transparent!important;filter:drop-shadow(0 0 4px #ff38c8) drop-shadow(0 0 8px #21d4fd)!important;transform:translateZ(18px) rotate(-7deg)!important;animation:gtVsPulse3D 1.5s ease-in-out infinite!important}
+.gt-duel-progress{position:relative!important;display:flex!important;gap:0!important;height:13px!important;margin-top:9px!important;border-radius:99px!important;overflow:hidden!important;border:1px solid #ffffff80!important;background:#060913!important;box-shadow:inset 0 3px 6px #000b,0 0 12px #21d4fd44!important;transform:translateZ(8px)!important}
+#gtDuelHostFill3D,#gtDuelCommunityFill3D{display:block!important;position:relative!important;height:100%!important;width:50%;transition:width .35s ease!important;box-shadow:inset 0 2px #ffffff60,0 0 9px currentColor!important}
+#gtDuelHostFill3D{background:linear-gradient(180deg,#ff82df 0%,#ff25b7 48%,#b30b79 100%)!important;border-right:1px solid #fff9!important}
+#gtDuelCommunityFill3D{background:linear-gradient(180deg,#8af6ff 0%,#16cfff 48%,#1263db 100%)!important}
+@keyframes gtVsPulse3D{0%,100%{transform:translateZ(18px) rotate(-7deg) scale(1);filter:drop-shadow(0 0 4px #ff38c8) drop-shadow(0 0 8px #21d4fd)}50%{transform:translateZ(24px) rotate(0) scale(1.12);filter:drop-shadow(0 0 8px #ff38c8) drop-shadow(0 0 14px #21d4fd)}}
+@media(max-width:600px){#liveVideoStage{height:calc(100svh - 108px)!important;min-height:500px!important;max-height:1000px!important;margin:0!important;border-radius:12px!important}#liveVideoOverlay{padding:9px 58px 10px 8px!important}#gtLiveActionRail{right:5px!important;top:19%!important;gap:10px!important}#gtLiveActionRail button{width:48px!important;height:48px!important;min-height:48px!important}#gtDuelHud{left:9px!important;right:59px!important;bottom:64px!important}.gt-duel-scoreline{grid-template-columns:1fr 40px 1fr!important;gap:5px!important}.gt-duel-vs{font-size:20px!important;min-height:36px!important}.gt-duel-team{padding:4px 6px!important}.gt-duel-team-name{font-size:9px!important}.gt-duel-score{font-size:23px!important}}
+@media(max-height:700px){#liveVideoStage{height:calc(100svh - 96px)!important;min-height:420px!important}#gtDuelHud{bottom:48px!important}}
+@media(prefers-reduced-motion:reduce){.gt-duel-vs{animation:none!important}}
 </style>
