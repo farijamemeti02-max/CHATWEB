@@ -1,0 +1,11 @@
+GAMETIK 1.9.31 — STATISCHER 3D-LOOK + ANIMIERTE 3D-GESCHENKE
+
+Umgesetzt:
+- Hauptseite: statische räumliche Oberflächen für Panels, Navigation, Buttons, Formulare, Profile, Storys, Feed-Karten und LIVE-Steuerelemente.
+- Keine CSS-Hüpfer, Rotationen, Skalierungen oder dauernden UI-Animationen.
+- LIVE-Geschenke bleiben echte WebGL/Three.js-Modelle und werden weiterhin über die bestehende Geschenkbestätigung ausgelöst.
+- Geschenkmodelle erhalten eine prozedurale Studio-Umgebung für stärkere Gold-/Chromreflexionen.
+- PayPal-/Geschenkseite erhält denselben statischen 3D-Look. Zahlungslogik, Preise, Links und Admin-Datei wurden nicht verändert.
+- admin.html, server.js, app.js, live.js, mini-games-3d.js und package.json wurden nicht geändert.
+
+Prüfung: JavaScript-Syntax und Projektprüfskript werden nach dem Update ausgeführt. Kein Live-Browser-/Render-Test wurde ausgeführt.

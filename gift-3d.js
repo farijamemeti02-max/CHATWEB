@@ -1,11 +1,11 @@
-/* GameTik 3D gift renderer v1.9.27.
+/* GameTik 3D gift renderer v1.9.30.
    Animations are triggered only after the app confirms a gift was sent/received.
    Transparent WebGL overlay; no UI click interception and no payment side effects. */
 (function () {
   'use strict';
   const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
   let threePromise = null, renderer = null, scene = null, camera = null, stage = null;
-  let canvas = null, raf = 0, active = [], resizeObserver = null;
+  let canvas = null, raf = 0, active = [], resizeObserver = null, studioEnv = null;
   const PALETTE = {
     Herz: 0xff347f, Stern: 0x38dfff, Feuer: 0xff7628, Krone: 0xc18aff,
     Bonbon: 0xff56c7, Lutscher: 0xff4eaa, Gummibär: 0x5affbd, Schokolade: 0xb8754e,
@@ -32,7 +32,7 @@
   }
   function setup(T) {
     stage = findStage();
-    if (!stage) return false;
+    if (!stage || !stage.isConnected) return false;
     if (getComputedStyle(stage).position === 'static') stage.style.position = 'relative';
     canvas = document.getElementById('gtGift3DCanvas');
     if (!canvas) {
@@ -42,6 +42,23 @@
     Object.assign(canvas.style, { position:'absolute', inset:'0', width:'100%', height:'100%',
       zIndex:'7', pointerEvents:'none', display:'block' });
     scene = new T.Scene();
+    /* Procedurale Studio-Reflexionen: metallischer Glanz ohne zusätzliche Bilddateien. */
+    if (!studioEnv) {
+      const envCanvas = document.createElement('canvas'); envCanvas.width = 512; envCanvas.height = 256;
+      const ctx = envCanvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 512, 0);
+      grad.addColorStop(0, '#080a13'); grad.addColorStop(.22, '#34384a');
+      grad.addColorStop(.32, '#f5f8ff'); grad.addColorStop(.38, '#68758d');
+      grad.addColorStop(.52, '#171c2a'); grad.addColorStop(.69, '#dce8ff');
+      grad.addColorStop(.76, '#24283a'); grad.addColorStop(1, '#080a13');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 256);
+      const top = ctx.createLinearGradient(0, 0, 0, 256);
+      top.addColorStop(0, '#ffffff'); top.addColorStop(.18, '#30384a'); top.addColorStop(.5, '#090b13'); top.addColorStop(.82, '#5b2c63'); top.addColorStop(1, '#101728');
+      ctx.globalAlpha = .42; ctx.fillStyle = top; ctx.fillRect(0, 0, 512, 256); ctx.globalAlpha = 1;
+      studioEnv = new T.CanvasTexture(envCanvas); studioEnv.mapping = T.EquirectangularReflectionMapping;
+      if ('colorSpace' in studioEnv && T.SRGBColorSpace) studioEnv.colorSpace = T.SRGBColorSpace;
+    }
+    scene.environment = studioEnv;
     camera = new T.PerspectiveCamera(38, 1, 0.1, 100);
     camera.position.set(0, 0, 8);
     renderer = new T.WebGLRenderer({ canvas, alpha:true, antialias:true, powerPreference:'low-power' });
@@ -62,8 +79,8 @@
     const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   }
-  function material(T, color, metalness=.55, roughness=.22) {
-    return new T.MeshStandardMaterial({ color, metalness, roughness, emissive:color, emissiveIntensity:.1 });
+  function material(T, color, metalness=.82, roughness=.13) {
+    return new T.MeshStandardMaterial({ color, metalness, roughness, envMap:studioEnv || null, envMapIntensity:1.55, emissive:color, emissiveIntensity:.045 });
   }
   function extrudedShape(T, points, color, depth=.18) {
     const shape = new T.Shape();
@@ -149,12 +166,13 @@
   function animate() {
     raf=0;if(!renderer)return;
     const now=performance.now();
-    active=active.filter(o=>now-o.start<3400);
+    active=active.filter(o=>{ if(now-o.start<4200) return true; scene.remove(o.mesh); o.mesh.traverse(n=>{ if(n.geometry) n.geometry.dispose(); if(n.material) (Array.isArray(n.material)?n.material:[n.material]).forEach(m=>m.dispose()); }); return false; });
     for(const o of active){
-      const t=(now-o.start)/3400;
-      o.mesh.position.y=-.35+Math.sin(t*Math.PI)*1.15;
-      o.mesh.rotation.y=t*6.5;o.mesh.rotation.x=Math.sin(t*5)*.12;o.mesh.rotation.z=Math.sin(t*8)*.1;
-      o.mesh.scale.setScalar((.72+Math.sin(t*Math.PI)*.55)*o.scale);
+      const t=(now-o.start)/4200;
+      /* Gifts only: clear, deliberate 3D rise, full turn, and settle. */
+      o.mesh.position.y=-.55+Math.sin(t*Math.PI)*1.55;
+      o.mesh.rotation.y=t*Math.PI*4.2;o.mesh.rotation.x=Math.sin(t*Math.PI*2)*.18;o.mesh.rotation.z=Math.sin(t*Math.PI*4)*.09;
+      o.mesh.scale.setScalar((.62+Math.sin(t*Math.PI)*.72)*o.scale);
       o.mesh.traverse(n=>{if(n.material&&'opacity'in n.material){n.material.transparent=true;n.material.opacity=Math.min(1,(1-t)*2.4);}});
     }
     renderer.render(scene,camera);
@@ -165,16 +183,23 @@
       const T=await loadThree();if(!renderer&&!setup(T))return false;
       const name=normalizeName(rawName), qty=Math.max(1,Math.min(999,Number(quantity)||1));
       const mesh=makeGift(T,name);mesh.position.set((Math.random()-.5)*1.5,-1.9,0);
-      const scale=Math.min(1.25,.82+Math.log2(qty)*.08);mesh.scale.setScalar(scale);scene.add(mesh);
+      const scale=Math.min(1.42,1.02+Math.log2(qty)*.08);mesh.scale.setScalar(scale);scene.add(mesh);
       active.push({mesh,start:performance.now(),scale});
       const label=document.createElement('div');label.className='gt-gift3d-label';
       label.textContent=(sender||'Community')+' sendet '+(qty>1?qty+'× ':'')+String(rawName||name);
-      stage.appendChild(label);window.setTimeout(()=>label.remove(),2800);
+      stage.appendChild(label);window.setTimeout(()=>label.remove(),3400);
       if(!raf)raf=requestAnimationFrame(animate);return true;
-    } catch(e) { console.warn('[GameTik 3D-Geschenke]',e); return false; }
+    } catch(e) { console.error('[GameTik 3D-Geschenke] Animation fehlgeschlagen:',e); showFallback(rawName, quantity, sender); return false; }
+  }
+
+  function showFallback(rawName, quantity, sender) {
+    const target=findStage(); if(!target) return;
+    const el=document.createElement('div'); el.className='gt-gift3d-fallback';
+    el.textContent='🎁 '+(sender||'Community')+' sendet '+(Number(quantity)>1?Math.min(999,Number(quantity))+'× ':'')+String(rawName||'Geschenk');
+    target.appendChild(el); window.setTimeout(()=>el.remove(),2600);
   }
   window.GameTikGift3D={play,normalizeName};
   const style=document.createElement('style');
-  style.textContent='#gtGift3DCanvas{overflow:hidden}.gt-gift3d-label{position:absolute;z-index:9;left:50%;top:18%;transform:translateX(-50%);max-width:85%;padding:7px 12px;border-radius:999px;border:1px solid #54e9ff99;background:linear-gradient(100deg,#24112fe8,#111b30e8);color:#fff;font-weight:850;font-size:clamp(11px,2.8vw,15px);text-align:center;box-shadow:0 0 18px #ff35c844,0 0 20px #25dfff33;pointer-events:none;animation:gtGift3DLabel 2.7s ease-out forwards}@keyframes gtGift3DLabel{0%{opacity:0;transform:translate(-50%,15px) scale(.7)}15%,72%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-20px) scale(.9)}}@media(prefers-reduced-motion:reduce){.gt-gift3d-label{animation-duration:.8s}}';
+  style.textContent='#gtGift3DCanvas{overflow:hidden}.gt-gift3d-fallback{position:absolute;z-index:10;left:50%;top:25%;transform:translateX(-50%);padding:9px 13px;border-radius:999px;background:linear-gradient(100deg,#24112fe8,#111b30e8);border:1px solid #ff42c8;color:#fff;font-weight:850;pointer-events:none;animation:gtGift3DLabel 2.6s ease-out forwards}.gt-gift3d-label{position:absolute;z-index:9;left:50%;top:18%;transform:translateX(-50%);max-width:85%;padding:7px 12px;border-radius:999px;border:1px solid #54e9ff99;background:linear-gradient(100deg,#24112fe8,#111b30e8);color:#fff;font-weight:850;font-size:clamp(11px,2.8vw,15px);text-align:center;box-shadow:0 0 18px #ff35c844,0 0 20px #25dfff33;pointer-events:none;animation:gtGift3DLabel 3.3s ease-out forwards!important}@keyframes gtGift3DLabel{0%{opacity:0;transform:translate(-50%,15px) scale(.7)}15%,72%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-20px) scale(.9)}}@media(prefers-reduced-motion:reduce){.gt-gift3d-label{animation-duration:.8s}}';
   document.head.appendChild(style);
 })();
