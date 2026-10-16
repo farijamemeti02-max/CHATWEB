@@ -1,7 +1,0 @@
-GameTik 1.9.80 – Battle Arena Start-Fix
-
-- Fehlerpfad korrigiert: Wenn das Erzeugen der Babylon/WebGL-Engine scheitert, wird der 2D-Sicherheitsmodus geöffnet.
-- Der 2D-Modus kann direkt über battle-arena.html?mode=2d getestet werden.
-- Der Adminbereich wurde nicht geändert.
-
-Prüfstatus: Syntax- und Projektprüfungen werden ausgeführt. Kein echter Browser-/Android-Live-Test und kein Render-Deployment durchgeführt.
