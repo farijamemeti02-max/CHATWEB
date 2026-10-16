@@ -1,0 +1,28 @@
+GameTik Battle Arena – Exosuit Fighter Update 1.9.47
+====================================================
+
+Änderungen ausschließlich an battle-arena.html:
+- Kämpfer optisch näher an die Referenz angepasst: dunkle, metallische Sci-Fi-Rüstung statt heller einfacher Formen.
+- Mehrschichtige Brustplatten, Bauchsegmente, Utility-Gürtel, Rückeneinheit und beleuchtete Details ergänzt.
+- Geschlossener Helm mit Visier, Seitenmodulen und leuchtenden Visierlinien.
+- Schulter-, Arm-, Unterarm-, Oberschenkel-, Knie-, Schienbein- und Stiefelpanzer weiter detailliert.
+- Arme und Beine drehen sich nun an separaten Gelenk-/Pivotpunkten, damit Animationen natürlicher wirken.
+- Klingenform und Griff der Energiewaffe verbessert.
+- Spieler und Gegner erhalten jeweils Pink-/Cyan-Akzente; die vorhandene Arena bleibt erhalten.
+- Kämpfer wenden sich leicht zur Arena-Kamera, damit Brust- und Visierdetails besser sichtbar sind.
+
+Erhalten:
+- Bestehende Arena, Boden, Beleuchtung und Ringe.
+- Lebensanzeigen, Trefferlogik, KI-Gegner, Sieg-/Niederlagenanzeige und Neustart.
+- Tastatur- und Touch-Steuerung einschließlich SCHLAG, TRITT, BLOCK und DODGE.
+- Zurück-Schaltfläche und bestehende mobile Layoutanpassungen.
+- admin.html, app.js und alle weiteren Projektdateien aus dem vorherigen Paket wurden nicht geändert.
+
+Prüfungen:
+- Inline-JavaScript mit node --check: bestanden.
+- HTML-ID-Prüfung: keine doppelten IDs.
+- ZIP-Integrität: wird nach Erstellung geprüft.
+
+Grenzen:
+- Die Figuren sind weiter prozedural in Babylon.js aufgebaut. Das ist ein detaillierterer stilisierter 3D-Exosuit, nicht die fotorealistische Qualität eines hochauflösenden externen 3D-Modells.
+- Es wurde kein echter Android-/Browser-/Render-Laufzeittest ausgeführt. Vor dem Veröffentlichen die neue battle-arena.html auf der Website prüfen.
