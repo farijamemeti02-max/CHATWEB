@@ -149,6 +149,9 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use('/uploads/videos', express.static(videoDir, { maxAge: '1h' }));
 app.use('/uploads/avatars', express.static(avatarDir, { maxAge: '1h' }));
 const publicDir = __dirname;
+// Serve Babylon.js locally so the arena does not depend on external CDNs being reachable.
+app.use('/vendor/babylonjs', express.static(path.join(__dirname, 'node_modules', 'babylonjs'), { fallthrough: false, maxAge: '7d' }));
+app.use('/vendor/babylonjs-loaders', express.static(path.join(__dirname, 'node_modules', 'babylonjs-loaders'), { fallthrough: false, maxAge: '7d' }));
 // Explicitly serve the homepage so GET / works even if static index resolution differs.
 app.get('/', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 // Do not expose backend source, package metadata, or environment files as public assets.
