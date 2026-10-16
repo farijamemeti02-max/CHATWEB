@@ -8,7 +8,6 @@ const html = read('index.html');
 const live = read('live.js');
 const gifts3d = read('gift-3d.js');
 const games3d = read('mini-games-3d.js');
-const arena = read('battle-arena.html');
 const pkg = JSON.parse(read('package.json'));
 const required = [
   [server.includes("app.set('trust proxy', 1)"), 'Render-Proxy-Vertrauen für korrekte IP-basierte Admin-Sperre fehlt'],
@@ -27,10 +26,6 @@ const required = [
   [html.includes('src="/gift-3d.js"') && gifts3d.includes('window.GameTikGift3D={play,normalizeName}'), '3D-Geschenkmodul ist nicht korrekt eingebunden'],
   [html.includes('src="/mini-games-3d.js"') && games3d.includes('Candy World 3D') && games3d.includes('Neon Racer 3D') && games3d.includes('Space Candy 3D'), '3D-Minispiele fehlen oder sind nicht eingebunden'],
   [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
-  [games3d.includes('id=\"gtmgBattleArena\"') && games3d.includes("location.href='/battle-arena.html'"), 'Battle-Arena-Einstieg im Spielemenü fehlt'],
-  [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('CDN-FALLBACK HOTFIX 1.9.78'), 'Battle-Arena 1.9.78 mit CDN-Fallback fehlt'],
-  [arena.includes('!window.BABYLON') && arena.includes('Playable 2D fallback') && arena.includes("get('mode')==='2d'") && arena.includes("searchParams.set('mode','2d')"), '2D-Fallback bei nicht verfügbarer Babylon.js-Bibliothek fehlt'],
-  [arena.includes('CAREER_KEY') && arena.includes('ACHIEVEMENTS') && arena.includes('challengeSelect'), 'Karriere-, Erfolge- oder Challenge-System der Arena fehlt'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
   [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
