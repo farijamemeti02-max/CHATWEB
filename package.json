@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.42",
-  "description": "GAMETIK LIVE: touch-scrollable on-stream chat overlay in lower-left video area",
+  "version": "1.9.44",
+  "description": "GAMETIK: Battle Arena 3D prototype with improved combat animation and tactical AI guard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

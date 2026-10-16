@@ -1,0 +1,18 @@
+GameTik Battle Arena – Animation Upgrade 1.9.44
+
+Weiterentwicklung des 1.9.43-Prototyps:
+- Kampfanimationen zeitlich an die Angriffsphase gekoppelt statt einer gleichmäßigen Armschwingung.
+- Zusätzliche Torso-, Kopf-, Schulter-, Arm- und Beinbewegungen für Schläge, Tritte, Blocken, Ausweichen und Trefferreaktionen.
+- Computergegner erhält eine zusätzliche Block-/Guard-Entscheidung und kann diese im HUD anzeigen.
+- Bestehende Touch-Steuerung, Tastatursteuerung, Arena, Lebensanzeigen und Spielstart bleiben erhalten.
+- Admin-, PayPal- und LIVE-Dateien wurden nicht gezielt geändert.
+
+Grenzen:
+- Kämpfer sind weiterhin prozedurale Platzhalter aus 3D-Grundformen; keine realistischen externen menschlichen Modelle oder professionellen Motion-Capture-Animationen.
+- Kein Online-Multiplayer und keine serverseitig gespeicherten Ranglisten.
+- Babylon.js wird über CDN geladen.
+
+Prüfung:
+- npm run check: 33 vorhandene Kernprüfungen bestanden.
+- Inline-JavaScript in battle-arena.html: node --check bestanden.
+- Kein echter Browser-, Android- oder Render-Laufzeittest durchgeführt.
