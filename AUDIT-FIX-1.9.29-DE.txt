@@ -1,0 +1,20 @@
+GameTik Audit Fix 1.9.29
+
+Änderungen:
+- Vorhandene 3D-Geschenkerenderdatei: abgelaufene Meshes werden jetzt aus der Szene entfernt und Ressourcen freigegeben.
+- Fehler beim Laden der 3D-Bibliothek werden sichtbar in der Konsole protokolliert; eine animierte Text-Fallback-Anzeige erscheint, wenn WebGL/Three.js fehlschlägt. Diese Fallback-Anzeige ist ausdrücklich KEIN 3D-Modell.
+- Neue eigenständige 3D-Minispiele: Candy World 3D, Neon Racer 3D und Space Candy 3D. Zugang über den neuen Spiele-Button in der mobilen unteren Navigation.
+- Minispiele verwenden Three.js und erfordern Internetzugang beim ersten Laden. Die Punktzahl ist lokal und wird NICHT als serverbestätigtes Süßigkeiten-Guthaben ausgegeben.
+- admin.html wurde nicht verändert.
+
+Einschränkungen: Es wurde Syntaxprüfung und ZIP-Integritätsprüfung durchgeführt. Ein echter Browser-/WebGL-/LiveKit-Test auf einem Endgerät war in dieser Umgebung nicht möglich. Zahlungen, Echtgeldbelohnungen und serverseitige Spielbelohnungen wurden nicht verändert.
+\nNachprüfung (Version 1.9.29):
+- npm run check prüft nun zusätzlich gift-3d.js und mini-games-3d.js.
+- Spiele-Schaltfläche auch in der Desktop-Seitenleiste; Mobil-Schaltfläche bleibt erhalten.
+- Klick-Erkennung gilt für beide Spiele-Schaltflächen.
+- Renderer passt sich nach Größen-/Orientierungsänderungen an.
+- Projektprüfungen prüfen explizit die Einbindung der beiden 3D-Module und die Spiele-Zugänge.
+\nTestgrenzen:
+- Syntax und 33 Projekt-Kernprüfungen wurden lokal ausgeführt.
+- ZIP-Integrität, lokale Script-Pfade, doppelte HTML-IDs und SVG/XML-Syntax werden separat geprüft.
+- Kein echter Endgerät-/LiveKit-/PayPal-/WebGL-End-to-End-Test wurde durchgeführt; externe CDN-Verfügbarkeit hängt von der Netzwerkverbindung ab.
