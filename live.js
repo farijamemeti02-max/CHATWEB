@@ -16,11 +16,40 @@
   let currentStream = null, currentRole = '', room = null, chatSocket = null, countTimer = null, gameUiTimer = null, liveLikeCount = 0, audioMuted = false, hostMicMuted = false, currentGame = null, audioContext = null, micSource = null, micStream = null, micDestination = null, micGain = null, reverbGain = null, dryGain = null, delayNode = null, delayFeedback = null, delayGain = null, micCompressor = null, voiceFilter = null, processedAudioTrack = null, micPublished = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function liveStatus(message) { $('liveStageStatus').textContent = message; }
+  async function updateLiveProfileAvatar(stream) {
+    const avatarHost = document.querySelector('#gtLiveProfilePill .gt-live-profile-avatar');
+    const name = document.getElementById('gtLiveProfileName');
+    if (name && stream?.hostUsername) name.textContent = '@' + stream.hostUsername;
+    if (!avatarHost || !stream?.hostId) return;
+    try {
+      const response = await fetch(apiBase + '/api/users/' + encodeURIComponent(stream.hostId) + '/profile');
+      if (!response.ok) return;
+      const data = await response.json();
+      const user = data.user || {};
+      if (name && user.username) name.textContent = '@' + user.username;
+      if (user.avatar_url) {
+        const img = document.createElement('img');
+        img.src = user.avatar_url;
+        img.alt = 'Profilbild von ' + (user.username || stream.hostUsername || 'LIVE-Nutzer');
+        img.loading = 'eager';
+        img.referrerPolicy = 'no-referrer';
+        img.style.cssText = 'width:100%;height:100%;display:block;object-fit:cover;border-radius:50%';
+        img.onerror = () => { img.remove(); if (!avatarHost.textContent.trim()) avatarHost.textContent = '👑'; };
+        avatarHost.replaceChildren(img);
+      } else {
+        avatarHost.textContent = (user.username || stream.hostUsername || 'G').slice(0,1).toUpperCase();
+      }
+    } catch {}
+  }
   function chatLine(username, body, time = new Date().toISOString(), gift = false) {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
     el.innerHTML = `<b>${esc(username)}</b> ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
-    $('liveChatMessages').appendChild(el); $('liveChatMessages').scrollTop = $('liveChatMessages').scrollHeight;
+    const messages=$('liveChatMessages');
+    const wasNearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 36;
+    messages.appendChild(el);
+    // TikTok-LIVE-Stil: mit neuen Nachrichten automatisch unten bleiben, aber manuelles Lesen alter Nachrichten respektieren.
+    if (wasNearBottom) messages.scrollTop = messages.scrollHeight;
     const overlay = $('liveOverlayChat');
     if (overlay) {
       const line = document.createElement('div'); line.className = 'live-overlay-line';
@@ -182,6 +211,7 @@
     currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.add('hidden'); $('liveAudioToggle')?.setAttribute('aria-expanded','false'); if ($('liveAudioToggleIcon')) $('liveAudioToggleIcon').textContent = '＋'; $('liveAudioToggle')?.closest('#liveAudioMixerLauncher')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
+    updateLiveProfileAvatar(currentStream).catch(()=>{});
     $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; if ($('liveEndTopBtn')) { $('liveEndTopBtn').classList.toggle('hidden', role !== 'host'); $('liveEndTopBtn').disabled = role !== 'host'; } $('liveStartBtn').classList.toggle('hidden', role === 'host');
     $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
     refreshCandyBalance(); liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
@@ -382,7 +412,7 @@
     if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
     const amount=Math.max(1,Math.min(20,Number(button.dataset.amount)||1));
     button.disabled=true;
-    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); await refreshCandyBalance(); playGameJingle('gift'); }
+    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); document.dispatchEvent(new CustomEvent('gametik:candy-sent',{detail:{amount:d.spent||amount,emoji:({1:'🍬',3:'🍭',5:'🧁',10:'🍫'})[Number(button.dataset.amount)]||'🍬'}})); await refreshCandyBalance(); playGameJingle('gift'); }
     catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); }
     finally { setTimeout(()=>{button.disabled=false;},500); }
   }));

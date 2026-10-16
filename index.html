@@ -1686,7 +1686,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
    if(candySource){
     const candyTitle=document.createElement('div');candyTitle.className='gt-gift-drawer-subhead';candyTitle.textContent='🍬 Kostenlose Süßigkeiten';drawer.appendChild(candyTitle);
     const candyGrid=document.createElement('div');candyGrid.id='gtLiveGiftDrawerCandy';candyGrid.className='gt-live-gift-candy';
-    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();drawer.hidden=true;document.getElementById('gtLiveGiftAction')?.setAttribute('aria-expanded','false');});candyGrid.appendChild(b);});
+    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();/* Keep the candy strip open so several gifts can be sent in a row. */});candyGrid.appendChild(b);});
     drawer.appendChild(candyGrid);
    }
    // Place the picker inside the blue-marked message area. It is hidden until the gift button is tapped.
@@ -1802,6 +1802,35 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #gtLiveGiftDrawer .gt-live-gift-candy button{min-width:0!important;min-height:34px!important;height:34px!important;padding:3px!important;border-radius:8px!important;font-size:10px!important;background:linear-gradient(120deg,#171b32,#10172b)!important;color:#fff!important;border:1px solid rgba(79,218,255,.35)!important;box-shadow:none!important}
 @media(max-width:480px){#gtLiveGiftDrawer{margin:6px 0 8px!important;padding:7px!important}#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:48px!important;min-height:48px!important}#gtLiveGiftDrawer .gt-live-gift-candy button{font-size:9px!important}}
 </style>
+
+
+<style id="gametik-live-candy-float-chat-avatar-1940">
+/* Gift effect overlays the actual live video for one second. */
+#gtLiveCandyBurst{position:absolute;z-index:30;left:50%;top:48%;transform:translate(-50%,-50%);pointer-events:none;font-size:clamp(48px,16vw,92px);line-height:1;filter:drop-shadow(0 0 12px #ff38c8) drop-shadow(0 0 22px #21d4fd);animation:gtCandyBurst1940 1s ease-out forwards}
+@keyframes gtCandyBurst1940{0%{opacity:0;transform:translate(-50%,-40%) scale(.45) rotate(-12deg)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(5deg)}40%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.82)}}
+#gtLiveProfilePill .gt-live-profile-avatar{overflow:hidden!important;padding:0!important;object-fit:cover!important}
+#gtLiveProfilePill .gt-live-profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+#liveChatMessages{scroll-behavior:smooth;overscroll-behavior:contain}
+@media(prefers-reduced-motion:reduce){#gtLiveCandyBurst{animation:none;opacity:1}}
+</style>
+<script id="gametik-live-candy-float-chat-avatar-1940-script">
+(function(){
+ function init(){
+  const stage=document.getElementById('liveVideoStage');
+  if(!stage||stage.dataset.gtCandyBurstBound==='1')return;
+  stage.dataset.gtCandyBurstBound='1';
+  document.addEventListener('gametik:candy-sent',event=>{
+   const detail=event.detail||{};
+   const old=document.getElementById('gtLiveCandyBurst'); if(old)old.remove();
+   const burst=document.createElement('div');burst.id='gtLiveCandyBurst';burst.setAttribute('aria-label','Geschenk gesendet');burst.textContent=detail.emoji||'🍬';
+   stage.appendChild(burst);window.setTimeout(()=>{if(burst.isConnected)burst.remove();},1000);
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ const observer=new MutationObserver(()=>init());
+ if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
 
 </body>
 
