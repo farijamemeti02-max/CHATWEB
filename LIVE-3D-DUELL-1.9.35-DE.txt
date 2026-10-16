@@ -1,0 +1,10 @@
+GameTik LIVE 3D Duell 1.9.35
+
+Änderungen:
+- Sichtbares VS direkt zwischen STREAMER und COMMUNITY im LIVE-Punktebereich.
+- VS mit metallischem 3D-Look, GameTik Neon-Pink/Violett/Blau und Leuchteffekt.
+- Neuer SPIEL STARTEN-Button im LIVE-Duell; er löst den vorhandenen Spielstart-Button aus, statt eine zweite Spiel-Logik zu erfinden.
+- Punktebalken nutzt die GameTik Markenfarben und synchronisiert weiterhin die vorhandenen Punktwerte.
+- Admin- und PayPal-Dateien nicht geändert.
+
+Prüfhinweis: Syntax- und Projektprüfungen ausführen. Kein Browser-/Render-Live-Test wurde durchgeführt.

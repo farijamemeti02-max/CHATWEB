@@ -1,0 +1,7 @@
+GameTik LIVE 1.9.20 – Nachprüfung
+
+- Getippte Likes steigen nun rechts im Stream hoch, innerhalb des Videobereichs.
+- Der pink-türkise Duell-Punkte-Streifen bleibt sichtbar und wird ausdrücklich gestylt.
+- Änderungen an index.html und live.js.
+- admin.html unverändert.
+- Syntax-/Projektprüfungen durchgeführt; echtes Render-/Handy-Live-Layout muss nach Deployment geprüft werden.

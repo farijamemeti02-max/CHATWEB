@@ -1,0 +1,11 @@
+GameTik – Projektabgleich 1.9.87
+
+Zusammengeführt auf Basis der vom Nutzer hochgeladenen Dateien:
+- server.js: hochgeladene Serverfassung beibehalten und die sicheren Arena-Endpunkte aus dem Projektstand ergänzt.
+- README.md, package.json, paypal.html, check-project.js und die Live-/Profil-/Punkte-/Testanweisungen berücksichtigt.
+- Bestehende Projektdateien für LiveKit, Socket.IO, Cloudflare R2, PayPal, 3D-Geschenke, Minispiele und Battle Arena erhalten.
+- Battle Arena: lokale Karriere mit Siegen, Niederlagen, Unentschieden und XP; freischaltbare Charaktere Nova/Frost/Phantom/Titan; separate kosmetische Outfits.
+- Online-Ranglisten bleiben deaktiviert. Der Server lehnt clientseitig gemeldete Online-Ergebnisse ab, solange kein serverautoritatives Online-Duell-Backend existiert.
+- admin.html wurde nicht geändert.
+
+Prüfgrenzen: Syntax- und Projektprüfungen sind lokale statische Prüfungen. Kein echter Android-/Browser-/Render-/Neon-/R2-/PayPal-/LiveKit-End-to-End-Test. Online-Duelle und LIVE-Zuschauerfunktion bleiben spätere Ausbaustufen.

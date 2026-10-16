@@ -1,0 +1,11 @@
+GameTik LIVE – Geschenke in der Nachrichtenbox – Version 1.9.39
+
+- Geschenk-Auswahl wird ausschließlich über den LIVE-Geschenke-Button geöffnet.
+- Auswahl sitzt im Nachrichtenbereich der Live-Chat-Box, nicht über dem Kamerabild.
+- Schmale, flache Darstellung für Mobilgeräte.
+- Bezahlte Geschenke (Herz, Stern, Feuer, Krone) verwenden weiterhin die ursprünglichen Sende-Buttons.
+- Kostenlose Süßigkeiten (🍬, 🍭, 🧁, 🍫) verwenden weiterhin die ursprünglichen Sende-Buttons.
+- Nach Auswahl oder Schließen wird die Geschenk-Auswahl wieder verborgen.
+- Admin- und Zahlungsdateien wurden nicht geändert.
+
+Prüfung: node --check für Server- und Hauptskripte sowie scripts/check-project.js erfolgreich (33 Kernprüfungen). Kein echter Browser-/Render-Test durchgeführt.

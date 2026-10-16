@@ -1,0 +1,15 @@
+GameTik – Battle Arena 3D Update 1.9.86
+
+Umgesetzt:
+- Vier freischaltbare Charaktervarianten: Nova (Level 1), Frost (Level 2), Phantom (Level 4), Titan (Level 6).
+- Neue Charakterauswahl mit Level-Sperren, aktivem Status und lokaler Speicherung.
+- Kosmetische Outfits bleiben getrennt von der Charakterauswahl.
+- Karrierehinweise erklären klar, dass Bot-Runden lokal und ungewertet sind.
+- Serverendpunkte für den Ranglistenstatus und Ergebnis-Upload sind fail-closed: Ranglisten bleiben deaktiviert und clientseitig gemeldete Ergebnisse werden abgelehnt, bis serverautoritatives Online-Duell-Gameplay vorhanden ist.
+- Babylon.js-3D-Engine, bestehende Arena-Steuerung, Karriere, Erfolge und Adminbereich beibehalten.
+
+Prüfgrenzen:
+- Statische Syntax- und Projektprüfungen werden ausgeführt.
+- Kein Browser-/Android-/Render-Live-Test in dieser Umgebung.
+- Online-Duelle und Zuschauer in GameTik LIVE bleiben spätere Ausbaustufen.
+- admin.html bleibt unverändert.

@@ -1,0 +1,21 @@
+GameTik LIVE 1.9.25 – Like-Zählung korrigiert
+
+Änderungen:
+- Jeder Like-Tap erhöht die Gesamt-Likezahl des laufenden Streams um 1.
+- Like-Zähler wird im Video-Overlay sichtbar gehalten und live per Socket.IO aktualisiert.
+- Like-Anfrage sendet eine Viewer-ID; angemeldete Zuschauer werden anhand ihrer Sitzung zugeordnet.
+- Während eines aktiven Duells zählen die ersten 10 Likes je Zuschauer als je 1 Community-Punkt. Weitere Likes erhöhen weiter die Gesamt-Likezahl, aber nicht den Duell-Punktestand.
+- Host-Eigenlikes vergeben keine Community-Duellpunkte.
+- Bei Start eines neuen Duells wird das Like-Punktelimit zurückgesetzt.
+- Bei API-Fehlern wird eine Fehlermeldung angezeigt, statt stillschweigend so zu tun, als sei der Like gezählt worden.
+- Adminbereich admin.html bleibt unverändert.
+
+Prüfungen:
+- node --check server.js
+- node --check live.js
+- node --check app.js
+- npm run check: 30 Kernprüfungen bestanden
+- ZIP-Integrität geprüft
+
+Einschränkung:
+Kein Live-Test auf Render durchgeführt. Die Likes werden aktuell im Arbeitsspeicher des Servers gezählt und können bei einem Server-Neustart zurückgesetzt werden; dauerhafte Speicherung erfordert eine Datenbankmigration.

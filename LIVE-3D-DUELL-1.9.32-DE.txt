@@ -1,0 +1,13 @@
+GAMETIK – LIVE-3D-DUELL 1.9.32
+
+Änderungen:
+- LIVE-Kamerabild auf Mobilgeräten nutzt nahezu die gesamte verfügbare Höhe.
+- Videobild wird auf die Fläche zugeschnitten (object-fit: cover), um schwarze Leerflächen zu reduzieren.
+- Die LIVE-Aktionsbuttons bleiben rechts als runde Neon-Buttons.
+- Duell-HUD erscheint während des aktiven Spiels im unteren Bildbereich.
+- „VS“ erhält einen leuchtenden 3D-/Neon-Effekt in Pink und Blau.
+- Punktebalken ist zweifarbig und wird anhand der aktuellen Streamer-/Community-Punkte berechnet.
+- Admin-, Server- und Zahlungsdateien wurden bei diesem Design-Patch nicht geändert.
+
+Prüfung:
+npm run check erfolgreich (33 Kernprüfungen). Ein Browser-/Render-Live-Test wurde nicht durchgeführt.
