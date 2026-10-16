@@ -1,8 +1,0 @@
-GameTik Designupdate 1.9.6
-
-- Profil-Krone kompakter und mittig über dem Avatar-Kreis ausgerichtet.
-- PayPal-&-Geschenke- und Admin-Zugriffskarten modernisiert: kompakte Neon-Glass-Optik, klare Symbole, bessere Lesbarkeit und Touch-Flächen.
-- Mobile Darstellung verfeinert.
-
-Prüfung: JavaScript-Syntax und 30 statische Projektprüfungen erfolgreich.
-Hinweis: Live-Funktion, Anmeldung, Admin-Login und PayPal-Zahlung wurden nicht gegen den laufenden Render-Dienst getestet.
