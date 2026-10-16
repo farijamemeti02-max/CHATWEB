@@ -21,3 +21,9 @@ Prüfung
 
 Babylon.js Dokumentation für den GLB-/Animationsworkflow:
 https://doc.babylonjs.com/features/featuresDeepDive/animation/animatedCharacter/
+
+
+Version 1.9.49 – Richtungsfehler behoben
+- Korrektur der Y-Drehung: Beide Kämpfer richten ihre lokale Vorwärtsachse (-Z) direkt auf den Gegner aus.
+- Keine Änderung an Touch-Steuerung, Admin, PayPal oder LIVE-Dateien.
+- Syntaxprüfung: siehe separates Prüfergebnis; echter Browser-/Android-Test ist noch erforderlich.
