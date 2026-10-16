@@ -1688,6 +1688,21 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(max-height:700px){#liveVideoStage{height:82svh!important;min-height:430px!important;max-height:760px!important}}@media(prefers-reduced-motion:reduce){#gtLiveActionRail button{transition:none!important}}
 </style>
 
+
+<style id="gametik-live-feedback-overlay-v1923">
+/* 1.9.23: visible floating likes and chat messages directly over the live camera. */
+#liveFloatingHearts{z-index:12!important;position:absolute!important;inset:0!important;overflow:hidden!important;pointer-events:none!important}
+#liveFloatingHearts .gametik-float-heart{z-index:12!important;position:absolute!important;left:var(--heart-x,78%)!important;bottom:18%!important;font-size:clamp(32px,8vw,58px)!important;line-height:1!important;animation:gametik-heart-rise 1.9s ease-out forwards!important;filter:drop-shadow(0 0 9px #ff2ac8) drop-shadow(0 2px 5px #000)!important}
+#liveVideoOverlay{z-index:10!important}
+#liveOverlayChat{position:absolute!important;left:8px!important;right:54px!important;bottom:58px!important;top:auto!important;width:auto!important;max-width:calc(100% - 66px)!important;max-height:38%!important;margin:0!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:flex-start!important;overflow:hidden!important;pointer-events:none!important;mask-image:linear-gradient(to bottom,transparent 0%,#000 8%,#000 100%)!important}
+#liveOverlayChat .live-overlay-line{display:block!important;width:fit-content!important;max-width:100%!important;overflow-wrap:anywhere!important;margin:2px 0!important;padding:5px 9px!important;border:0!important;border-left:2px solid #ff38c8!important;border-radius:8px!important;background:linear-gradient(90deg,rgba(5,7,16,.76),rgba(5,7,16,.24))!important;color:#fff!important;font-size:clamp(12px,3.2vw,15px)!important;line-height:1.28!important;text-shadow:0 1px 5px #000!important;backdrop-filter:blur(3px)!important;animation:gtChatMessageIn .2s ease-out both!important}
+#liveOverlayHint{opacity:.8!important}
+#liveLikeCount.gt-like-pop{animation:gtLikePop .38s ease-out!important}
+@keyframes gtLikePop{0%{transform:scale(1)}45%{transform:scale(1.22);filter:drop-shadow(0 0 9px #ff2ac8)}100%{transform:scale(1)}}
+@keyframes gtChatMessageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){#liveOverlayChat{left:7px!important;right:47px!important;bottom:55px!important;max-width:calc(100% - 56px)!important;max-height:36%!important}#liveOverlayChat .live-overlay-line{font-size:12px!important;padding:4px 7px!important}#liveFloatingHearts .gametik-float-heart{bottom:20%!important;font-size:38px!important}}
+</style>
+
 </body>
 </html>
 <style id="gametik-camera-modern-v192">

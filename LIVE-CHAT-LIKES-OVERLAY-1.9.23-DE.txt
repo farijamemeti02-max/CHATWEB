@@ -1,0 +1,5 @@
+GameTik LIVE 1.9.23 – sichtbare Likes und Chat im Kamerabild
+
+Änderungen: Likes erzeugen sofort sichtbare animierte Herzen rechts über dem Video; die Like-Anzeige erhält eine kurze Animation. Gesendete Nachrichten werden direkt als Overlay im Kamerabild angezeigt. Eingehende Chatnachrichten erscheinen ebenfalls über dem Video. Die Nachrichtenleiste liegt innerhalb des Videobereichs oberhalb des unteren LIVE-Hinweises.
+
+Geänderte Dateien: live.js und index.html. admin.html wurde nicht geändert.

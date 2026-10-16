@@ -16,25 +16,35 @@
   let currentStream = null, currentRole = '', room = null, chatSocket = null, countTimer = null, gameUiTimer = null, liveLikeCount = 0, audioMuted = false, hostMicMuted = false, currentGame = null, audioContext = null, micSource = null, micStream = null, micDestination = null, micGain = null, reverbGain = null, dryGain = null, delayNode = null, delayFeedback = null, delayGain = null, micCompressor = null, voiceFilter = null, processedAudioTrack = null, micPublished = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function liveStatus(message) { $('liveStageStatus').textContent = message; }
+  let pendingOwnOverlayBody = '';
+  function addOverlayChatLine(username, body) {
+    const overlay = $('liveOverlayChat');
+    if (!overlay) return;
+    const key = `${String(username)}\u0000${String(body)}`;
+    if ([...overlay.children].some(node => node.dataset.messageKey === key)) return;
+    const line = document.createElement('div'); line.className = 'live-overlay-line'; line.dataset.messageKey = key;
+    line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
+    overlay.appendChild(line);
+    while (overlay.children.length > 5) overlay.firstElementChild.remove();
+    overlay.scrollTop = overlay.scrollHeight;
+  }
   function chatLine(username, body, time = new Date().toISOString(), gift = false) {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
     el.innerHTML = `<b>${esc(username)}</b> ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
     $('liveChatMessages').appendChild(el); $('liveChatMessages').scrollTop = $('liveChatMessages').scrollHeight;
-    const overlay = $('liveOverlayChat');
-    if (overlay) {
-      const line = document.createElement('div'); line.className = 'live-overlay-line';
-      line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
-      overlay.appendChild(line);
-      while (overlay.children.length > 5) overlay.firstElementChild.remove();
-      setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
+    if (pendingOwnOverlayBody && String(body) === pendingOwnOverlayBody) {
+      pendingOwnOverlayBody = '';
+    } else {
+      addOverlayChatLine(username, body);
     }
   }
   function showFloatingHeart() {
     const container = $('liveFloatingHearts'); if (!container) return;
     const heart = document.createElement('span'); heart.className = 'gametik-float-heart'; heart.textContent = ['❤️','💖','💗','💕'][Math.floor(Math.random()*4)];
-    heart.style.setProperty('--heart-x', `${18 + Math.random()*64}%`);
-    container.appendChild(heart); setTimeout(() => heart.remove(), 1700);
+    heart.style.setProperty('--heart-x', `${70 + Math.random()*19}%`);
+    heart.setAttribute('aria-hidden','true');
+    container.appendChild(heart); setTimeout(() => heart.remove(), 1900);
   }
   let candyBalanceCache = 0, soundContext = null, lastAnnouncedWinner = null;
   async function refreshCandyBalance() {
@@ -330,7 +340,9 @@
   $('liveChatForm').addEventListener('submit', event => {
     event.preventDefault(); const body = $('liveChatInput').value.trim();
     if (!currentStream || !chatSocket || !body) return;
-    chatSocket.emit('live:chat', {roomId:currentStream.id, body}, result => { if (result?.error) $('liveGiftStatus').textContent = result.error; else $('liveChatInput').value = ''; });
+    pendingOwnOverlayBody = body;
+    addOverlayChatLine('Du', body);
+    chatSocket.emit('live:chat', {roomId:currentStream.id, body}, result => { if (result?.error) { pendingOwnOverlayBody = ''; $('liveGiftStatus').textContent = result.error; } else $('liveChatInput').value = ''; });
   });
   document.querySelectorAll('.live-gift').forEach(button => button.addEventListener('click', async () => {
     if (!currentStream) return;
@@ -384,8 +396,11 @@
   async function sendLiveLike() {
     if (!currentStream) return;
     showFloatingHeart();
+    // Visible local feedback immediately; the server response updates the shared total.
+    const likeCount = $('liveLikeCount');
+    if (likeCount) { likeCount.classList.remove('gt-like-pop'); void likeCount.offsetWidth; likeCount.classList.add('gt-like-pop'); }
     try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/like`, {method:'POST', body:'{}'}); liveLikeCount = Number(data.likes || liveLikeCount); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; }
-    catch (error) { $('liveGiftStatus').textContent = error.message; }
+    catch (error) { const status = $('liveGiftStatus'); if (status) status.textContent = error.message; }
   }
   $('liveLikeBtn')?.addEventListener('click', sendLiveLike);
   $('liveVideoStage')?.addEventListener('click', event => {
