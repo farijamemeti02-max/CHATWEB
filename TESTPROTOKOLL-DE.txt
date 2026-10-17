@@ -35,3 +35,14 @@ Version 1.9.27 – 3D-Geschenke korrigiert (16.10.2026)
 - node --check für server.js, app.js, live.js, gift-3d.js und scripts/check-project.js bestanden; 30 Projektprüfungen bestanden.
 - admin.html bytegenau unverändert (SHA-256-Abgleich mit Ausgangs-ZIP).
 - Nicht geprüft: echtes Browser/WebGL-Rendering auf allen Geräten und produktiver LIVE-/PayPal-End-to-End-Test.
+
+
+Zusätzliche Prüfung 1.9.82 (16.10.2026)
+- `npm run check`: 46 Kernprüfungen bestanden.
+- `node --check`: server.js, app.js, live.js, gift-3d.js, mini-games-3d.js und scripts/check-project.js bestanden.
+- Alle 13 Inline-JavaScript-Blöcke der HTML-Seiten bestehen `node --check`.
+- Alle vier HTML-Seiten: keine doppelten IDs und keine fehlenden lokalen Datei-Referenzen im geprüften Umfang.
+- Vier Geschenk-SVG-Dateien erfolgreich als XML geparst.
+- `admin.html` blieb bytegenau unverändert (SHA-256-Abgleich vor/nach Änderung).
+- ZIP-Integrität wird nach Erstellung geprüft.
+- Nicht geprüft: echtes Touch-/Browser-Verhalten auf einem Android-Gerät, Verfügbarkeit externer CDNs, produktive Render-/Neon-/R2-/PayPal-/LiveKit-Verbindungen.
