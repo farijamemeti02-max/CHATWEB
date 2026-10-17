@@ -1,3 +1,11 @@
+## Update 1.9.83 – Battle-Arena-Touchsteuerung
+
+- Beim Ergebnisdialog wird die mobile Touch-Steuerung explizit ausgeblendet und liegt auch per Ebenenreihenfolge hinter dem Ergebnisfenster.
+- Nach „Noch einmal“ wird die Touch-Steuerung wieder eingeblendet.
+- Der 2D-Sicherheitsmodus blendet die Steuerung bei Rundenende ebenfalls aus und stellt sie nach einem Neustart wieder her.
+- „← Zurück“ navigiert zur GameTik-Startseite.
+- `npm run check` und zusätzliche Syntax-/HTML-/SVG-Prüfungen wurden ausgeführt. Ein echter Smartphone-/Render-/PayPal-/LiveKit-End-to-End-Test ist nicht Teil dieser statischen Prüfungen.
+
 # GameTik – Foto/Video, Storys, Reaktionen und Bewertungen
 
 ## Dateien
@@ -188,3 +196,23 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die vorhandenen Geschenk-Schaltflächen und deren Zahlungs-/Versandlogik bleiben die funktionale Quelle. Die 3D-Animation ist ein visueller Effekt und bestätigt keine Zahlung.
 - Three.js wird beim ersten Geschenk dynamisch von jsDelivr geladen; dafür ist eine Internetverbindung nötig. Wenn die Bibliothek nicht erreichbar ist, bleibt der bestehende Geschenkbereich nutzbar.
 - `admin.html` wurde nicht geändert.
+
+## Battle Arena – Projektintegration 1.9.79
+- `battle-arena.html` nutzt die Arena-Fassung 1.9.78 mit 3D-Modus über Babylon.js und einem vereinfachten 2D-Fallback, falls die externe 3D-Bibliothek nicht geladen werden kann.
+- Der Einstieg „Battle Arena 3D“ bleibt im vorhandenen GameTik-3D-Spielemenü und öffnet `/battle-arena.html`.
+- Die Arena enthält Trainingskampf, Touch-Steuerung, Schwierigkeitswahl, Pause/Neustart, Kampfstatistik, Challenges, Karriere-XP und Erfolge. Karrierewerte werden lokal in diesem Browser gespeichert und nicht serverübergreifend synchronisiert.
+- Diese Integration wurde statisch geprüft. Ein echter Android-/Browser-Test, ein Test auf Render und eine Prüfung aller Geräte-/CDN-Konstellationen sind nicht erfolgt. `admin.html` bleibt unverändert.
+
+
+
+## Battle Arena 1.9.83 – Start-Fallback
+Wenn Babylon.js zwar geladen wird, WebGL aber auf dem Gerät nicht initialisiert werden kann oder die 3D-Szene beim Start fehlschlägt, startet jetzt ein eigenständiger 2D-Sicherheitsmodus mit sichtbaren Kämpfern, Timer und Grundsteuerung. Die 3D-Ansicht muss weiterhin auf echten Geräten getestet werden.
+
+
+## Battle Arena 1.9.87 – Full 3D
+Die Battle Arena lädt Babylon.js über mehrere CDN-Quellen, bevor sie startet. Es gibt keinen automatischen Wechsel in eine 2D-Spielansicht. Wenn WebGL oder alle CDNs ausfallen, wird ein klarer 3D-Fehlerhinweis angezeigt. Die Arena versucht auf Desktop und Mobilgeräten zuerst, texturierte humanoide GLB-Kämpfer mit Biped-Skelett zu laden. Prozedurale Figuren bleiben als lokaler Fallback verfügbar. Treffer-/K.-o.-Skelettbewegungen, Kampfzustände und die Animationsschleife laufen im Babylon.js-Code.
+
+
+## Battle Arena 1.9.87 — humanoide Kämpfer
+
+Siehe `UPDATE-1.9.87-DE.txt` und `ASSET-LIZENZEN-3D-DE.txt`. Die Arena lädt auf Mobilgeräten ebenfalls externe, geriggte menschliche GLB-Modelle und retargetet passende Biped-Animationen. Für einen Offline-Release müssen die Assets lokal gehostet werden.
