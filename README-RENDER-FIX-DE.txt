@@ -27,6 +27,6 @@ WENN DU DIESE DATEI IN EIN BESTEHENDES GAMETIK-REPOSITORY EINBAUST
 
 PRÜFUNGSERGEBNISSE
 - node --check server.js: bestanden.
-- npm test: 18/18 Tests bestanden (Testsuite wird durch mehrere enthaltene Testpfade dreifach gefunden).
+- npm run check: 6/6 automatisierte Tests bestanden (nach Korrektur des fehlerhaften Testpfads).
 - HTML-Inline-JavaScript syntaktisch geprüft; HTML-IDs eindeutig; Arena-Kopie synchronisiert.
 - In dieser Umgebung wurde kein echter Render-Deploy und kein Browser-/Android-Laufzeittest ausgeführt. Deshalb kann ein erfolgreicher Live-Betrieb erst nach Deployment bestätigt werden.

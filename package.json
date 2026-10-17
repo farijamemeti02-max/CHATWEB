@@ -1,6 +1,6 @@
 {
   "name": "gametik-battle-arena-online-server",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
   "description": "Dedicated Socket.IO matchmaking and authoritative combat server for GameTik Battle Arena",
   "main": "server.js",
