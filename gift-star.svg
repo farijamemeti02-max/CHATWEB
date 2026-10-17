@@ -1,15 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-<defs>
- <linearGradient id="gold" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fffbd2"/><stop offset=".18" stop-color="#bdf8ff"/><stop offset=".38" stop-color="#48dfff"/><stop offset=".65" stop-color="#147be8"/><stop offset=".84" stop-color="#123c9b"/><stop offset="1" stop-color="#a9f7ff"/></linearGradient>
- <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5bf4ff"/><stop offset="1" stop-color="#15286d"/></linearGradient>
- <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dy="5"/><feComponentTransfer><feFuncA type="linear" slope=".65"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
- <radialGradient id="glow"><stop stop-color="#27dfff" stop-opacity=".5"/><stop offset="1" stop-color="#27dfff" stop-opacity="0"/></radialGradient>
-</defs>
-<circle cx="64" cy="64" r="59" fill="url(#glow)"/>
-<path d="m64 9 14 34 37 2-28 25 9 37-32-20-32 20 9-37L13 45l37-2Z" fill="url(#edge)" transform="translate(0 5)"/>
-<path d="m64 8 14 34 37 2-28 25 9 37-32-20-32 20 9-37L13 44l37-2Z" fill="url(#gold)" stroke="#d8ffff" stroke-width="3" stroke-linejoin="round" filter="url(#shadow)"/>
-<path d="m64 17 10 29 30 1-23 20 7 29-24-15Z" fill="#fff" opacity=".2"/>
-<path d="M29 43l20 1 8 14" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".85"/>
-<path d="m88 17 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#fff"/>
-<circle cx="98" cy="82" r="4" fill="#fff" opacity=".9"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title"><title id="title">GameTik Stern</title><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff6a1"/><stop offset=".45" stop-color="#43eaff"/><stop offset="1" stop-color="#4278ff"/></linearGradient><filter id="s"><feGaussianBlur stdDeviation="3"/></filter></defs><circle cx="64" cy="64" r="57" fill="#141b32" stroke="#4beaff" stroke-opacity=".7" stroke-width="2"/><path d="m64 17 13 29 32 4-24 22 7 32-28-17-28 17 7-32-24-22 32-4Z" fill="#35e9ff" opacity=".4" filter="url(#s)"/><path d="m64 22 12 28 31 4-23 21 7 30-27-16-27 16 7-30-23-21 31-4Z" fill="url(#g)" stroke="#e4fcff" stroke-width="3" stroke-linejoin="round"/><path d="m42 55 15-2" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/></svg>
