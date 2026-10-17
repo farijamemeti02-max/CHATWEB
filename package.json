@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.31",
-  "description": "GAMETIK platform with static 3D UI depth and animated WebGL LIVE gifts and 3D mini-games",
+  "version": "1.9.41",
+  "description": "GAMETIK LIVE: inline streamer profile in lower chat panel and scrollable on-stream chat",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
