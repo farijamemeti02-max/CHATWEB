@@ -1,12 +1,12 @@
 {
   "name": "gametik",
-  "version": "1.9.31",
-  "description": "GAMETIK platform with static 3D UI depth and animated WebGL LIVE gifts and 3D mini-games",
+  "version": "1.9.25",
+  "description": "GAMETIK social platform with public member profile navigation and profile posts",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node scripts/run-check.js"
+    "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
   },
   "engines": {
     "node": "22.x"
