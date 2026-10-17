@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title"><title id="title">GameTik Krone</title><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff1a6"/><stop offset=".45" stop-color="#c6d8ff"/><stop offset="1" stop-color="#8c5cff"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff4fcf"/><stop offset="1" stop-color="#5a7dff"/></linearGradient><filter id="s"><feGaussianBlur stdDeviation="3"/></filter></defs><circle cx="64" cy="64" r="57" fill="#141b32" stroke="#b18aff" stroke-opacity=".7" stroke-width="2"/><path d="m22 42 25 17 17-30 17 30 25-17-8 49H30Z" fill="#a87aff" opacity=".35" filter="url(#s)"/><path d="m22 39 25 17 17-30 17 30 25-17-8 49H30Z" fill="url(#g)" stroke="#f5f3ff" stroke-width="3" stroke-linejoin="round"/><path d="M30 81h68l-3 12H33Z" fill="url(#b)" stroke="#ffc5f3" stroke-width="2"/><circle cx="22" cy="39" r="6" fill="#ff4fcf" stroke="#ffe5fb" stroke-width="2"/><circle cx="64" cy="26" r="6" fill="#48eaff" stroke="#e7fdff" stroke-width="2"/><circle cx="106" cy="39" r="6" fill="#ff4fcf" stroke="#ffe5fb" stroke-width="2"/><path d="M43 67h42" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+ <linearGradient id="silver" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset=".17" stop-color="#c8f8ff"/><stop offset=".34" stop-color="#879dbb"/><stop offset=".5" stop-color="#f7ffff"/><stop offset=".68" stop-color="#697b9e"/><stop offset=".84" stop-color="#e6f6ff"/><stop offset="1" stop-color="#7788a7"/></linearGradient>
+ <linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".4" stop-color="#a9c5e9"/><stop offset=".7" stop-color="#526687"/><stop offset="1" stop-color="#f6ffff"/></linearGradient>
+ <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd5f4"/><stop offset=".4" stop-color="#ff42c9"/><stop offset="1" stop-color="#8b12c8"/></linearGradient>
+ <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9ffff"/><stop offset=".4" stop-color="#35dfff"/><stop offset="1" stop-color="#2354dd"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-40%" width="160%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dy="5"/><feComponentTransfer><feFuncA type="linear" slope=".65"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <radialGradient id="glow"><stop stop-color="#a63cff" stop-opacity=".45"/><stop offset="1" stop-color="#a63cff" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="64" cy="66" rx="61" ry="57" fill="url(#glow)"/>
+<path d="M19 47 39 66 63 16 88 66 109 47 100 99 28 99Z" fill="#3a4868" transform="translate(0 7)"/>
+<path d="M16 43 39 63 63 14 88 63 112 43 101 93 27 93Z" fill="url(#silver)" stroke="#f4ffff" stroke-width="3" stroke-linejoin="round" filter="url(#shadow)"/>
+<path d="M27 93h74l-5 16H32Z" fill="url(#band)" stroke="#f6ffff" stroke-width="2"/>
+<path d="M23 49 40 65 63 20 86 65 105 49" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" opacity=".8"/>
+<circle cx="39" cy="63" r="8" fill="url(#blue)" stroke="#d9ffff" stroke-width="2"/><circle cx="63" cy="17" r="10" fill="url(#pink)" stroke="#ffe5fa" stroke-width="2"/><circle cx="88" cy="63" r="8" fill="url(#blue)" stroke="#d9ffff" stroke-width="2"/>
+<path d="M42 101h44" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+<path d="m94 20 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#fff"/>
+</svg>

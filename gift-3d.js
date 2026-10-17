@@ -22,7 +22,7 @@
       script.onload = () => window.THREE ? resolve(window.THREE) : reject(new Error('Three.js wurde geladen, ist aber nicht verfügbar.'));
       script.onerror = () => reject(new Error('Three.js konnte nicht geladen werden. Bitte Internetverbindung prüfen.'));
       document.head.appendChild(script);
-    }).catch(error => { threePromise = null; throw error; });
+    });
     return threePromise;
   }
   function findStage() {
