@@ -1,0 +1,19 @@
+GAMETIK – ERWEITERUNG BATTLE ARENA (Mobile Layout Fix)
+
+Änderungen an battle-arena.html:
+- Mobile Steuerung und Richtungstasten bleiben erhalten.
+- SCHLAG, TRITT, BLOCK und DODGE bleiben erhalten.
+- Neue-Runde-Schaltfläche wird auf Mobilgeräten räumlich von den Touch-Steuerelementen getrennt.
+- Hilfetext blendet sich auf kleinen Displays aus, damit er nicht unter den Bedienelementen liegt.
+- Kopfzeile, Lebensanzeigen und Footer erhalten responsive Größen und Safe-Area-Abstände.
+- Bestehende 3D-Arena, Figuren, Kampfablauf, Sieg/Niederlage, Babylon.js und Zurück-Navigation wurden nicht absichtlich ersetzt.
+
+Prüfungen:
+- Inline-JavaScript mit node --check geprüft.
+- Auf doppelte HTML-IDs geprüft.
+- Vorhandensein der wichtigsten Arena- und Steuerungsfunktionen geprüft.
+
+Grenzen:
+- Kein echter Browser-, Android- oder Render-Live-Test wurde ausgeführt.
+- Dieses ZIP enthält die hochgeladenen Dateien und den gezielten Arena-Fix, ist aber kein vollständiges Deploy-Paket: server.js, index.html, live.js und package.json waren in den bereitgestellten Dateien nicht enthalten.
+- Alle Dateien außer battle-arena.html und dieser Prüfnotiz wurden unverändert übernommen.
