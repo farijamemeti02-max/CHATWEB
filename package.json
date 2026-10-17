@@ -1,12 +1,12 @@
 {
   "name": "gametik",
-  "version": "1.9.88",
-  "description": "GAMETIK social platform with locally served Babylon.js 3D Battle Arena recovery",
+  "version": "1.9.31",
+  "description": "GAMETIK platform with static 3D UI depth and animated WebGL LIVE gifts and 3D mini-games",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node --check live.js && node --check gift-3d.js && node --check mini-games-3d.js && node scripts/check-project.js"
+    "check": "node scripts/run-check.js"
   },
   "engines": {
     "node": "22.x"
@@ -18,8 +18,6 @@
     "socket.io": "^4.8.1",
     "livekit-server-sdk": "^2.19.1",
     "@aws-sdk/client-s3": "^3.800.0",
-    "pg": "^8.16.3",
-    "babylonjs": "7.54.3",
-    "babylonjs-loaders": "7.54.3"
+    "pg": "^8.16.3"
   }
 }
