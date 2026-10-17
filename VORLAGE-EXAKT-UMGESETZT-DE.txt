@@ -1,5 +1,0 @@
-GAMETIK LIVE – VORLAGE UMGESETZT
-
-Die LIVE-Oberfläche wurde anhand des vom Nutzer gelieferten Screenshots angepasst: großes Hochkantvideo, Profil-/Folgenleiste oben, Zuschaueranzeige, Neon-Aktionsleiste rechts mit Like/Chat/Geschenke/Spiel/Teilen, Kommentare über dem Video und kompakte pink-blaue Duellanzeige am unteren Videorand. Das Game-Symbol ist eine gezeichnete Controller-Illustration. Nachrichtenfeld und Geschenkaktionen bleiben unter dem Stream.
-
-Wichtig: Diese Änderungen sind in den Projektdateien enthalten. Sie sind noch nicht automatisch zu GitHub oder Render hochgeladen. Kamera-/Live-Übertragung, Follow-Backend, echte PayPal-Zahlungen und echte Spielintegration müssen separat in der laufenden Umgebung geprüft werden. admin.html wurde nicht verändert.
