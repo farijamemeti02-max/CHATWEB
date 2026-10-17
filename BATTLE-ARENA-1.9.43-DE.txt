@@ -1,0 +1,20 @@
+GameTik Battle Arena – Version 1.9.43
+
+Neu:
+- Eigenständige battle-arena.html mit Babylon.js als browserbasierter 3D-Prototyp.
+- Prozedural zusammengesetzte menschliche Platzhalter-Kämpfer, Arena, Neon-Pink-/Elektroblau-Beleuchtung, Lebensanzeigen und Trefferpartikel.
+- Einzelspieler-Trainingsrunde gegen einen Computergegner.
+- Bewegung per WASD, leichter Angriff J, schwerer Angriff K, Block L, Ausweichen Leertaste; Touch-Bedienung auf kleinen Bildschirmen.
+- Einstieg über 3D-Spiele > Battle Arena 3D.
+
+Wichtige Grenzen:
+- Dies ist ein früher spielbarer Prototyp, kein fertiges Konsolenspiel.
+- Die Figuren sind aus einfachen 3D-Grundformen aufgebaut und noch keine realistischen, extern erstellten Charaktermodelle.
+- Babylon.js und dessen Materialbibliothek werden über CDN geladen; für das Spiel ist eine Internetverbindung erforderlich.
+- Noch kein Online-Multiplayer, keine serverseitig gespeicherten Ranglisten und keine Persistenz für Spielstände.
+- Admin-, PayPal- und bestehende LIVE-Dateien wurden nicht gezielt geändert.
+
+Prüfung:
+- npm run check: bestanden (33 vorhandene Kernprüfungen).
+- JavaScript-Syntax der Battle-Arena-Seite: bestanden.
+- Kein echter Browser-/Android-/Render-Laufzeittest durchgeführt.

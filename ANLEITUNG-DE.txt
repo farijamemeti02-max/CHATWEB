@@ -1,0 +1,43 @@
+GAMETIK – KORRIGIERTES GESAMTPAKET
+=================================
+
+WICHTIG
+- admin.html wurde nicht geändert.
+- Passwort-Reset-E-Mails werden über die Brevo HTTPS API versendet (nicht über SMTP). Das vermeidet den zuvor protokollierten SMTP-ETIMEDOUT.
+- Echte Zugangsdaten gehören nur in Render > CHATWEB > Environment, niemals in GitHub oder Screenshots.
+
+GITHUB
+1. ZIP entpacken und den Inhalt des Ordners GameTik öffnen.
+2. Im bestehenden CHATWEB-Repository die enthaltenen Projektdateien ersetzen/hochladen: server.js, app.js, index.html, live.js, package.json, README.md, ANLEITUNG-DE.txt, TESTPROTOKOLL-DE.txt, scripts/check-project.js, .env.example, paypal.html, admin.html und die vier gift-*.svg-Dateien.
+3. admin.html bleibt unverändert; sie ist nur enthalten, damit die vollständige Projektstruktur beisammen ist.
+4. GitHub darf keine echten API-Schlüssel, Datenbankpasswörter oder R2-Geheimnisse enthalten.
+
+RENDER > CHATWEB > ENVIRONMENT
+Behalte die bereits richtigen DATABASE_URL- und R2-Werte. Prüfe diese Variablen:
+- DATABASE_URL = bestehende Neon PostgreSQL Connection String
+- BREVO_API_KEY = dein Brevo API-v3-Schlüssel
+- SMTP_FROM = GameTik <vollständige, bei Brevo verifizierte Absenderadresse>
+- APP_BASE_URL = https://chatweb-iajl.onrender.com
+- R2_ACCOUNT_ID = Cloudflare Account ID
+- R2_ACCESS_KEY_ID = R2 Access Key ID
+- R2_SECRET_ACCESS_KEY = R2 Secret Access Key
+- R2_BUCKET_NAME = gametik-media (nur wenn dies exakt dein Bucketname ist)
+- R2_REGION = auto
+- R2_PUBLIC_URL = vollständige öffentliche R2-Domain ohne abschließenden Slash
+
+SMTP_HOST, SMTP_PORT, SMTP_USER und SMTP_PASS werden vom Passwort-Reset dieser Version nicht benötigt. Du kannst sie stehen lassen; diese Version ignoriert sie.
+
+DEPLOY UND TEST
+1. Warte in Render auf einen erfolgreichen Deploy.
+2. Öffne https://chatweb-iajl.onrender.com/api/health. Erwartet: ok=true, database=postgresql-connected, passwordResetConfigured=true. r2Configured sollte true sein, wenn alle R2-Werte korrekt sind.
+3. Teste Anmeldung und Registrierung mit einem Konto, das noch nicht existiert. Verwende bei vorhandenen Konten „Anmelden“.
+4. Für den Reset: „Anmelden“ wählen, die registrierte E-Mail-Adresse in „Benutzername oder E-Mail“ eingeben und „Passwort vergessen?“ drücken.
+5. Die Reset-E-Mail enthält die direkte GameTik-Adresse als Text, nicht einen Brevo-Tracking-Button. Kopiere die vollständige HTTPS-Adresse in die Browser-Adresszeile.
+6. Setze ein neues Passwort mit 10–128 Zeichen und melde dich damit an.
+7. Profilbild hochladen, Seite neu laden und prüfen, ob es weiterhin sichtbar ist.
+
+WICHTIGE GRENZEN
+- Die statischen Prüfungen bestehen, aber ich kann von hier aus deine geheimen Render-/Neon-/Brevo-/Cloudflare-Zugangsdaten nicht testen. Daher kann kein seriöser Entwickler garantieren, dass ein externer Dienst ohne Live-Test niemals einen Fehler liefert.
+- Wenn /api/health nicht ok=true meldet, prüfe zuerst Render-Logs und DATABASE_URL.
+- Wenn passwordResetConfigured=false ist, fehlt BREVO_API_KEY, SMTP_FROM oder APP_BASE_URL.
+- Teile niemals BREVO_API_KEY, DATABASE_URL oder R2_SECRET_ACCESS_KEY öffentlich.
