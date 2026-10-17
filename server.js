@@ -478,18 +478,6 @@ function asyncRoute(fn) { return (req,res,next) => Promise.resolve(fn(req,res,ne
 function publicUser(user) {
   return { id: user.id, username: user.username, email: null, avatar_url: user.avatar_url || null, created_at: user.created_at, gender: user.gender || '', bio: user.bio || '', relationship_status: user.relationship_status || '', location: user.location || '', social_private: user.social_private !== false, social_visibility: ['public','friends','private'].includes(user.social_visibility) ? user.social_visibility : (user.social_private === false ? 'public' : 'private'), following_count: user.following ? user.following.size : 0, followers_count: [...sessions.values()].filter(other => other.following && other.following.has(user.id)).length, posts_count: videos.filter(v => v.user_id === user.id).length, likes_count: videos.filter(v => v.user_id === user.id).reduce((sum, v) => sum + v.likes.size, 0) };
 }
-// Ranked Battle Arena results are deliberately fail-closed until the duel simulation is authoritative on the server.
-// Local bot rounds are practice-only; a browser must never be allowed to award itself ranked wins or XP.
-app.get('/api/arena/ranked-status', auth, (_req, res) => res.json({
-  enabled: false,
-  mode: 'practice-only',
-  message: 'Online-Ranglisten bleiben deaktiviert, bis serverautoritatives Online-Duell-Gameplay verfügbar ist.'
-}));
-app.post('/api/arena/ranked-result', auth, (_req, res) => res.status(409).json({
-  accepted: false,
-  error: 'Online-Ergebnisse werden derzeit nicht angenommen. Bot-Runden sind ungewertet; Online-Siege dürfen erst nach serverseitiger Duellprüfung zählen.'
-}));
-
 app.get('/api/health', (_req,res) => res.status(dbPool && databaseReady ? 200 : 503).json({ ok: Boolean(dbPool && databaseReady), service: 'gametik', mode: dbPool && databaseReady ? 'postgresql' : 'file-backed', storagePath: dataRoot, persistentStorage: Boolean(dbPool && databaseReady), database: dbPool && databaseReady ? 'postgresql-connected' : 'DATABASE_URL-missing-or-not-ready', r2Configured: Boolean(r2Ready), passwordResetConfigured: Boolean(process.env.BREVO_API_KEY && (process.env.SMTP_FROM || process.env.BREVO_SENDER_EMAIL) && (process.env.APP_BASE_URL || process.env.RENDER_EXTERNAL_URL)), secretKey: 'passwords-hashed' }));
 app.get('/api/config', (_req,res) => res.json({
   paypalUrl: process.env.PAYPAL_DONATION_URL || '',
