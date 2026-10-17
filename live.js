@@ -16,90 +16,17 @@
   let currentStream = null, currentRole = '', room = null, chatSocket = null, countTimer = null, gameUiTimer = null, liveLikeCount = 0, audioMuted = false, hostMicMuted = false, currentGame = null, audioContext = null, micSource = null, micStream = null, micDestination = null, micGain = null, reverbGain = null, dryGain = null, delayNode = null, delayFeedback = null, delayGain = null, micCompressor = null, voiceFilter = null, processedAudioTrack = null, micPublished = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function liveStatus(message) { $('liveStageStatus').textContent = message; }
-  async function updateLiveProfileAvatar(stream) {
-    const avatarHost = document.querySelector('#gtLiveProfilePill .gt-live-profile-avatar');
-    const name = document.getElementById('gtLiveProfileName');
-    if (name && stream?.hostUsername) name.textContent = '@' + stream.hostUsername;
-    if (!avatarHost || !stream?.hostId) return;
-    try {
-      const response = await fetch(apiBase + '/api/users/' + encodeURIComponent(stream.hostId) + '/profile');
-      if (!response.ok) return;
-      const data = await response.json();
-      const user = data.user || {};
-      if (name && user.username) name.textContent = '@' + user.username;
-      if (user.avatar_url) {
-        const img = document.createElement('img');
-        img.src = user.avatar_url;
-        img.alt = 'Profilbild von ' + (user.username || stream.hostUsername || 'LIVE-Nutzer');
-        img.loading = 'eager';
-        img.referrerPolicy = 'no-referrer';
-        img.style.cssText = 'width:100%;height:100%;display:block;object-fit:cover;border-radius:50%';
-        img.onerror = () => { img.remove(); if (!avatarHost.textContent.trim()) avatarHost.textContent = '👑'; };
-        avatarHost.replaceChildren(img);
-      } else {
-        avatarHost.textContent = (user.username || stream.hostUsername || 'G').slice(0,1).toUpperCase();
-      }
-    } catch {}
-  }
-  async function showInlineStreamerProfile() {
-    const panel = $('gtLiveInlineProfile');
-    const messages = $('liveChatMessages');
-    const form = $('liveChatForm');
-    const heading = document.querySelector('#liveChatDock .gt-live-chat-heading');
-    if (!panel || !currentStream) return;
-    panel.classList.remove('hidden');
-    if (messages) messages.classList.add('hidden');
-    if (form) form.classList.add('hidden');
-    if (heading) heading.classList.add('hidden');
-    panel.innerHTML = '<div class="muted">Profil wird geladen …</div>';
-    try {
-      if (!currentStream.hostId) throw new Error('Für diesen Stream ist keine Profil-ID verfügbar.');
-      const response = await fetch(apiBase + '/api/users/' + encodeURIComponent(currentStream.hostId) + '/profile', {headers: localStorage.getItem('gametik_token') ? {Authorization:'Bearer '+localStorage.getItem('gametik_token')} : {}});
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'Profil konnte nicht geladen werden.');
-      const user = data.user || {};
-      const avatar = user.avatar_url ? `<img class="gt-inline-profile-avatar" src="${esc(user.avatar_url)}" alt="Profilbild von ${esc(user.username || currentStream.hostUsername || 'Nutzer')}" referrerpolicy="no-referrer">` : '<div class="gt-inline-profile-avatar" style="display:grid;place-items:center;font-size:28px;background:#15172a">👤</div>';
-      panel.innerHTML = `<div class="gt-inline-profile-head">${avatar}<div><div class="gt-inline-profile-name">${esc(user.username || currentStream.hostUsername || 'LIVE-Nutzer')}</div><div class="muted tiny">${esc(user.gender || 'GameTik-Mitglied')}</div></div></div><div class="gt-inline-profile-stats"><span><b>${Number(user.followers_count || 0)}</b> Follower</span><span><b>${Number(user.following_count || 0)}</b> Folgt</span><span><b>${Number(user.posts_count || 0)}</b> Beiträge</span></div><div class="gt-inline-profile-bio">${esc(user.bio || 'Keine Biografie angegeben.')}</div><button type="button" class="secondary gt-inline-profile-close" id="gtInlineProfileBack">← Zurück zum Live-Chat</button>`;
-      $('gtInlineProfileBack')?.addEventListener('click', closeInlineStreamerProfile);
-    } catch (error) {
-      panel.innerHTML = `<div>${esc(error.message || 'Profil konnte nicht geladen werden.')}</div><button type="button" class="secondary gt-inline-profile-close" id="gtInlineProfileBack">← Zurück zum Live-Chat</button>`;
-      $('gtInlineProfileBack')?.addEventListener('click', closeInlineStreamerProfile);
-    }
-    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }
-  function closeInlineStreamerProfile() {
-    $('gtLiveInlineProfile')?.classList.add('hidden');
-    $('liveChatMessages')?.classList.remove('hidden');
-    $('liveChatForm')?.classList.remove('hidden');
-    document.querySelector('#liveChatDock .gt-live-chat-heading')?.classList.remove('hidden');
-  }
-  function bindLiveProfileTap() {
-    const avatar = document.querySelector('#gtLiveProfilePill .gt-live-profile-avatar');
-    if (!avatar || avatar.dataset.profileTapBound === '1') return;
-    avatar.dataset.profileTapBound = '1';
-    avatar.setAttribute('role','button'); avatar.setAttribute('tabindex','0'); avatar.setAttribute('aria-label','Profil des Live-Streamers im unteren Bereich öffnen');
-    avatar.addEventListener('click', showInlineStreamerProfile);
-    avatar.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showInlineStreamerProfile(); } });
-  }
-
   function chatLine(username, body, time = new Date().toISOString(), gift = false) {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
     el.innerHTML = `<b>${esc(username)}</b> ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
-    const messages=$('liveChatMessages');
-    const wasNearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 36;
-    messages.appendChild(el);
-    // TikTok-LIVE-Stil: mit neuen Nachrichten automatisch unten bleiben, aber manuelles Lesen alter Nachrichten respektieren.
-    if (wasNearBottom) messages.scrollTop = messages.scrollHeight;
+    $('liveChatMessages').appendChild(el); $('liveChatMessages').scrollTop = $('liveChatMessages').scrollHeight;
     const overlay = $('liveOverlayChat');
     if (overlay) {
       const line = document.createElement('div'); line.className = 'live-overlay-line';
       line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
-      // Keep a viewer who is reading older messages in place; otherwise follow the newest line.
-      const overlayNearBottom = overlay.scrollHeight - overlay.scrollTop - overlay.clientHeight < 36;
       overlay.appendChild(line);
-      while (overlay.children.length > 80) overlay.firstElementChild.remove();
-      if (overlayNearBottom) requestAnimationFrame(() => { overlay.scrollTop = overlay.scrollHeight; });
+      while (overlay.children.length > 5) overlay.firstElementChild.remove();
       setTimeout(() => { if (line.isConnected) line.style.opacity = '.82'; }, 9000);
     }
   }
@@ -154,12 +81,7 @@
     applyCameraEffect();
   }
   function renderGame(game) {
-    const wasActive = !!currentGame?.active;
     currentGame = game || {active:false, endsAt:null, hostPoints:0, communityPoints:0, winner:null};
-    if (currentGame.active && !wasActive) {
-      const vs = $('liveDuelVs');
-      if (vs) { vs.classList.remove('gt-vs-flash'); void vs.offsetWidth; vs.classList.add('gt-vs-flash'); setTimeout(() => vs.classList.remove('gt-vs-flash'), 1250); }
-    }
     $('liveGameHostPoints').textContent = String(Number(currentGame.hostPoints || 0)); if ($('liveDuelHostScore')) $('liveDuelHostScore').textContent = String(Number(currentGame.hostPoints || 0));
     $('liveGameCommunityPoints').textContent = String(Number(currentGame.communityPoints || 0)); if ($('liveDuelCommunityScore')) $('liveDuelCommunityScore').textContent = String(Number(currentGame.communityPoints || 0));
     const hostScore = Math.max(0, Number(currentGame.hostPoints || 0)); const communityScore = Math.max(0, Number(currentGame.communityPoints || 0)); const scoreTotal = hostScore + communityScore; const hostShare = scoreTotal ? (hostScore / scoreTotal) * 100 : 50; const communityShare = scoreTotal ? (communityScore / scoreTotal) * 100 : 50; if ($('liveDuelHostFill')) $('liveDuelHostFill').style.width = `${hostShare}%`; if ($('liveDuelCommunityFill')) $('liveDuelCommunityFill').style.width = `${communityShare}%`; if ($('liveDuelLead')) $('liveDuelLead').textContent = hostScore === communityScore ? '🤝 Gleichstand' : hostScore > communityScore ? '⚡ Streamer-Team führt' : '💗 Community-Team führt'; if ($('liveDuelTimer') && $('liveGameTimer')) $('liveDuelTimer').textContent = $('liveGameTimer').textContent;
@@ -255,9 +177,8 @@
     currentStream = data.stream; currentRole = role; audioMuted = false; hostMicMuted = false; $('liveAudioMixer')?.classList.add('hidden'); $('liveAudioToggle')?.setAttribute('aria-expanded','false'); if ($('liveAudioToggleIcon')) $('liveAudioToggleIcon').textContent = '＋'; $('liveAudioToggle')?.closest('#liveAudioMixerLauncher')?.classList.toggle('hidden', role !== 'host'); await stopAudioMixer();
     $('liveMuteBtn').textContent = role === 'host' ? '🎙️ Mikrofon aktiv' : '🔊 Ton aktiv'; $('liveMuteBtn').setAttribute('aria-pressed', 'false');
     $('liveStage').classList.remove('hidden'); $('liveStageTitle').textContent = currentStream.title;
-    updateLiveProfileAvatar(currentStream).then(bindLiveProfileTap).catch(()=>{}); setTimeout(bindLiveProfileTap, 100); setTimeout(bindLiveProfileTap, 500);
     $('liveEndBtn').classList.toggle('hidden', role !== 'host'); $('liveEndBtn').disabled = role !== 'host'; if ($('liveEndTopBtn')) { $('liveEndTopBtn').classList.toggle('hidden', role !== 'host'); $('liveEndTopBtn').disabled = role !== 'host'; } $('liveStartBtn').classList.toggle('hidden', role === 'host');
-    $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; closeInlineStreamerProfile(); if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
+    $('liveGiftStatus').textContent = ''; if ($('liveOverlayChat')) $('liveOverlayChat').innerHTML = ''; if ($('liveFloatingHearts')) $('liveFloatingHearts').innerHTML = '';
     refreshCandyBalance(); liveLikeCount = Number(data.stream.likes || data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; renderGame(data.stream.game); clearInterval(gameUiTimer); gameUiTimer = setInterval(() => { if (currentGame) renderGame(currentGame); }, 1000);
     room = new window.LivekitClient.Room({adaptiveStream: true, dynacast: true});
     room.on(window.LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => renderTrack(track, participant));
@@ -280,7 +201,7 @@
       chatSocket = window.io(apiBase || undefined, {auth: localStorage.getItem('gametik_token') ? {token: localStorage.getItem('gametik_token')} : {guestLiveRoomId: currentStream.id}});
       chatSocket.on('connect', () => chatSocket.emit('live:join-chat', {roomId: currentStream.id}, result => { if (result?.error) liveStatus(result.error); }));
       chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at); });
-      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) { chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); window.GameTikGift3D?.play(gift.gift, gift.quantity || gift.amount || Number((String(gift.gift).match(/×\s*(\d+)/)||[])[1]) || 1, gift.username); } playGameJingle('gift'); });
+      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); playGameJingle('gift'); });
       chatSocket.on('live:game-state', event => { if (event.roomId === currentStream?.id) renderGame(event.game); });
       chatSocket.on('live:like-count', data => { if (data.roomId === currentStream?.id) { liveLikeCount = Number(data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; } });
       chatSocket.on('live:ended', event => { if (event.id === currentStream?.id) { liveStatus('Der Stream wurde beendet.'); leaveStream(false); refreshStreams(); } });
@@ -424,7 +345,7 @@
   }));
   document.querySelectorAll('.live-smiley').forEach(button => button.addEventListener('click', () => { const input=$('liveChatInput'); if (!input) return; input.value=(input.value ? input.value+' ' : '')+button.dataset.smiley; input.focus(); }));
   $('liveCandyClaim')?.addEventListener('click', async () => { if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } try { const d=await api('/api/candy/claim',{method:'POST',body:'{}'}); candyBalanceCache=Number(d.balance||0); $('liveGiftStatus').textContent=`🎉 ${d.awarded} kostenlose Süßigkeiten erhalten!`; await refreshCandyBalance(); playGameJingle('gift'); } catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); } });
-  $('liveCandyGift')?.addEventListener('click', async () => { if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; } if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } const amount=Number(prompt('Wie viele kostenlose Süßigkeiten möchtest du verschenken? (1–20)', '1')); if (!Number.isInteger(amount)||amount<1||amount>20) return; try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeiten verschenkt. Dein Guthaben: ${d.balance}`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); await refreshCandyBalance(); } catch(e) { $('liveGiftStatus').textContent=e.message; } });
+  $('liveCandyGift')?.addEventListener('click', async () => { if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; } if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } const amount=Number(prompt('Wie viele kostenlose Süßigkeiten möchtest du verschenken? (1–20)', '1')); if (!Number.isInteger(amount)||amount<1||amount>20) return; try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeiten verschenkt. Dein Guthaben: ${d.balance}`; await refreshCandyBalance(); } catch(e) { $('liveGiftStatus').textContent=e.message; } });
   $('liveCasinoOpen')?.addEventListener('click', async () => { if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; } $('liveCasinoModal')?.classList.remove('hidden'); await refreshCandyBalance(); });
   $('liveCasinoClose')?.addEventListener('click', () => $('liveCasinoModal')?.classList.add('hidden'));
   $('liveCasinoSpin')?.addEventListener('click', async () => {
@@ -456,7 +377,7 @@
     if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
     const amount=Math.max(1,Math.min(20,Number(button.dataset.amount)||1));
     button.disabled=true;
-    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); document.dispatchEvent(new CustomEvent('gametik:candy-sent',{detail:{amount:d.spent||amount,emoji:({1:'🍬',3:'🍭',5:'🧁',10:'🍫'})[Number(button.dataset.amount)]||'🍬'}})); await refreshCandyBalance(); playGameJingle('gift'); }
+    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; await refreshCandyBalance(); playGameJingle('gift'); }
     catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); }
     finally { setTimeout(()=>{button.disabled=false;},500); }
   }));

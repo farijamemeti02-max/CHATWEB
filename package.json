@@ -1,12 +1,12 @@
 {
   "name": "gametik",
-  "version": "1.9.87",
-  "description": "GAMETIK social platform with mobile humanoid combat fighters and dynamic 3D Battle Arena",
+  "version": "1.9.26",
+  "description": "GAMETIK social platform with 3D WebGL LIVE gift animations",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node --check live.js && node --check gift-3d.js && node --check mini-games-3d.js && node scripts/check-project.js"
+    "check": "node --check server.js && node --check app.js && node --check live.js && node scripts/check-project.js"
   },
   "engines": {
     "node": "22.x"
