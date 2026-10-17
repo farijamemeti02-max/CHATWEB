@@ -1,19 +1,25 @@
 {
-  "name": "gametik-battle-arena-online-server",
-  "version": "3.0.1",
-  "private": true,
-  "description": "Dedicated Socket.IO matchmaking and authoritative combat server for GameTik Battle Arena",
+  "name": "gametik",
+  "version": "1.9.34",
+  "description": "GAMETIK platform with LIVE streaming, persistent state, 3D gifts and mini-games",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --test",
-    "test": "node --test"
+    "dev": "node --watch server.js",
+    "check": "node scripts/run-check.js",
+    "check:core": "node scripts/check-project.js",
+    "check:syntax": "node --check server.js && node --check app.js && node --check live.js && node --check gift-3d.js && node --check mini-games-3d.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "socket.io": "^4.8.1"
+    "multer": "^2.0.2",
+    "socket.io": "^4.8.1",
+    "livekit-server-sdk": "^2.19.1",
+    "@aws-sdk/client-s3": "^3.800.0",
+    "pg": "^8.16.3"
   }
 }
