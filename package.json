@@ -1,12 +1,14 @@
 {
   "name": "gametik",
-  "version": "1.9.44",
-  "description": "GAMETIK: Battle Arena 3D prototype with improved combat animation and tactical AI guard",
+  "version": "1.9.34",
+  "description": "GAMETIK platform with LIVE streaming, persistent state, 3D gifts and mini-games",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check": "node --check server.js && node --check app.js && node --check live.js && node --check gift-3d.js && node --check mini-games-3d.js && node scripts/check-project.js"
+    "check": "node scripts/run-check.js",
+    "check:core": "node scripts/check-project.js",
+    "check:syntax": "node --check server.js && node --check app.js && node --check live.js && node --check gift-3d.js && node --check mini-games-3d.js"
   },
   "engines": {
     "node": "22.x"
