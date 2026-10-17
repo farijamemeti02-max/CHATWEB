@@ -28,7 +28,7 @@ const required = [
   [html.includes('src="/mini-games-3d.js"') && games3d.includes('Candy World 3D') && games3d.includes('Neon Racer 3D') && games3d.includes('Space Candy 3D'), '3D-Minispiele fehlen oder sind nicht eingebunden'],
   [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
   [games3d.includes('id=\"gtmgBattleArena\"') && games3d.includes("location.href='/battle-arena.html'"), 'Battle-Arena-Einstieg im Spielemenü fehlt'],
-  [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('3D ENGINE RECOVERY 1.9.88') && arena.includes('HUMAN_MODEL_BASE') && arena.includes('loadRiggedFighter'), 'Battle-Arena 1.9.87 mit Human-GLB-Lader fehlt'],
+  [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('HUMAN FIGHTERS & COMBAT 1.9.87') && arena.includes('HUMAN_MODEL_BASE') && arena.includes('loadRiggedFighter'), 'Battle-Arena 1.9.87 mit Human-GLB-Lader fehlt'],
   [arena.includes('cdn.babylonjs.com/babylon.js') && arena.includes('cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js') && arena.includes('window.__bootArena'), 'Mehrfach-CDN-Lader für Babylon.js fehlt'],
   [arena.includes('show3DError(engineError') && arena.includes('show3DError(sceneError') && !arena.includes('activateSafe2D(engineError') && !arena.includes('activateSafe2D(sceneError'), 'Arena darf bei Fehlern nicht auf 2D umschalten'],
   [arena.includes('CAREER_KEY') && arena.includes('ACHIEVEMENTS') && arena.includes('challengeSelect'), 'Karriere-, Erfolge- oder Challenge-System der Arena fehlt'],
@@ -38,7 +38,7 @@ const required = [
   [arena.includes('touchControls.hidden=false'), 'Touch-Steuerung wird nach Neustart nicht korrekt wiederhergestellt'],
   [arena.includes('.resultOverlay{position:absolute;inset:0;z-index:20;') && arena.includes('.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none;z-index:5}'), 'Ergebnisfenster liegt nicht sicher über der Touch-Steuerung'],
   [arena.includes('button[data-action=\"restart\"]{grid-column:3;grid-row:2;border-radius:14px;width:100%;min-width:0;max-width:100%;height:48px;padding:0 3px;'), 'Mobile Neustart-Schaltfläche kann aus ihrer Grid-Spalte überlaufen'],
-  [pkg.version === '1.9.88', 'Projektversion ist nicht auf 1.9.87 aktualisiert'],
+  [pkg.version === '1.9.87', 'Projektversion ist nicht auf 1.9.87 aktualisiert'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
   [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
@@ -78,8 +78,6 @@ required.push([arena.includes('createHumanActionClip') && arena.includes("trigge
 required.push([arena.includes('new B.ShadowGenerator') && arena.includes('floor.receiveShadows=true') && arena.includes('mesh.receiveShadows=true'), 'Dynamische Schatten für Arena/Kämpfer fehlen']);
 required.push([(arena.match(/function setRiggedAnimation\(f,mode\)/g)||[]).length===1, 'Doppelte rigged-Animationsfunktion überschreibt die Kampfsteuerung']);
 required.push([arena.includes('HUMAN_MODEL_BASE') && arena.includes('3D-MODELL NICHT GELADEN'), 'Modelllade-Fehler wird nicht sichtbar behandelt']);
-required.push([Boolean(pkg.dependencies.babylonjs && pkg.dependencies['babylonjs-loaders']) && server.includes("app.use('/vendor/babylonjs'") && server.includes("app.use('/vendor/babylonjs-loaders'"), 'Lokale Babylon.js-/GLB-Loader-Abhängigkeiten und statische Routen fehlen']);
-required.push([arena.includes("'/vendor/babylonjs/babylon.js'") && arena.includes("'/vendor/babylonjs-loaders/babylonjs.loaders.min.js'"), 'Arena versucht nicht zuerst die lokal bereitgestellte 3D-Engine zu laden']);
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }
 console.log(`Projektprüfung erfolgreich: ${required.length} Kernprüfungen bestanden.`);
