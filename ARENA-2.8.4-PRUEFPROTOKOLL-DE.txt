@@ -1,0 +1,18 @@
+GAMETIK ARENA 2.8.4 – PRÜFPROTOKOLL
+
+Ergebnis
+- 33 vorhandene GameTik-Kernprüfungen bestanden.
+- JavaScript-Syntaxprüfung: server.js, app.js, live.js, gift-3d.js und mini-games-3d.js bestanden.
+- Inline-JavaScript der Arena: Syntaxprüfung bestanden.
+- Eingebettetes GLB-Modell: glTF-Binärheader und deklarierte Dateilänge geprüft; 9.684.372 Bytes stimmen überein.
+- ZIP-Integrität: bestanden.
+- admin.html und server.js stimmen bytegenau mit dem gelieferten Ausgangsprojekt 1.9.34 überein.
+
+Änderungen in Arena 2.8.4
+- Aktuelle selbstenthaltene Cyber-Ninja-Arena ist als battle-arena.html integriert.
+- KI-Schwierigkeit LEICHT / NORMAL / SCHWER ist über eine Schaltfläche umschaltbar.
+- Bestehende Bewegungs-, Sprung-, Kampf-, Block-, Ausweich-, Combo-, Spezialangriff- und Touch-Logik wurde beibehalten.
+
+Nicht ausgeführt
+- Kein echter Browser-, Android-, Render- oder Netzwerk-Live-Test in dieser Arbeitsumgebung.
+- Keine Prüfung von externen CDN-Verfügbarkeit oder Laufzeit-FPS auf einem realen Gerät.
