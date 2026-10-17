@@ -8,7 +8,23 @@ const { Server } = require('socket.io');
 const PORT = Number.parseInt(process.env.PORT || '4000', 10);
 const TICK_MS = 50;
 const MAX_WAITING = 500;
-const ARENA_FILE = path.join(__dirname, 'public', 'battle-arena.html');
+// Resolve the arena from the common Render layouts. This explicitly supports
+// the path seen in Render logs: /opt/render/project/src/public/battle-arena.html.
+const ARENA_CANDIDATES = [
+  path.join(__dirname, 'src', 'public', 'battle-arena.html'),
+  path.join(__dirname, 'public', 'battle-arena.html'),
+  path.join(__dirname, 'battle-arena.html'),
+  path.join(process.cwd(), 'src', 'public', 'battle-arena.html'),
+  path.join(process.cwd(), 'public', 'battle-arena.html'),
+  path.join(process.cwd(), 'battle-arena.html'),
+];
+function resolveArenaFile() {
+  return ARENA_CANDIDATES.find((candidate) => {
+    try { return require('node:fs').statSync(candidate).isFile(); }
+    catch { return false; }
+  }) || null;
+}
+const ARENA_FILE = resolveArenaFile();
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '*')
   .split(',').map((value) => value.trim()).filter(Boolean);
 
@@ -22,7 +38,22 @@ app.get('/health', (_req, res) => res.status(200).json({
   waitingPlayers: waitQueue.length,
   activeMatches: matches.size,
 }));
-app.get('/', (_req, res) => res.sendFile(ARENA_FILE));
+app.get('/', (_req, res) => {
+  const arenaFile = resolveArenaFile();
+  if (!arenaFile) {
+    console.error('[GameTik Battle Arena] HTML missing. Checked:', ARENA_CANDIDATES.join(' | '));
+    return res.status(503).type('text/plain').send('Battle Arena HTML fehlt. Bitte battle-arena.html unter src/public/ oder public/ bereitstellen.');
+  }
+  return res.sendFile(arenaFile);
+});
+app.use(express.static(path.join(__dirname, 'src', 'public'), {
+  index: false,
+  etag: true,
+  maxAge: '1h',
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+  },
+}));
 app.use(express.static(path.join(__dirname, 'public'), {
   index: false,
   etag: true,
