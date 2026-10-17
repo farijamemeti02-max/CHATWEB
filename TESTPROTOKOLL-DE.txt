@@ -1,0 +1,37 @@
+GameTik Einzeldatei-Prüfprotokoll – 15.10.2026
+
+Geprüfte Dateien: server.js, app.js, live.js, index.html, admin.html, paypal.html, package.json, README.md, ANLEITUNG-DE.txt, .env.example, scripts/check-project.js, TESTPROTOKOLL-DE.txt sowie gift-heart.svg, gift-star.svg, gift-fire.svg und gift-crown.svg.
+
+Bestanden:
+- node --check server.js
+- node --check app.js
+- node --check live.js
+- npm run check: 27 statische Kernprüfungen bestanden
+- HTML-Struktur der Hauptseiten eingelesen; keine doppelten IDs in index.html, paypal.html oder admin.html gefunden
+- lokale Dateien, auf die die HTML-Seiten verweisen, geprüft; keine fehlenden lokalen Referenzen gefunden (Socket.IO wird vom Server bereitgestellt)
+- alle vier Geschenk-SVG-Dateien haben ein SVG-Root-Element und schließen korrekt
+- admin.html ist gegenüber der bereitgestellten Ausgangsdatei bytegenau unverändert
+- Passwort-vergessen-Button korrigiert: falls keine E-Mail-Adresse im Feld steht, fragt die Oberfläche nach der registrierten E-Mail-Adresse, statt nur eine schwer sichtbare Statusmeldung zu zeigen
+- ZIP-Integrität wird nach dem Packen geprüft
+
+Nicht durch statische Prüfungen belegbar:
+- erfolgreicher E-Mail-Versand über den echten Brevo-API-Schlüssel
+- Erreichbarkeit und Berechtigungen der echten Neon- und Cloudflare-R2-Dienste
+- erfolgreiche Anmeldung, Passwortänderung und Profilbild-Wiederherstellung im Live-Render-Dienst
+- PayPal-Checkout und LiveKit mit echten Zugangsdaten
+
+Keine Geheimnisse in diese Datei eintragen. Live-Tests müssen nach Deployment erfolgen.
+
+Zusätzliche Korrektur 1.8.4: Express vertraut in Render auf einen Proxy-Hop (trust proxy = 1), damit die IP-basierte Admin-Anmeldesperre die vom Hosting weitergeleitete Client-IP verwenden kann. Die Admin-Oberfläche admin.html wurde nicht geändert.
+
+
+Version 1.8.8: LIVE-Spiel und Rundenoptionen in die Live-Chat-Schnellzugriffsbox verschoben. Stream-HUD zeigt Team-Punkte und einen geteilten Neon-Fortschrittsbalken (Cyan/Blau vs. Pink/Violett). Statische Prüfung erforderlich; Live-Stream-Verhalten muss nach Deployment manuell getestet werden.
+
+
+Version 1.9.27 – 3D-Geschenke korrigiert (16.10.2026)
+- gift-3d.js erstellt echte WebGL-Meshes für Herz, Stern, Feuer, Krone, Bonbon, Lutscher, Gummibär, Schokolade, Rose, Diamant, Kristall, Supercar, Phönix, Galaxy, Thron und Universum.
+- LIVE-Animation wird erst durch das bestätigte live:gift-Ereignis ausgelöst; kein Geschenk wird mehr allein durch Anklicken des Kaufbuttons vorzeitig animiert.
+- Kostenlose Süßigkeiten werden nach erfolgreicher API-Antwort animiert; LIVE-Empfänger erhalten die Animation über das vorhandene Socket-Ereignis.
+- node --check für server.js, app.js, live.js, gift-3d.js und scripts/check-project.js bestanden; 30 Projektprüfungen bestanden.
+- admin.html bytegenau unverändert (SHA-256-Abgleich mit Ausgangs-ZIP).
+- Nicht geprüft: echtes Browser/WebGL-Rendering auf allen Geräten und produktiver LIVE-/PayPal-End-to-End-Test.

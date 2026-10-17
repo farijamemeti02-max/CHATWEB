@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+ <linearGradient id="flame" x1=".2" y1="0" x2=".8" y2="1"><stop stop-color="#fff7b0"/><stop offset=".22" stop-color="#ffe54f"/><stop offset=".48" stop-color="#ff8b26"/><stop offset=".72" stop-color="#ff3a4d"/><stop offset="1" stop-color="#9c145d"/></linearGradient>
+ <linearGradient id="inner" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff"/><stop offset=".4" stop-color="#fff2a1"/><stop offset="1" stop-color="#ff6d24"/></linearGradient>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dy="5"/><feComponentTransfer><feFuncA type="linear" slope=".65"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <radialGradient id="glow"><stop stop-color="#ff6927" stop-opacity=".58"/><stop offset="1" stop-color="#ff6927" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="64" cy="72" rx="58" ry="54" fill="url(#glow)"/>
+<path d="M65 117C35 119 17 96 24 70c4-16 18-25 21-48 15 11 21 25 19 37 12-9 19-23 18-35 28 22 40 48 29 71-8 17-25 24-46 22Z" fill="#b92a42" transform="translate(0 3)"/>
+<path d="M64 115C35 116 20 94 27 70c4-14 16-24 20-43 14 10 20 23 18 36 11-9 17-22 17-32 24 20 35 44 25 66-7 15-23 20-43 18Z" fill="url(#flame)" stroke="#ffe7a2" stroke-width="3" stroke-linejoin="round" filter="url(#shadow)"/>
+<path d="M64 103c-15 0-24-12-19-26 3-8 10-14 13-25 8 8 10 15 8 22 7-5 11-12 11-19 14 15 18 30 10 40-5 6-13 9-23 8Z" fill="url(#inner)"/>
+<path d="M47 43c5-8 8-16 8-23" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<path d="m91 24 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#fff6c6"/>
+</svg>

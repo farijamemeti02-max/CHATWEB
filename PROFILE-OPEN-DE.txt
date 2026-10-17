@@ -1,0 +1,12 @@
+GameTik 1.9.8 – Öffnen fremder Profile
+
+Änderungen:
+- Nutzerprofile können über Suchergebnisse, Follower-/Freundeslisten und den Namen im Feed geöffnet werden.
+- Profilfenster lädt das Profil über /api/users/:id/profile.
+- Zeigt Avatar, Biografie, Follower, Folgt und Beiträge.
+- Öffentliche Beiträge werden im Profil als Galerie angezeigt.
+- Folgen, Freundschaftsanfrage und Nachricht sind direkt im Profil erreichbar.
+- Private Profile bleiben anklickbar, zeigen aber keine Beiträge; Freundschafts-/Privatsphäre-Einstellungen werden berücksichtigt.
+- Admin-Datei wurde nicht geändert.
+
+Prüfung: node --check server.js, app.js und live.js sowie npm run check erfolgreich (30 statische Kernprüfungen). Kein Live-Test gegen Render/Neon/R2 ausgeführt.
