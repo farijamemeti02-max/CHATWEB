@@ -1,11 +1,13 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const root = path.join(__dirname, '..');
+const root = __dirname;
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const server = read('server.js');
 const html = read('index.html');
 const live = read('live.js');
+const gifts3d = read('gift-3d.js');
+const games3d = read('mini-games-3d.js');
 const pkg = JSON.parse(read('package.json'));
 const required = [
   [server.includes("app.set('trust proxy', 1)"), 'Render-Proxy-Vertrauen für korrekte IP-basierte Admin-Sperre fehlt'],
@@ -21,6 +23,9 @@ const required = [
   [html.includes('id="livePanel"') && html.includes('src="/live.js"'), 'Live-Frontend fehlt'],
   [html.includes('id="liveGamePanel"') && html.includes('id="liveGameTimer"') && html.includes('id="liveGameHostPoints"') && html.includes('id="liveGameCommunityPoints"'), 'LIVE-Spielanzeige fehlt'],
   [live.includes('live:game-state') && live.includes('/game/start'), 'LIVE-Spiel-Frontend fehlt'],
+  [html.includes('src="/gift-3d.js"') && gifts3d.includes('window.GameTikGift3D={play,normalizeName}'), '3D-Geschenkmodul ist nicht korrekt eingebunden'],
+  [html.includes('src="/mini-games-3d.js"') && games3d.includes('Candy World 3D') && games3d.includes('Neon Racer 3D') && games3d.includes('Space Candy 3D'), '3D-Minispiele fehlen oder sind nicht eingebunden'],
+  [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
   [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
@@ -38,6 +43,12 @@ const required = [
   [html.includes('id="gtAccountQuick"') && html.includes('id="authModal"'), 'Sichtbarer Konto-erstellen-/Anmelden-Schnellzugriff fehlt'],
   [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
+  [server.includes("app.get('/api/arena/ranked-status'") && server.includes("app.post('/api/arena/ranked-result'") && server.includes('accepted: false'), 'Online-Rangliste akzeptiert keine ungeprüften Resultate'],
+  [html.includes('data-nav="games"') && fs.existsSync(path.join(root, 'battle-arena.html')), 'GameTik-Startseite oder Battle Arena fehlt'],
+  [fs.existsSync(path.join(root, 'battle-arena.html')) && read('battle-arena.html').includes('fighterCharacters') && read('battle-arena.html').includes('data-character'), 'Freischaltbare Arena-Charaktere fehlen'],
+  [read('battle-arena.html').includes('careerDefaults={rounds:0,wins:0,losses:0,draws:0') && read('battle-arena.html').includes('recordCareerResult') && read('battle-arena.html').includes('career.xp'), 'Karriere-Siege/Niederlagen/XP werden nicht erfasst'],
+  [Boolean(pkg.dependencies['socket.io']), 'Socket.IO-Abhängigkeit für Echtzeitkommunikation fehlt'],
+  [read('battle-arena.html').includes('Bot-Runden') && read('battle-arena.html').includes('ungewertet'), 'Bot-Runden werden nicht klar als ungewertet markiert'],
 ];
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }

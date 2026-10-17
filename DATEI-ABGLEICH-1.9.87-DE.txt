@@ -1,0 +1,27 @@
+Datei-Abgleich GameTik 1.9.87
+
+Vom Nutzer hochgeladene Dateien und Abgleich:
+- VORLAGE-EXAKT-UMGESETZT-DE.txt: übernommen; Live-Layout-Vorgaben und Admin-Unverändert-Hinweis erhalten.
+- UMSETZUNG-LIVE-1.9.15-DE.txt: übernommen; mobile Video-first-Ansicht und Testgrenzen erhalten.
+- UMSETZUNG-LIVE-1.9.13-DE.txt: übernommen; Live-Layout und Sicherheits-/Deployment-Hinweise erhalten.
+- TESTPROTOKOLL-DE.txt: mit vorhandenen neueren Testnotizen zusammengeführt; kein echter Live-Test behauptet.
+- server.js: hochgeladene Serverfassung abgeglichen; nur die später hinzugekommenen, fail-closed Arena-Ranglisten-Endpunkte zusätzlich erhalten.
+- README.md: hochgeladene Dokumentation mit neueren Release-/Arena-Hinweisen zusammengeführt.
+- PUNKTEBALKEN-1.9.16-DE.txt: übernommen; Neon-Duell-Punktebalken-Vorgabe erhalten.
+- PROFILE-OPEN-DE.txt: übernommen; Profilöffnungs-Vorgabe erhalten.
+- paypal.html: bytegenau wie hochgeladen übernommen.
+- package.json: hochgeladene Abhängigkeiten/Skripte mit dem vorhandenen 1.9.86-Prüfsetup zusammengeführt und Version auf 1.9.87 angehoben.
+- check-project.js: hochgeladene Projektprüfung als Grundlage; Projektpfad für den ZIP-Root korrigiert und zusätzliche Prüfungen ergänzt.
+
+Weitere vorhandene Projektdateien beibehalten:
+index.html, app.js, live.js, battle-arena.html, gift-3d.js, mini-games-3d.js, admin.html, SVG-Geschenke, .env.example, scripts/check-project.js sowie vorhandene Update-/Anleitungsdateien.
+
+Battle Arena:
+- 3D-Engine Babylon.js, lokale Karriere (Siege, Niederlagen, Unentschieden, XP), Erfolge und Level
+- Charaktere Nova, Frost, Phantom, Titan mit Level-Freischaltung
+- kosmetische Outfits getrennt von Charakteren
+- Online-Ranglisten bleiben aus; ungeprüfte Browser-Ergebnisse werden serverseitig abgelehnt
+- Online-Duelle und Zuschauer in GameTik LIVE sind noch nicht implementiert und bleiben spätere Ausbaustufen
+
+Adminbereich:
+admin.html wurde nicht geändert. SHA-256: 36d64d6d6b38a176aa3ea327cdb2fb297abd52fb4d2b3eaf9a5b31a03aae181c
