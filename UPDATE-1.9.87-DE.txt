@@ -1,0 +1,23 @@
+GameTik Battle Arena 1.9.87 — echte humanoide Kämpfer und Kampfzustände
+
+Umgesetzt im Code:
+- Die bisherige Sperre für externe GLB-Modelle auf Mobilgeräten ist entfernt. Android und Desktop versuchen nun, die menschlichen Modelle zu laden.
+- Primärmodelle: Male Adult 01 und Male Adult 02 von models.codelove.in. Die Figuren besitzen ein Biped-Skelett und PBR-Texturen; ihre ursprünglichen Texturfarben werden nicht mehr mit Neonfarben überschrieben.
+- Lizenz: MIT für die rigged-adult-Charaktere. Quellen/Asset-Metadaten bleiben in diesem Projekt dokumentiert.
+- Idle-, Walk- und Run-Animationen werden von passenden Biped-Clips geladen und anhand der Bone-Namen auf die Charaktere übertragen.
+- Für Punch, Kick, Special, Block, Dodge, Hit und KO gibt es im Babylon.js-Code erzeugte Bone-Animationsgruppen, sofern das Modell kompatible Biped-Knoten bereitstellt.
+- Dynamische Kamera verfolgt die Mitte der Kämpfer und zoomt abhängig vom Abstand.
+- Weiche Shadow-Maps werden für Arena-Boden und importierte Figuren eingerichtet; auf Mobilgeräten wird die Shadow-Map kleiner gehalten.
+- Doppelte ältere Animationsfunktion entfernt, die zuvor die neue Kampfzustands-Auswahl überschrieb.
+- Beim KO bleibt der Fall sichtbar, bevor das Ergebnisfenster erscheint. Ein Neustart bricht eine noch ausstehende Ergebnisanzeige ab und setzt die Fallpose zurück.
+- Wenn ein externer humanoider GLB nicht geladen werden kann, bleibt die prozedurale lokale Figur sichtbar; zusätzlich wird CesiumMan als zweiter GLB-Fallback versucht.
+
+Bekannte Grenzen (ehrlich dokumentiert):
+- Diese kostenlosen Charaktere sind game-ready stilisierte 3D-Menschen, keine fotorealistischen AAA-Scan-Modelle.
+- Kampfanimationen wurden prozedural im Spielcode angelegt; es handelt sich nicht um Motion-Capture-Aufnahmen.
+- Der Asset-Server und seine Dateien müssen über Internet erreichbar sein. Vollständiger Offline-Betrieb erfordert, die Modelle und Animationsdateien im eigenen Projekt zu hosten.
+- Hier wurden Node-Projektprüfungen und JavaScript-Syntax geprüft; ein echter Android-/Render-Browserlauf konnte in dieser Umgebung nicht durchgeführt werden.
+
+Wichtig: Admin, PayPal und LIVE wurden nicht als Teil dieser Arena-Änderung gezielt umgeschrieben.
+
+Wichtige Qualitätsgrenze: Die freien rigged Adult-Modelle sind texturierte, natürlich proportionierte Echtzeit-Charaktere, aber kein photorealistischer AAA-Scan. Die Angriffs-/K.-o.-Bewegungen in dieser Version sind codebasierte Skelettbewegungen, keine Motion-Capture-Kampfclips. Für filmreife Kampfanimationen sind zusätzliche lizenzierte Fight-Mocap-Clips erforderlich.

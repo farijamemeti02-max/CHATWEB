@@ -1,0 +1,19 @@
+GameTik LIVE – Version 1.9.13
+
+Umsetzung nach der Beispielaufnahme:
+- größeres vertikales LIVE-Video mit pink/türkiser GameTik-Optik
+- kompakte Aktionsleiste rechts im Video (Like, Chat, Geschenke, Teilen)
+- Live-Kommentare direkt als Overlay im Video
+- Chat-Eingabe unmittelbar unter dem Video
+- Geschenke in einem einklappbaren Auswahlfenster
+- GameTik-Spiel zunächst nur als kleiner Button; das Spielpanel wird erst nach Antippen im Videobereich eingeblendet
+- mobile Größenanpassung
+
+Wichtig:
+Diese Version baut auf den vorhandenen Projektdateien auf. Die statischen Prüfungen testen nicht die tatsächliche LiveKit-Verbindung, den Versand von Geschenken oder das Verhalten im Browser. Diese Funktionen müssen nach dem Deployment live getestet werden.
+
+Sicherheits-/Deployment-Hinweis:
+Neon DATABASE_URL, Cloudflare-R2-Schlüssel und Render-Environment-Variablen unverändert lassen. admin.html wurde nicht geändert.
+
+
+Korrektur 1.9.14 – Video hat Vorrang: Das vollständige Spiel-Panel wird nicht mehr über dem Videobild eingeblendet. Der GameTik-Spiel-Button schaltet die Spieloptionen unterhalb des Streams ein/aus; die kompakte Punkteanzeige kann im Stream sichtbar bleiben. Videofläche auf Mobilgeräten vergrößert, Video mit object-fit:contain und Chat direkt unter dem Stream kompakter. Live-Funktion muss nach Deployment real getestet werden.

@@ -1,0 +1,9 @@
+GameTik LIVE 1.9.17 – Video groß, Chat über Geschenken
+
+Änderungen:
+- LIVE-Videobereich nutzt die verfügbare Breite und eine größere Hochformatfläche.
+- Videoelement wird auf die Stage-Größe gesetzt; object-fit: cover füllt den Bereich. Je nach Kamera-Seitenverhältnis können Bildränder abgeschnitten werden.
+- Reihenfolge im Live-Chat: Überschrift, Nachrichten/Kommentare, Eingabefeld und Senden, danach kompakte Spiel-/Geschenkoptionen.
+- Rechte Aktionsbuttons bleiben kompakt und über dem Video erreichbar.
+
+Hinweis: Dies ist eine Codeänderung. Kamera-/LiveKit-Verbindung, echtes Verhalten auf Render und unterschiedlichen Android-Geräten müssen nach dem Deployment live getestet werden. Keine Zugangsdaten oder Datenbankinhalte wurden geändert.

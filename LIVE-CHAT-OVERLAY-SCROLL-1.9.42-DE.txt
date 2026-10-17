@@ -1,0 +1,5 @@
+GameTik LIVE – Version 1.9.42
+
+Änderung: Live-Nachrichten erscheinen im unteren linken Bereich direkt über dem LIVE-Videobild, wie vom Nutzer blau markiert. Der Bereich ist auf Touchscreens vertikal scrollbar. Neue Nachrichten folgen automatisch, solange der Zuschauer nicht nach oben gescrollt hat; dann bleibt die Leseposition erhalten. Der Nachrichtenverlauf im darunterliegenden Live-Chat bleibt bestehen.
+
+Hinweis: Syntax- und Projektprüfungen sind durchzuführen. Die Änderung wurde nicht auf Render veröffentlicht und nicht auf einem realen Mobilgerät im aktiven Live-Stream getestet.

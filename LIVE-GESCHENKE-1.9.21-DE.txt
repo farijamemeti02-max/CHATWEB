@@ -1,0 +1,6 @@
+GameTik LIVE 1.9.21 – Geschenkfenster überarbeitet
+- Geschenkfenster kompakter und dezenter gestaltet, unten im Videobereich direkt oberhalb des Duell-Punktebalkens.
+- Herz, Stern und Krone optisch zurückhaltender hervorgehoben; vorhandene SVG-Grafiken und bestehende Geschenkpreise/Funktionslogik bleiben erhalten.
+- Geschenk-Kacheln als schmale Viererreihe mit kleineren Icons und zentriertem Text, damit Preise nicht über die Nachbarkachel laufen.
+- Ausschließlich index.html und diese Änderungsnotiz ergänzt; admin.html bleibt unverändert.
+- Statische Syntax-/Projektprüfungen und ZIP-Integrität separat prüfen; keine Behauptung eines Render-Livetests.

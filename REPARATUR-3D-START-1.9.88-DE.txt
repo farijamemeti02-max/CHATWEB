@@ -1,0 +1,12 @@
+GAMETIK BATTLE ARENA – REPARATUR 1.9.88
+
+Konkrete Ursache, die wir aus dem Screenshot ableiten können: Die Arena meldet den Fehler, bevor sie eine 3D-Szene zeigt. Die bisherige Version lädt Babylon.js ausschließlich von externen CDNs. Wenn diese Quellen auf dem Gerät/Netzwerk blockiert oder nicht erreichbar sind, startet die Engine nicht.
+
+Änderungen:
+- Babylon.js und Babylon.js-GLB-Loader sind als npm-Abhängigkeiten eingetragen.
+- Express stellt diese Bibliotheken über /vendor/babylonjs und /vendor/babylonjs-loaders lokal bereit.
+- Die Arena versucht zuerst die lokalen Dateien und nutzt externe CDNs nur als Rückfall.
+- Der Fehlertext zeigt nun die tatsächliche Fehlerursache statt nur „3D-Start fehlgeschlagen“.
+- Adminbereich, PayPal und LIVE-Frontend/-Logik wurden nicht gezielt geändert.
+
+WICHTIG: Nach dem Upload muss Render die neuen npm-Abhängigkeiten installieren (normaler Build/Deploy). Die Prüfung in dieser Umgebung bestätigt den Quelltext, nicht den erfolgreichen Lauf auf Render oder Android. Die menschlichen GLB-Modelle und Animationen werden weiterhin von externen Modellquellen geladen und sind ein separates Thema.

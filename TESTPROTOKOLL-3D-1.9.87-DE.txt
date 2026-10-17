@@ -1,0 +1,9 @@
+GAMETIK — TESTPROTOKOLL 1.9.87
+
+Lokale automatische Tests:
+- npm run check
+- Node-Syntaxprüfung für battle-arena.html Inline-JavaScript
+- Prüfung der ZIP-Integrität
+- Strukturprüfung: zwei humane GLB-URLs, drei Biped-Animationsclips, Bone-Action-Builder, mobile Ladefunktion, KO-State, dynamic camera, ShadowGenerator, sichtbarer Modell-Ladefehler, fallback
+
+Wichtig: Ein externer GLB kann in der lokalen Entwicklungs-Sandbox nicht heruntergeladen oder hier im echten Android-Browser getestet werden. Die Laufzeit-Integration ist daher als Code implementiert, aber der tatsächliche erfolgreiche Download, die Retarget-Qualität und das Rendering müssen nach Upload auf Render im Browser verifiziert werden.

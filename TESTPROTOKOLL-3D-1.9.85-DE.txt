@@ -1,0 +1,7 @@
+GAMETIK – TESTPROTOKOLL 1.9.85
+
+Änderung: Battle Arena bleibt vollständig 3D. Babylon.js wird vor dem Start über mehrere CDN-Quellen geladen. Die Arena startet erst nach Abschluss des Engine-Ladevorgangs.
+
+Automatische Prüfungen: HTML-Quelltext vorhanden; Versionsmarkierung 1.9.85 vorhanden; kein Aufruf von activateSafe2D bei Engine-/Szenenfehlern; CDN-Fallback-Kette vorhanden; JS-Syntaxprüfung wird separat ausgeführt; ZIP-Integrität wird separat geprüft.
+
+Grenze: Kein Live-Test in einem echten Android-Browser und kein Render-Deployment aus dieser Umgebung. Ein 3D-Spiel benötigt WebGL und eine erreichbare CDN-Quelle.
