@@ -1,9 +1,0 @@
-GameTik LIVE – Änderungen 1.9.41
-
-1. Tippen auf das Streamer-Profilbild oben links öffnet das Profil im unteren Live-Chat-Bereich statt als Vollbildseite.
-2. Das Inline-Profil zeigt Profilbild (falls vorhanden), Nutzernamen, Followerzahl, Folgezahl, Beitragszahl und Biografie, soweit der Profil-Endpunkt diese Daten liefert.
-3. „Zurück zum Live-Chat“ schließt das Profil im unteren Bereich und zeigt den Chat wieder. Das Video bleibt oben bestehen.
-4. Chatnachrichten über dem Live-Video sind jetzt touch-scrollbar. Neue Nachrichten folgen dem unteren Ende, solange der Zuschauer nicht manuell nach oben gescrollt hat.
-5. Der vorhandene Chat unter dem Video, Server, Adminbereich und PayPal-Dateien wurden nicht absichtlich geändert.
-
-Prüfung: npm run check erfolgreich; 33 Projekt-Kernprüfungen bestanden. Keine Live-Browser-/Render-Prüfung durchgeführt.
