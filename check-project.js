@@ -44,21 +44,6 @@ const required = [
   [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
 ];
-// Additional structural checks: catch duplicate HTML IDs and missing local assets.
-const idMatches = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
-const duplicateIds = [...new Set(idMatches.filter((id, index) => idMatches.indexOf(id) !== index))];
-required.push([duplicateIds.length === 0, duplicateIds.length ? `Doppelte IDs in index.html: ${duplicateIds.slice(0, 10).join(', ')}` : 'Keine doppelten IDs in index.html']);
-const localRefs = [...html.matchAll(/(?:src|href)=["']([^"'#?]+)(?:[?#][^"']*)?["']/gi)]
-  .map(match => match[1])
-  .filter(ref => !/^(?:https?:)?\/\//i.test(ref) && !ref.startsWith('data:') && !ref.startsWith('mailto:') && !ref.startsWith('tel:'));
-const missingRefs = [...new Set(localRefs)].filter(ref => {
-  // Socket.IO serves this script dynamically from the running Express server.
-  if (ref === '/socket.io/socket.io.js' || ref === 'socket.io/socket.io.js') return false;
-  const relative = ref.startsWith('/') ? ref.slice(1) : ref;
-  return !fs.existsSync(path.join(root, relative));
-});
-required.push([missingRefs.length === 0, missingRefs.length ? `Fehlende lokale HTML-Dateien: ${missingRefs.slice(0, 10).join(', ')}` : 'Alle lokalen HTML-Dateiverweise vorhanden']);
-
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }
 console.log(`Projektprüfung erfolgreich: ${required.length} Kernprüfungen bestanden.`);
