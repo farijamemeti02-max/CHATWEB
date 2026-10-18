@@ -1,12 +1,3 @@
-## Update 1.9.87 – Abgleich der hochgeladenen Dateien
-
-- Die hochgeladenen Dateien `server.js`, `README.md`, `paypal.html`, `package.json`, `check-project.js` sowie die Live-, Profil-, Punkte- und Testanweisungen wurden mit dem bestehenden Projektstand abgeglichen. Neuere vorhandene Funktionen wurden nicht durch ältere Upload-Fassungen überschrieben.
-- Karriere: Siege, Niederlagen, Unentschieden, XP, Erfolge und Level bleiben lokal im Browser gespeichert.
-- Charaktere Nova, Frost, Phantom und Titan werden nach Level freigeschaltet; kosmetische Outfits sind getrennt.
-- Socket.IO bleibt als Echtzeit-Abhängigkeit erhalten. Online-Duelle und LIVE-Zuschauer sind noch nicht implementiert.
-- Online-Ranglisten bleiben deaktiviert; ungeprüfte, clientseitig gemeldete Ergebnisse werden vom Server abgelehnt.
-- `admin.html` bleibt unverändert.
-
 ## Update 1.9.86 – Battle Arena: Charaktere und sichere Online-Ergebnisse
 
 - Neue Charakterauswahl mit vier freischaltbaren 3D-Varianten; kosmetische Outfits bleiben separat.
