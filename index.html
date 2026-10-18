@@ -1035,7 +1035,6 @@ button:hover,button:active,.button:hover,.btn:hover,.navbtn:hover,.gift:hover,.l
           <div id="liveVideoStage" style="position:relative;margin-top:10px;border-radius:16px;overflow:hidden;background:#05050a"><div id="liveVideoGrid" style="display:grid;grid-template-columns:1fr;gap:8px;min-height:260px"></div><div id="liveVideoOverlay" style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:linear-gradient(180deg,rgba(3,4,11,.50) 0%,transparent 28%,transparent 62%,rgba(0,0,0,.58) 100%)"><div class="gt-live-metrics" aria-label="Live-Statistik"><span class="gt-live-metric gt-live-viewers" id="liveViewerCount" aria-live="polite"><span aria-hidden="true">◉</span> <span class="gt-live-metric-number">0</span> <span class="gt-live-metric-label">Zuschauer</span></span><span class="gt-live-metric gt-live-likes" id="liveLikeCount" aria-live="polite"><span aria-hidden="true">♥</span> <span class="gt-live-metric-number">0</span> <span class="gt-live-metric-label">Likes</span></span></div><div id="liveDuelOverlay" class="hidden gt-stream-duel-hud" aria-label="Live-Duell Punkteanzeige" aria-live="polite"><div class="gt-stream-duel-head"><span>⚔️ LIVE-DUELL</span><span id="liveDuelTimer" class="gt-stream-duel-time">03:00</span></div><div class="gt-stream-duel-teams"><div class="gt-stream-duel-team gt-stream-duel-host"><span>🎁 STREAMER</span><strong id="liveDuelHostScore">0</strong></div><div class="gt-stream-duel-vs" id="liveDuelVs" aria-label="Versus">VS</div><div class="gt-stream-duel-team gt-stream-duel-community"><span>💗 COMMUNITY</span><strong id="liveDuelCommunityScore">0</strong></div></div><button id="gtLiveDuelStartButton" type="button" aria-label="GameTik Duell starten">▶ SPIEL STARTEN</button><div class="gt-stream-duel-meter" role="img" aria-label="Punktevergleich"><div id="liveDuelHostFill" class="gt-stream-duel-fill gt-stream-duel-host-fill" style="width:50%"></div><div id="liveDuelCommunityFill" class="gt-stream-duel-fill gt-stream-duel-community-fill" style="width:50%"></div></div><div id="liveDuelLead" class="gt-stream-duel-lead">Das Duell beginnt gleich</div></div><div id="liveOverlayChat" aria-live="polite" style="max-width:78%;max-height:38%;overflow:hidden;display:flex;flex-direction:column;gap:5px;margin-bottom:12px"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span id="liveOverlayHint" style="font-size:12px;text-shadow:0 1px 4px #000">Tippe auf das Video für ❤️</span><span style="font-weight:800;text-shadow:0 1px 4px #000">🔴 LIVE</span></div></div><div id="liveFloatingHearts" style="position:absolute;inset:0;overflow:hidden;pointer-events:none"></div></div>
 <div id="liveChatDock" class="gt-live-chat-dock panel" style="padding:10px;margin:10px 0;background:linear-gradient(145deg,#0b0c18f5,#151126f5);border:1px solid #53e7ff66;border-radius:18px;box-shadow:0 0 18px #21d4fd12">
   <div class="gt-live-chat-heading"><b>💬 Live-Chat</b><span class="gt-live-chat-subtitle">Schreib und reagiere, ohne den Stream aus den Augen zu verlieren</span></div>
-  <section id="gtLiveInlineProfile" class="hidden" aria-live="polite" style="margin:8px 0;padding:12px;border:1px solid #36dfff66;border-radius:15px;background:linear-gradient(135deg,#111426,#1a1230)"></section>
   <div id="liveChatMessages" style="height:92px;overflow:auto;margin:7px 0" aria-live="polite"></div>
   <form id="liveChatForm" class="row gt-live-chat-form" style="gap:7px">
     <input id="liveChatInput" maxlength="300" placeholder="Nachricht schreiben …" required style="flex:1;min-width:100px">
@@ -1832,22 +1831,6 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
-
-
-<style id="gametik-live-profile-inline-and-scroll-v41">
-/* Chat messages are touch-scrollable directly over the LIVE video. */
-#liveOverlayChat{pointer-events:auto!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;overscroll-behavior:contain!important;scrollbar-width:thin;scrollbar-color:#38dff5 #111323}
-#liveOverlayChat .live-overlay-line{flex:0 0 auto!important}
-#gtLiveProfilePill .gt-live-profile-avatar{cursor:pointer!important;pointer-events:auto!important;outline-offset:3px}
-#gtLiveProfilePill .gt-live-profile-avatar:focus-visible{outline:2px solid #26e6ff}
-#gtLiveInlineProfile .gt-inline-profile-head{display:flex;align-items:center;gap:12px}
-#gtLiveInlineProfile .gt-inline-profile-avatar{width:72px;height:72px;flex:0 0 72px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(#111426,#111426) padding-box,linear-gradient(135deg,#ff38c8,#26e6ff) border-box}
-#gtLiveInlineProfile .gt-inline-profile-name{font-size:18px;font-weight:850;overflow-wrap:anywhere}
-#gtLiveInlineProfile .gt-inline-profile-stats{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;color:#dbeafe;font-size:13px}
-#gtLiveInlineProfile .gt-inline-profile-bio{white-space:pre-wrap;overflow-wrap:anywhere;color:#c9cde0;font-size:13px}
-#gtLiveInlineProfile .gt-inline-profile-close{margin-top:10px;padding:8px 12px}
-@media(max-width:600px){#liveOverlayChat{max-height:38%!important}#gtLiveInlineProfile{padding:10px!important}#gtLiveInlineProfile .gt-inline-profile-avatar{width:60px;height:60px;flex-basis:60px}}
-</style>
 
 </body>
 
