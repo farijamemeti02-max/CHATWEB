@@ -1,4 +1,4 @@
-## Update 1.9.83 – Battle-Arena-Touchsteuerung
+## Update 1.9.82 – Battle-Arena-Touchsteuerung
 
 - Beim Ergebnisdialog wird die mobile Touch-Steuerung explizit ausgeblendet und liegt auch per Ebenenreihenfolge hinter dem Ergebnisfenster.
 - Nach „Noch einmal“ wird die Touch-Steuerung wieder eingeblendet.
@@ -203,7 +203,3 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 - Die Arena enthält Trainingskampf, Touch-Steuerung, Schwierigkeitswahl, Pause/Neustart, Kampfstatistik, Challenges, Karriere-XP und Erfolge. Karrierewerte werden lokal in diesem Browser gespeichert und nicht serverübergreifend synchronisiert.
 - Diese Integration wurde statisch geprüft. Ein echter Android-/Browser-Test, ein Test auf Render und eine Prüfung aller Geräte-/CDN-Konstellationen sind nicht erfolgt. `admin.html` bleibt unverändert.
 
-
-
-## Battle Arena 1.9.83 – Start-Fallback
-Wenn Babylon.js zwar geladen wird, WebGL aber auf dem Gerät nicht initialisiert werden kann oder die 3D-Szene beim Start fehlschlägt, startet jetzt ein eigenständiger 2D-Sicherheitsmodus mit sichtbaren Kämpfern, Timer und Grundsteuerung. Die 3D-Ansicht muss weiterhin auf echten Geräten getestet werden.
