@@ -1,9 +1,3 @@
-## Update 1.9.86 – Battle Arena: Charaktere und sichere Online-Ergebnisse
-
-- Neue Charakterauswahl mit vier freischaltbaren 3D-Varianten; kosmetische Outfits bleiben separat.
-- Online-Ranglisten sind absichtlich deaktiviert, bis ein serverautoritatives Online-Duell-Backend die Ergebnisse überprüft.
-- `admin.html` bleibt unverändert.
-
 ## Update 1.9.83 – Battle-Arena-Touchsteuerung
 
 - Beim Ergebnisdialog wird die mobile Touch-Steuerung explizit ausgeblendet und liegt auch per Ebenenreihenfolge hinter dem Ergebnisfenster.
@@ -15,12 +9,9 @@
 # GameTik – Foto/Video, Storys, Reaktionen und Bewertungen
 
 ## Dateien
-- `index.html` – GameTik-Frontend
+- `index.html` – Frontend
 - `app.js` – Frontend-Logik
-- `server.js` – Express API und Socket.IO
-- `battle-arena.html` – Babylon.js-3D-Arena mit Karriere, Charakteren und Outfits
-- `live.js`, `gift-3d.js`, `mini-games-3d.js` – LIVE- und 3D-Spielmodule
-- `check-project.js` und `scripts/check-project.js` – Projektprüfungen
+- `server.js` – Express API
 - `package.json` – Start und Syntaxprüfung
 
 ## Lokal prüfen
@@ -216,20 +207,3 @@ Die vier virtuellen Geschenk-Icons (Herz, Stern, Feuer, Krone) sind direkt in `i
 
 ## Battle Arena 1.9.83 – Start-Fallback
 Wenn Babylon.js zwar geladen wird, WebGL aber auf dem Gerät nicht initialisiert werden kann oder die 3D-Szene beim Start fehlschlägt, startet jetzt ein eigenständiger 2D-Sicherheitsmodus mit sichtbaren Kämpfern, Timer und Grundsteuerung. Die 3D-Ansicht muss weiterhin auf echten Geräten getestet werden.
-
-
-## Battle Arena 1.9.85 – Full 3D
-Die Battle Arena lädt Babylon.js über mehrere CDN-Quellen, bevor sie startet. Es gibt keinen automatischen Wechsel in eine 2D-Spielansicht. Wenn WebGL oder alle CDNs ausfallen, wird ein klarer 3D-Fehlerhinweis angezeigt. Die Arena nutzt weiterhin prozedural aufgebaute 3D-Kämpfer und ihre Animations-/Kampfschleife.
-
-
-## Battle Arena 3D – Charaktere, Outfits und Online-Ergebnisse (1.9.86)
-
-- Vier Charaktervarianten sind in der 3D-Arena verfügbar: Nova (Level 1), Frost (Level 2), Phantom (Level 4) und Titan (Level 6). Die Auswahl wird lokal im Browser gespeichert.
-- Kosmetische Outfits bleiben separat wählbar und schalten sich über Level frei. Charaktere geben keinen Schadensbonus.
-- Siege, Niederlagen, Unentschieden, XP, Karriere und Erfolge aus Bot-Runden bleiben lokale, ungewertete Fortschritte. Browserdaten werden nicht als vertrauenswürdige Online-Ergebnisse behandelt.
-- Die Arena nutzt weiterhin Babylon.js für echte 3D-Grafik. Online-Duelle und die LIVE-Zuschauerfunktion sind eine spätere Ausbaustufe. Eine Online-Rangliste darf erst Ergebnisse zählen, wenn ein serverautoritatives Duell-Backend den Ausgang bestätigt; clientseitig gemeldete Siege dürfen nicht als verifiziert gelten.
-- `admin.html` wurde nicht geändert.
-
-## Serverprüfung der Arena-Ergebnisse
-
-Die Endpunkte `/api/arena/ranked-status` und `/api/arena/ranked-result` sind absichtlich geschlossen: Ranglisten sind deaktiviert und der Server lehnt clientseitig gemeldete Ergebnisse ab. Erst wenn Online-Duelle serverautoritativ simuliert und abgeschlossen werden, darf der Server Siege, Niederlagen und XP für eine Online-Rangliste vergeben. Das verhindert, dass Browserdaten allein als verifizierte Ergebnisse gelten.
