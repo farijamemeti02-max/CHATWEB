@@ -1035,6 +1035,7 @@ button:hover,button:active,.button:hover,.btn:hover,.navbtn:hover,.gift:hover,.l
           <div id="liveVideoStage" style="position:relative;margin-top:10px;border-radius:16px;overflow:hidden;background:#05050a"><div id="liveVideoGrid" style="display:grid;grid-template-columns:1fr;gap:8px;min-height:260px"></div><div id="liveVideoOverlay" style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:linear-gradient(180deg,rgba(3,4,11,.50) 0%,transparent 28%,transparent 62%,rgba(0,0,0,.58) 100%)"><div class="gt-live-metrics" aria-label="Live-Statistik"><span class="gt-live-metric gt-live-viewers" id="liveViewerCount" aria-live="polite"><span aria-hidden="true">◉</span> <span class="gt-live-metric-number">0</span> <span class="gt-live-metric-label">Zuschauer</span></span><span class="gt-live-metric gt-live-likes" id="liveLikeCount" aria-live="polite"><span aria-hidden="true">♥</span> <span class="gt-live-metric-number">0</span> <span class="gt-live-metric-label">Likes</span></span></div><div id="liveDuelOverlay" class="hidden gt-stream-duel-hud" aria-label="Live-Duell Punkteanzeige" aria-live="polite"><div class="gt-stream-duel-head"><span>⚔️ LIVE-DUELL</span><span id="liveDuelTimer" class="gt-stream-duel-time">03:00</span></div><div class="gt-stream-duel-teams"><div class="gt-stream-duel-team gt-stream-duel-host"><span>🎁 STREAMER</span><strong id="liveDuelHostScore">0</strong></div><div class="gt-stream-duel-vs" id="liveDuelVs" aria-label="Versus">VS</div><div class="gt-stream-duel-team gt-stream-duel-community"><span>💗 COMMUNITY</span><strong id="liveDuelCommunityScore">0</strong></div></div><button id="gtLiveDuelStartButton" type="button" aria-label="GameTik Duell starten">▶ SPIEL STARTEN</button><div class="gt-stream-duel-meter" role="img" aria-label="Punktevergleich"><div id="liveDuelHostFill" class="gt-stream-duel-fill gt-stream-duel-host-fill" style="width:50%"></div><div id="liveDuelCommunityFill" class="gt-stream-duel-fill gt-stream-duel-community-fill" style="width:50%"></div></div><div id="liveDuelLead" class="gt-stream-duel-lead">Das Duell beginnt gleich</div></div><div id="liveOverlayChat" aria-live="polite" style="max-width:78%;max-height:38%;overflow:hidden;display:flex;flex-direction:column;gap:5px;margin-bottom:12px"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span id="liveOverlayHint" style="font-size:12px;text-shadow:0 1px 4px #000">Tippe auf das Video für ❤️</span><span style="font-weight:800;text-shadow:0 1px 4px #000">🔴 LIVE</span></div></div><div id="liveFloatingHearts" style="position:absolute;inset:0;overflow:hidden;pointer-events:none"></div></div>
 <div id="liveChatDock" class="gt-live-chat-dock panel" style="padding:10px;margin:10px 0;background:linear-gradient(145deg,#0b0c18f5,#151126f5);border:1px solid #53e7ff66;border-radius:18px;box-shadow:0 0 18px #21d4fd12">
   <div class="gt-live-chat-heading"><b>💬 Live-Chat</b><span class="gt-live-chat-subtitle">Schreib und reagiere, ohne den Stream aus den Augen zu verlieren</span></div>
+  <section id="gtLiveInlineProfile" class="hidden" aria-live="polite" style="margin:8px 0;padding:12px;border:1px solid #36dfff66;border-radius:15px;background:linear-gradient(135deg,#111426,#1a1230)"></section>
   <div id="liveChatMessages" style="height:92px;overflow:auto;margin:7px 0" aria-live="polite"></div>
   <form id="liveChatForm" class="row gt-live-chat-form" style="gap:7px">
     <input id="liveChatInput" maxlength="300" placeholder="Nachricht schreiben …" required style="flex:1;min-width:100px">
@@ -1686,7 +1687,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
    if(candySource){
     const candyTitle=document.createElement('div');candyTitle.className='gt-gift-drawer-subhead';candyTitle.textContent='🍬 Kostenlose Süßigkeiten';drawer.appendChild(candyTitle);
     const candyGrid=document.createElement('div');candyGrid.id='gtLiveGiftDrawerCandy';candyGrid.className='gt-live-gift-candy';
-    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();drawer.hidden=true;document.getElementById('gtLiveGiftAction')?.setAttribute('aria-expanded','false');});candyGrid.appendChild(b);});
+    candySource.querySelectorAll('[data-amount]').forEach(sourceButton=>{const b=sourceButton.cloneNode(true);b.removeAttribute('id');b.addEventListener('click',()=>{const original=candySource.querySelector('[data-amount="'+sourceButton.getAttribute('data-amount')+'"]');if(original)original.click();/* Keep the candy strip open so several gifts can be sent in a row. */});candyGrid.appendChild(b);});
     drawer.appendChild(candyGrid);
    }
    // Place the picker inside the blue-marked message area. It is hidden until the gift button is tapped.
@@ -1802,6 +1803,54 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #gtLiveGiftDrawer .gt-live-gift-candy button{min-width:0!important;min-height:34px!important;height:34px!important;padding:3px!important;border-radius:8px!important;font-size:10px!important;background:linear-gradient(120deg,#171b32,#10172b)!important;color:#fff!important;border:1px solid rgba(79,218,255,.35)!important;box-shadow:none!important}
 @media(max-width:480px){#gtLiveGiftDrawer{margin:6px 0 8px!important;padding:7px!important}#gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:48px!important;min-height:48px!important}#gtLiveGiftDrawer .gt-live-gift-candy button{font-size:9px!important}}
 </style>
+
+
+<style id="gametik-live-candy-float-chat-avatar-1940">
+/* Gift effect overlays the actual live video for one second. */
+#gtLiveCandyBurst{position:absolute;z-index:30;left:50%;top:48%;transform:translate(-50%,-50%);pointer-events:none;font-size:clamp(48px,16vw,92px);line-height:1;filter:drop-shadow(0 0 12px #ff38c8) drop-shadow(0 0 22px #21d4fd);animation:gtCandyBurst1940 1s ease-out forwards}
+@keyframes gtCandyBurst1940{0%{opacity:0;transform:translate(-50%,-40%) scale(.45) rotate(-12deg)}18%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(5deg)}40%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) scale(.82)}}
+#gtLiveProfilePill .gt-live-profile-avatar{overflow:hidden!important;padding:0!important;object-fit:cover!important}
+#gtLiveProfilePill .gt-live-profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+#liveChatMessages{scroll-behavior:smooth;overscroll-behavior:contain}
+@media(prefers-reduced-motion:reduce){#gtLiveCandyBurst{animation:none;opacity:1}}
+</style>
+<script id="gametik-live-candy-float-chat-avatar-1940-script">
+(function(){
+ function init(){
+  const stage=document.getElementById('liveVideoStage');
+  if(!stage||stage.dataset.gtCandyBurstBound==='1')return;
+  stage.dataset.gtCandyBurstBound='1';
+  document.addEventListener('gametik:candy-sent',event=>{
+   const detail=event.detail||{};
+   const old=document.getElementById('gtLiveCandyBurst'); if(old)old.remove();
+   const burst=document.createElement('div');burst.id='gtLiveCandyBurst';burst.setAttribute('aria-label','Geschenk gesendet');burst.textContent=detail.emoji||'🍬';
+   stage.appendChild(burst);window.setTimeout(()=>{if(burst.isConnected)burst.remove();},1000);
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ const observer=new MutationObserver(()=>init());
+ if(document.documentElement)observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+
+<style id="gametik-live-profile-inline-and-scroll-v41">
+/* Chat messages are touch-scrollable directly over the LIVE video. */
+#liveOverlayChat{pointer-events:auto!important;overflow-y:auto!important;overflow-x:hidden!important;touch-action:pan-y!important;overscroll-behavior:contain!important;scrollbar-width:thin;scrollbar-color:#38dff5 #111323}
+#liveOverlayChat .live-overlay-line{flex:0 0 auto!important}
+#gtLiveProfilePill .gt-live-profile-avatar{cursor:pointer!important;pointer-events:auto!important;outline-offset:3px}
+#gtLiveProfilePill .gt-live-profile-avatar:focus-visible{outline:2px solid #26e6ff}
+#gtLiveInlineProfile .gt-inline-profile-head{display:flex;align-items:center;gap:12px}
+#gtLiveInlineProfile .gt-inline-profile-avatar{width:72px;height:72px;flex:0 0 72px;border-radius:50%;object-fit:cover;border:2px solid transparent;background:linear-gradient(#111426,#111426) padding-box,linear-gradient(135deg,#ff38c8,#26e6ff) border-box}
+#gtLiveInlineProfile .gt-inline-profile-name{font-size:18px;font-weight:850;overflow-wrap:anywhere}
+#gtLiveInlineProfile .gt-inline-profile-stats{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;color:#dbeafe;font-size:13px}
+#gtLiveInlineProfile .gt-inline-profile-bio{white-space:pre-wrap;overflow-wrap:anywhere;color:#c9cde0;font-size:13px}
+#gtLiveInlineProfile .gt-inline-profile-close{margin-top:10px;padding:8px 12px}
+@media(max-width:600px){#liveOverlayChat{max-height:38%!important}#gtLiveInlineProfile{padding:10px!important}#gtLiveInlineProfile .gt-inline-profile-avatar{width:60px;height:60px;flex-basis:60px}}
+</style>
+
+
+
 
 </body>
 
@@ -2079,4 +2128,14 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveChatMessages #gtLiveGiftDrawer .gt-live-gift-candy{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}
 #liveChatMessages #gtLiveGiftDrawer .gt-live-gift-candy button{height:28px!important;min-height:28px!important;padding:2px!important;font-size:9px!important;border-radius:7px!important}
 @media(max-width:480px){#liveChatMessages{height:clamp(90px,17svh,150px)!important;min-height:90px!important;max-height:150px!important;overflow-y:auto!important}#liveChatMessages #gtLiveGiftDrawer{padding:5px!important}#liveChatMessages #gtLiveGiftDrawer #gtLiveGiftDrawerButtons .live-gift{height:38px!important;min-height:38px!important}}
+</style>
+
+<style id="gametik-live-overlay-chat-scroll-v1942">
+/* v1.9.42: Live messages are displayed in the viewer-marked lower-left area of the video and can be scrolled by touch. */
+#liveVideoStage #liveVideoOverlay{position:absolute!important;isolation:isolate!important}
+#liveVideoStage #liveOverlayChat{position:absolute!important;left:9px!important;right:58px!important;bottom:43px!important;top:auto!important;align-self:auto!important;width:auto!important;max-width:none!important;max-height:31%!important;height:auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:flex-start!important;gap:5px!important;margin:0!important;padding:3px 4px 4px 0!important;box-sizing:border-box!important;pointer-events:auto!important;touch-action:pan-y!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:thin!important;scrollbar-color:rgba(83,231,255,.72) rgba(5,7,18,.2)!important;z-index:7!important}
+#liveVideoStage #liveOverlayChat .live-overlay-line{flex:0 0 auto!important;pointer-events:auto!important;max-width:100%!important;width:max-content!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#liveVideoStage #liveOverlayChat::-webkit-scrollbar{width:4px!important}
+#liveVideoStage #liveOverlayChat::-webkit-scrollbar-thumb{background:rgba(83,231,255,.72)!important;border-radius:8px!important}
+@media(max-width:600px){#liveVideoStage #liveOverlayChat{left:6px!important;right:52px!important;bottom:40px!important;max-height:30%!important;gap:4px!important;padding-right:3px!important}#liveVideoStage #liveOverlayChat .live-overlay-line{font-size:12px!important;line-height:1.25!important;padding:4px 7px!important}}
 </style>
