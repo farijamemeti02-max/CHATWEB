@@ -37,7 +37,7 @@ const required = [
   [arena.includes('touchControls.hidden=false') && arena.includes('controls.hidden=over'), 'Touch-Steuerung wird nach Neustart oder im 2D-Fallback nicht korrekt wiederhergestellt'],
   [arena.includes('.resultOverlay{position:absolute;inset:0;z-index:20;') && arena.includes('.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none;z-index:5}'), 'Ergebnisfenster liegt nicht sicher über der Touch-Steuerung'],
   [arena.includes('button[data-action=\"restart\"]{grid-column:3;grid-row:2;border-radius:14px;width:100%;min-width:0;max-width:100%;height:48px;padding:0 3px;'), 'Mobile Neustart-Schaltfläche kann aus ihrer Grid-Spalte überlaufen'],
-  [pkg.version === '1.9.83', 'Projektversion ist nicht auf 1.9.83 aktualisiert'],
+  [pkg.version === '1.9.82', 'Projektversion ist nicht auf 1.9.82 aktualisiert'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
   [server.includes('process.env.PORT || 10000'), 'Render-Port-Fallback fehlt'],
