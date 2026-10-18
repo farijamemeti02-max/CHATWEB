@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const root = path.join(__dirname, '..');
+const root = __dirname;
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const server = read('server.js');
 const html = read('index.html');
@@ -43,6 +43,12 @@ const required = [
   [html.includes('id="gtAccountQuick"') && html.includes('id="authModal"'), 'Sichtbarer Konto-erstellen-/Anmelden-Schnellzugriff fehlt'],
   [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
+  [server.includes("app.get('/api/arena/ranked-status'") && server.includes("app.post('/api/arena/ranked-result'") && server.includes('accepted: false'), 'Online-Rangliste akzeptiert keine ungeprüften Resultate'],
+  [html.includes('data-nav="games"') && fs.existsSync(path.join(root, 'battle-arena.html')), 'GameTik-Startseite oder Battle Arena fehlt'],
+  [fs.existsSync(path.join(root, 'battle-arena.html')) && read('battle-arena.html').includes('fighterCharacters') && read('battle-arena.html').includes('data-character'), 'Freischaltbare Arena-Charaktere fehlen'],
+  [read('battle-arena.html').includes('careerDefaults={rounds:0,wins:0,losses:0,draws:0') && read('battle-arena.html').includes('recordCareerResult') && read('battle-arena.html').includes('career.xp'), 'Karriere-Siege/Niederlagen/XP werden nicht erfasst'],
+  [Boolean(pkg.dependencies['socket.io']), 'Socket.IO-Abhängigkeit für Echtzeitkommunikation fehlt'],
+  [read('battle-arena.html').includes('Bot-Runden') && read('battle-arena.html').includes('ungewertet'), 'Bot-Runden werden nicht klar als ungewertet markiert'],
 ];
 const failures = required.filter(([ok]) => !ok).map(([, message]) => message);
 if (failures.length) { console.error('Projektprüfung fehlgeschlagen:\n- ' + failures.join('\n- ')); process.exit(1); }

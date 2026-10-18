@@ -8,7 +8,7 @@ WICHTIG
 
 GITHUB
 1. ZIP entpacken und den Inhalt des Ordners GameTik öffnen.
-2. Im bestehenden CHATWEB-Repository die enthaltenen Projektdateien ersetzen/hochladen: server.js, app.js, index.html, live.js, package.json, README.md, ANLEITUNG-DE.txt, TESTPROTOKOLL-DE.txt, scripts/check-project.js, .env.example, paypal.html, admin.html und die vier gift-*.svg-Dateien.
+2. Im bestehenden CHATWEB-Repository die enthaltenen Projektdateien ersetzen/hochladen: server.js, app.js, index.html, live.js, package.json, README.md, ANLEITUNG-DE.txt, TESTPROTOKOLL-DE.txt, check-project.js, scripts/check-project.js, battle-arena.html, .env.example, paypal.html, admin.html und die vier gift-*.svg-Dateien.
 3. admin.html bleibt unverändert; sie ist nur enthalten, damit die vollständige Projektstruktur beisammen ist.
 4. GitHub darf keine echten API-Schlüssel, Datenbankpasswörter oder R2-Geheimnisse enthalten.
 
@@ -41,3 +41,8 @@ WICHTIGE GRENZEN
 - Wenn /api/health nicht ok=true meldet, prüfe zuerst Render-Logs und DATABASE_URL.
 - Wenn passwordResetConfigured=false ist, fehlt BREVO_API_KEY, SMTP_FROM oder APP_BASE_URL.
 - Teile niemals BREVO_API_KEY, DATABASE_URL oder R2_SECRET_ACCESS_KEY öffentlich.
+
+BATTLE ARENA 3D – VERSION 1.9.86
+- Die Arena nutzt Babylon.js und bietet freischaltbare Charaktervarianten und kosmetische Outfits.
+- Siege/XP aus Bot-Runden sind lokal und ungewertet. Die API lehnt Ranglisten-Ergebnisse ab, bis Online-Duelle serverautoritativ geprüft werden.
+- Nach dem Hochladen `npm run check` ausführen. Ein echter Smartphone-/Browser-Test bleibt vor Veröffentlichung notwendig.
