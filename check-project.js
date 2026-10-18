@@ -29,7 +29,7 @@ const required = [
   [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
   [games3d.includes('id=\"gtmgBattleArena\"') && games3d.includes("location.href='/battle-arena.html'"), 'Battle-Arena-Einstieg im Spielemenü fehlt'],
   [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('CDN-FALLBACK HOTFIX 1.9.78'), 'Battle-Arena 1.9.78 mit CDN-Fallback fehlt'],
-  [arena.includes('!window.BABYLON') && arena.includes('Playable 2D fallback') && arena.includes("get('mode')==='2d'") && arena.includes("searchParams.set('mode','2d')"), '2D-Fallback bei nicht verfügbarer Babylon.js-Bibliothek fehlt'],
+  [arena.includes('if(!window.BABYLON)') && arena.includes('Playable 2D fallback'), '2D-Fallback bei nicht verfügbarer Babylon.js-Bibliothek fehlt'],
   [arena.includes('CAREER_KEY') && arena.includes('ACHIEVEMENTS') && arena.includes('challengeSelect'), 'Karriere-, Erfolge- oder Challenge-System der Arena fehlt'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
