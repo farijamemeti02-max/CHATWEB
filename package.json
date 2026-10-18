@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.40",
-  "description": "GAMETIK LIVE: chat auto-scroll with manual scroll preservation, host profile avatar in live pill, candy gift burst overlay, persistent candy gift picker",
+  "version": "1.9.39",
+  "description": "GAMETIK platform with immersive LIVE camera view, compact single-overlay LIVE duel HUD with metallic 3D VS, gift picker inside the Live-Chat message box, opened only on tap, with paid gifts and free candy gifts",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
