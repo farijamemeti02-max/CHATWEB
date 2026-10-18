@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.80",
-  "description": "GAMETIK platform with Battle Arena 3D start fix and 2D fallback",
+  "version": "1.9.79",
+  "description": "GAMETIK social platform with LIVE streaming, 3D gifts, mini-games and Battle Arena (CDN fallback, career and combat modes)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
