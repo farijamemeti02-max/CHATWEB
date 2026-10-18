@@ -1,18 +1,15 @@
-GameTik Battle Arena – Version 1.9.75 (Stabilitätsfix)
+GameTik Battle Arena – Version 1.9.74
 
-Korrekturen:
-- Mobile/kleine Displays laden keine externen GLB-Dateien mehr automatisch. Die Arena startet sofort mit den lokalen prozeduralen Kämpfern, statt auf externe Modell-Downloads zu warten.
-- Auf Desktop werden externe Modelle mit einem 7-Sekunden-Timeout geladen. Bei Fehler/Timeout bleibt der lokale Kämpfer erhalten.
-- GLB-Import wird nur akzeptiert, wenn tatsächlich sichtbare Geometrie vorhanden ist.
-- Render-Auflösung und Arena-Höhe wurden für Mobilgeräte angepasst.
-- Bei Größenänderungen der mobilen Browser-Viewport-Höhe wird die Engine neu skaliert.
-- Vorhandene Kampf-, Pause-, Statistik-, Stil-, Challenge-, Karriere-, XP- und Spezialangriffsfunktionen bleiben im HTML erhalten.
+Änderung in diesem Paket:
+- Drei eigene Spezialangriffs-Sequenzen mit unterscheidbarer Bewegung und Energieeffekten:
+  1. NEON BURST – aufladender Energiekern und expandierender Ring
+  2. CYBER DASH – kurzer Vorstoß mit cyanfarbener Energie
+  3. OVERDRIVE – grüner Energieaufbau mit rotierendem Ring
+- Die Spezialsequenzen laufen beim Spezialangriff abwechselnd und werden beim Neustart bereinigt.
+- Bestehende Spiellogik, XP/Karriere, Outfits, Menüs und restliche Funktionen bleiben im selben HTML erhalten.
+- Vorhandenes GLB-Skelett/Clip-System bleibt unverändert; die drei neuen Spezialsequenzen sind eigens erstellte Babylon.js-Transform-/VFX-Animationen und keine neuen externen Motion-Capture-Skelettclips.
 
-Tests:
-- JavaScript-Syntax mit Node.js geprüft.
-- Alle Referenzen auf HTML-IDs auf Vorhandensein geprüft.
-- ZIP-Archivintegrität geprüft.
-- Kein echter Android-/Chrome-Laufzeittest möglich; daher keine Behauptung, dass sämtliche Live-Funktionen bereits im Browser bestätigt wurden.
-- Nicht bei GitHub oder Render veröffentlicht.
-
-Hinweis: Auf Mobilgeräten wird die lokale prozedurale 3D-Figur verwendet, damit externe Modell-Downloads nicht die Arena blockieren. Das sind keine vollwertigen Skelett-Motion-Capture-Kämpfer.
+Wichtig:
+- Die drei Spezialsequenzen sind visuelle Spiel-Animationen. Sie animieren die Fighter-Root-Transform und Energieeffekte; sie sind KEINE neu aufgenommenen Skelettanimationen für einzelne Arme/Beine.
+- Externes Cesium-Man-Modell benötigt Internet. Falls es nicht lädt, greift weiterhin der prozedurale Kämpfer.
+- Kein Live-Browser-Test und keine Veröffentlichung auf GitHub oder Render durchgeführt.
