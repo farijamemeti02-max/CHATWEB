@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.79",
-  "description": "GAMETIK social platform with LIVE streaming, 3D gifts, mini-games and Battle Arena (CDN fallback, career and combat modes)",
+  "version": "1.9.45",
+  "description": "GAMETIK social platform with LIVE streaming, 3D gifts, mini-games and Battle Arena",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
