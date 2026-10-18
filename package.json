@@ -1,7 +1,7 @@
 {
   "name": "gametik",
-  "version": "1.9.42",
-  "description": "GAMETIK LIVE: touch-scrollable on-stream chat overlay in lower-left video area",
+  "version": "1.9.41",
+  "description": "GAMETIK LIVE: inline streamer profile in lower chat panel and scrollable on-stream chat",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
