@@ -1,5 +1,9 @@
-GameTik Battle Arena 1.9.50 – Fighter Motion
+GameTik Battle Arena – Hotfix 1.9.78
 
-Enthält battle-arena.html mit einer verbesserten sichtbaren Kampfanimation: leichte Angriffe betonen die Schlagbewegung, schwere Angriffe zeigen nun deutlicher einen Tritt mit Beinbewegung. Die vorhandene Ausdaueranzeige, Combo-Rückmeldung, mobile Steuerung und übrigen GameTik-Dateien werden nicht verändert.
+Wichtiger Fallback:
+Wenn die externe Babylon.js-CDN-Bibliothek nicht geladen wird, wird nicht mehr direkt abgebrochen. Stattdessen startet ein vereinfachter 2D-Sicherheitsmodus mit Canvas, Lebensanzeigen, Timer und funktionierenden Grundaktionen (Schlag, Tritt, Block, Dodge, Special, Pause und Neustart). Die vorhandenen Overlay-Schaltflächen öffnen weiterhin ihre Fenster.
 
-Installation: Nur battle-arena.html im Projektordner durch diese Datei ersetzen. Vorher die bestehende Datei als Sicherung kopieren. Diese Version wurde nicht auf GitHub/Render veröffentlicht und nicht live getestet.
+Wenn Babylon.js erfolgreich geladen wird, bleibt der bestehende 3D-Modus aktiv.
+
+Einschränkung:
+Der 2D-Sicherheitsmodus ist eine Notlösung zur Bedienbarkeit, kein Ersatz für alle 3D-/Karriere-/Kampfmechaniken. Er wurde statisch geprüft, nicht auf dem echten Android-Gerät getestet.
