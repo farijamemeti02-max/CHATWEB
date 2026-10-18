@@ -8,7 +8,7 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const htmlPath = path.join(root, 'public', 'battle-arena.html');
-const canonicalHtmlPath = path.resolve(root, '..', 'battle-arena.html');
+const canonicalHtmlPath = path.join(root, 'battle-arena.html');
 const serverPath = path.join(root, 'server.js');
 const packagePath = path.join(root, 'package.json');
 const html = fs.readFileSync(htmlPath, 'utf8');
@@ -52,6 +52,8 @@ test('Standalone server dependencies and start script are declared', () => {
 });
 
 
-test('Canonical HTML is identical to the HTML served by the online server', () => {
-  assert.equal(fs.readFileSync(canonicalHtmlPath, 'utf8'), html);
+test('Canonical HTML matches the HTML copies served from both supported public folders', () => {
+  const canonical = fs.readFileSync(canonicalHtmlPath, 'utf8');
+  assert.equal(canonical, html);
+  assert.equal(fs.readFileSync(path.join(root, 'src', 'public', 'battle-arena.html'), 'utf8'), canonical);
 });
