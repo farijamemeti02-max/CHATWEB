@@ -432,21 +432,62 @@
     if (button.disabled) return;
     button.disabled=true; button.textContent='🎰 AUTOMAT DREHT …';
     const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-    const symbols=['🥷','⚔️','🔷','🤖','🛡️','👾','⚡','GAMETIK'];
+    const symbols=['ERDE','MARS','JUPITER','SATURN','NEPTUN','URANUS','PLUTO','SONNE','GALAXIE','GAMETIK'];
     try {
       for(let i=0;i<20;i++) {
-        window.GameTikCasinoGrid?.drawGrid(Array.from({length:15},()=>symbols[Math.floor(Math.random()*7)]));
+        window.GameTikCasinoGrid?.drawGrid(Array.from({length:15},()=>symbols[Math.floor(Math.random()*9)]));
         if(reels){reels.style.transform=`translateY(${i%2?2:-2}px)`;reels.style.filter=`blur(${i<15?1.2:0}px)`;}
         await wait(65+Math.min(i,15)*5);
       }
       const d=await api('/api/candy/spin',{method:'POST',body:'{}'});
+      window.GameTikCrownToken=d.crownToken||null;
       window.GameTikCasinoGrid?.drawGrid(d.symbols);
       if(reels){reels.style.transform='translateY(0)';reels.style.filter='none';reels.classList.toggle('gametik-reel-win',Boolean(d.bonus||d.reward));}
       const free=$('liveCasinoFreeSpins'); if(free)free.textContent=`Freispiele: ${Number(d.freeSpins||0)}`;
-      $('liveCasinoResult').textContent=d.bonus ? '👑 GAMETIK-BONUS! 10 Freispiele freigeschaltet!' : d.reward ? `✨ GEWONNEN! +${d.reward} kostenlose Süßigkeit(en)!` : d.roundCost===0 ? 'Freispiel gespielt. Kein Gewinn in dieser Runde.' : '1 🍬 eingesetzt. Diesmal kein Gewinn – versuche es erneut!';
+      $('liveCasinoResult').textContent=d.bonus ? '👑 GAMETIK-BONUS! 10 Freispiele freigeschaltet!' : d.logoCount>0 ? '👑 Die GameTik-Krone ist erschienen! Tippe auf die Krone, um sie zu öffnen.' : d.reward ? `✨ GEWONNEN! +${d.reward} kostenlose Süßigkeit(en)!` : d.roundCost===0 ? 'Freispiel gespielt. Kein Gewinn in dieser Runde.' : '1 🍬 eingesetzt. Diesmal kein Gewinn – versuche es erneut!';
       candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward||d.bonus) playGameJingle('win');
     } catch(e) { $('liveCasinoResult').textContent=e.message; }
     finally { if(reels){reels.style.transform='translateY(0)';reels.style.filter='none';} setTimeout(()=>{button.disabled=false;button.textContent='🎰 DREHEN · 1 🍬';},1000); }
+  });
+  $('liveCasinoReels')?.addEventListener('click', async (event) => {
+    const crown = event.target.closest('[data-crown-symbol]');
+    if (!crown || crown.disabled) return;
+    const token = window.GameTikCrownToken;
+    if (!token) {
+      $('liveCasinoResult').textContent = 'Dreh zuerst den Automaten, bis eine Krone erscheint.';
+      return;
+    }
+    crown.disabled = true;
+    const overlay = $('gtCrownRewardOverlay');
+    const title = $('gtCrownRewardTitle');
+    const text = $('gtCrownRewardText');
+    const close = $('gtCrownRewardClose');
+    if (overlay) overlay.hidden = false;
+    if (title) title.textContent = 'Die GameTik-Krone öffnet sich …';
+    if (text) text.textContent = 'Der Zufallsgenerator bestimmt deine Überraschung.';
+    if (close) close.textContent = 'Belohnung wird geöffnet …';
+    try {
+      await new Promise(resolve => setTimeout(resolve, 950));
+      const d = await api('/api/candy/crown-open', {method:'POST', body:JSON.stringify({crownToken:token})});
+      window.GameTikCrownToken = null;
+      if (title) title.textContent = `✨ +${d.reward} Süßigkeiten!`;
+      if (text) text.textContent = `Dein virtuelles Guthaben beträgt jetzt ${d.balance} 🍬.`;
+      if (close) close.textContent = 'Weiter spielen';
+      crown.classList.add('gt-crown-opened');
+      candyBalanceCache = Number(d.balance || 0);
+      await refreshCandyBalance();
+      playGameJingle('win');
+      $('liveCasinoResult').textContent = `👑 Kronen-Überraschung: +${d.reward} kostenlose Süßigkeit(en)!`;
+    } catch (error) {
+      if (overlay) overlay.hidden = true;
+      if (title) title.textContent = 'Krone konnte nicht geöffnet werden';
+      $('liveCasinoResult').textContent = error.message || 'Die Kronenbelohnung konnte nicht geladen werden.';
+      crown.disabled = false;
+    }
+  });
+  $('gtCrownRewardClose')?.addEventListener('click', () => {
+    const overlay = $('gtCrownRewardOverlay');
+    if (overlay) overlay.hidden = true;
   });
   document.querySelectorAll('.live-candy-send').forEach(button => button.addEventListener('click', async () => {
     if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; }
