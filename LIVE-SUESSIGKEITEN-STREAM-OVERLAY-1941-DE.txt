@@ -1,0 +1,10 @@
+GameTik – Live-Süßigkeiten im Stream sichtbar (Build 1.9.41)
+
+- Beim erfolgreichen Senden erscheinen mehrere animierte Süßigkeiten und ein kurzer Absender-/Mengenhinweis direkt über dem Live-Video.
+- Die Animation wird unabhängig davon angezeigt, ob ein Live-Duell aktiv ist.
+- Alle Zuschauer im selben Live-Raum erhalten die Animation über das bestätigte Socket.IO-Geschenkereignis.
+- Sender sehen eine einzelne Animation; die lokale und die Socket-Animation werden nicht doppelt übereinander abgespielt.
+- Die 2D-Overlay-Animation ist eine sichtbare Ausweichdarstellung, falls WebGL/Three.js auf einem Gerät nicht verfügbar ist.
+- Adminbereich und CyberNinja Arena 2.8.2 bleiben unverändert.
+
+Prüfung: JavaScript-Syntax, Projektprüfungen und Regressionstest ausgeführt. Eine echte LiveKit-/Browser-Sitzung wurde nicht gestartet.

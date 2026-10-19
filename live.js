@@ -280,7 +280,28 @@
       chatSocket = window.io(apiBase || undefined, {auth: localStorage.getItem('gametik_token') ? {token: localStorage.getItem('gametik_token')} : {guestLiveRoomId: currentStream.id}});
       chatSocket.on('connect', () => chatSocket.emit('live:join-chat', {roomId: currentStream.id}, result => { if (result?.error) liveStatus(result.error); }));
       chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at); });
-      chatSocket.on('live:gift', gift => { if (gift.roomId === currentStream?.id) { chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true); window.GameTikGift3D?.play(gift.gift, gift.quantity || gift.amount || Number((String(gift.gift).match(/×\s*(\d+)/)||[])[1]) || 1, gift.username); } playGameJingle('gift'); });
+      chatSocket.on('live:gift', gift => {
+        if (gift.roomId === currentStream?.id) {
+          chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true);
+          const isCandy = !!gift.free || /süßigkeit|süßigkeiten|bonbon|candy/i.test(String(gift.gift || ''));
+          const localUsername = String(localStorage.getItem('gametik_username') || '').trim().toLocaleLowerCase();
+          const senderUsername = String(gift.username || '').trim().toLocaleLowerCase();
+          const isOwnCandy = isCandy && localUsername && senderUsername === localUsername;
+          const quantity = Math.max(1, Number(gift.quantity || gift.amount || Number((String(gift.gift).match(/×\s*(\d+)/)||[])[1]) || 1));
+          if (isCandy) {
+            // The sender already renders optimistically after the server accepts the gift.
+            // Every other client gets the same visible overlay even with WebGL unavailable.
+            if (!isOwnCandy) {
+              const emoji = gift.emoji || (quantity >= 10 ? '🍫' : quantity >= 5 ? '🧁' : quantity >= 3 ? '🍭' : '🍬');
+              document.dispatchEvent(new CustomEvent('gametik:candy-sent', {detail:{amount:quantity, emoji, username:gift.username || 'Community'}}));
+              window.GameTikGift3D?.play(gift.gift, quantity, gift.username);
+            }
+          } else {
+            window.GameTikGift3D?.play(gift.gift, quantity, gift.username);
+          }
+        }
+        playGameJingle('gift');
+      });
       chatSocket.on('live:game-state', event => { if (event.roomId === currentStream?.id) renderGame(event.game); });
       chatSocket.on('live:like-count', data => { if (data.roomId === currentStream?.id) { liveLikeCount = Number(data.likes || 0); $('liveLikeCount').textContent = `❤️ ${liveLikeCount} Likes`; } });
       chatSocket.on('live:ended', event => { if (event.id === currentStream?.id) { liveStatus('Der Stream wurde beendet.'); leaveStream(false); refreshStreams(); } });
@@ -483,7 +504,7 @@
     if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
     const amount=Math.max(1,Math.min(20,Number(button.dataset.amount)||1));
     button.disabled=true;
-    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); document.dispatchEvent(new CustomEvent('gametik:candy-sent',{detail:{amount:d.spent||amount,emoji:({1:'🍬',3:'🍭',5:'🧁',10:'🍫'})[Number(button.dataset.amount)]||'🍬'}})); await refreshCandyBalance(); playGameJingle('gift'); }
+    try { const d=await api('/api/candy/gift',{method:'POST',body:JSON.stringify({liveRoomId:currentStream.id,amount})}); $('liveGiftStatus').textContent=`🍬 ${d.spent} Süßigkeit(en) gesendet! Guthaben: ${d.balance} 🍬`; window.GameTikGift3D?.play('Bonbon', d.spent || amount, localStorage.getItem('gametik_username') || 'Community'); document.dispatchEvent(new CustomEvent('gametik:candy-sent',{detail:{amount:d.spent||amount,emoji:({1:'🍬',3:'🍭',5:'🧁',10:'🍫'})[Number(button.dataset.amount)]||'🍬',username:localStorage.getItem('gametik_username')||'Community'}})); await refreshCandyBalance(); playGameJingle('gift'); }
     catch(e) { $('liveGiftStatus').textContent=e.message; await refreshCandyBalance(); }
     finally { setTimeout(()=>{button.disabled=false;},500); }
   }));
