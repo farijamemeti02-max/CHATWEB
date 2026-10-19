@@ -1,57 +1,44 @@
 'use strict';
-
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const root = __dirname;
+const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+const html = read('index.html');
+const server = read('server.js');
+const live = read('live.js');
 
-const root = path.resolve(__dirname, '..');
-const htmlPath = path.join(root, 'public', 'battle-arena.html');
-const canonicalHtmlPath = path.resolve(root, '..', 'battle-arena.html');
-const serverPath = path.join(root, 'server.js');
-const packagePath = path.join(root, 'package.json');
-const html = fs.readFileSync(htmlPath, 'utf8');
-const serverSource = fs.readFileSync(serverPath, 'utf8');
-const inline = html.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
-
-test('Battle Arena HTML contains the main controls and matching client', () => {
-  assert.ok(html.includes('id="renderCanvas"'));
-  assert.ok(html.includes('id="soundBtn"'));
-  assert.ok(html.includes('id="onlineBtn"'));
-  assert.ok(html.includes('rearStadiumArc'));
-  assert.ok(html.includes('function ensureAudio()'));
-  assert.ok(html.includes('function animateFighter('));
-  assert.ok(html.includes('function applyOnlineState(packet)'));
-  assert.ok(html.includes("socket.emit('matchmaking:join')"));
+test('GameTik candy slot keeps five reels and three rows', () => {
+  assert.ok(html.includes('id="liveCasinoReels"'));
+  assert.ok(html.includes('aria-label="Fünf Walzen mit je drei Symbolen"'));
+  assert.ok(live.includes('Array.from({length:15}'));
+  assert.ok(server.includes('grid = Array.from({length:15}'));
 });
-
-test('HTML IDs are unique', () => {
-  const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
-  assert.equal(ids.length, new Set(ids).size, 'Duplicate id attribute found');
+test('Planet symbols use dimensional planet styling instead of text placeholders', () => {
+  for (const name of ['ERDE','MARS','JUPITER','SATURN','NEPTUN','URANUS','PLUTO','SONNE','GALAXIE']) assert.ok(html.includes(name));
+  assert.ok(html.includes('gt-casino-symbol.gt-planet:before'));
+  assert.ok(fs.existsSync(path.join(root, 'gametik-crown-bonus.svg')));
 });
-
-test('Inline browser JavaScript parses successfully', () => {
-  assert.ok(inline, 'Inline script block not found');
-  assert.doesNotThrow(() => new vm.Script(inline[1], { filename: 'battle-arena.inline.js' }));
+test('Crown bonus awards ten free spins and crown surprise is one-time server-side', () => {
+  assert.ok(server.includes('logoCount >= 3'));
+  assert.ok(server.includes("app.post('/api/candy/crown-open'"));
+  assert.ok(server.includes('candyCrownClaims.delete(token)'));
+  assert.ok(live.includes('gtFreeSpinIntro'));
+  assert.ok(live.includes('/api/candy/crown-open'));
 });
-
-test('Online server JavaScript parses and declares authoritative combat handlers', () => {
-  assert.doesNotThrow(() => new vm.Script(serverSource, { filename: 'server.js' }));
-  for (const eventName of ['matchmaking:join', 'battle:input', 'battle:attack', 'battle:dodge', 'battle:rematch']) {
-    assert.ok(serverSource.includes(`'${eventName}'`), `Missing server event ${eventName}`);
-  }
-  assert.ok(serverSource.includes('target.hp = Math.max(0, target.hp - hit.damage)'));
+test('Live gift renderer remains event-driven and available', () => {
+  const gifts = read('gift-3d.js');
+  assert.ok(html.includes('<script src="/gift-3d.js" defer></script>'));
+  assert.ok(gifts.includes('new T.WebGLRenderer'));
+  assert.ok(live.includes('GameTikGift3D?.play'));
 });
-
-test('Standalone server dependencies and start script are declared', () => {
-  const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-  assert.equal(pkg.scripts.start, 'node server.js');
-  assert.ok(pkg.dependencies.express);
-  assert.ok(pkg.dependencies['socket.io']);
+test('Core JavaScript parses and CyberNinja 2.8.2 is retained', () => {
+  for (const file of ['server.js','live.js','gift-3d.js']) assert.doesNotThrow(() => new vm.Script(read(file), {filename:file}));
+  assert.ok(fs.existsSync(path.join(root, 'GameTik-Battle-Arena-2.8.2-CyberNinja-EMBEDDED.html')));
 });
-
-
-test('Canonical HTML is identical to the HTML served by the online server', () => {
-  assert.equal(fs.readFileSync(canonicalHtmlPath, 'utf8'), html);
+test('admin.html remains present and server serves the project root', () => {
+  assert.ok(fs.existsSync(path.join(root, 'admin.html')));
+  assert.ok(server.includes('const publicDir = __dirname;'));
 });

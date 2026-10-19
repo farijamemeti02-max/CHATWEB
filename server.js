@@ -171,7 +171,7 @@ const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
 const candyFreeSpins = new Map();
-const candyCrownClaims = new Map(); // one-time crown-opening rewards
+const candyCrownClaims = new Map(); // single-use, user-bound crown rewards
 const stories = [];
 const adminBlockedUsers = new Set();
 // Friend requests are held in memory in this demo backend; use a database for persistence.
@@ -1130,8 +1130,7 @@ app.post('/api/candy/crown-open', auth, (req, res) => {
     if (claim && claim.expiresAt < Date.now()) candyCrownClaims.delete(token);
     return res.status(400).json({ error: 'Diese Krone wurde bereits geöffnet oder ist abgelaufen.' });
   }
-  // Consume before awarding so a repeated request cannot claim the same crown twice.
-  candyCrownClaims.delete(token);
+  candyCrownClaims.delete(token); // consume before granting: one reward per spin
   const roll = Math.random() * 100;
   const reward = roll < 40 ? 5 : roll < 70 ? 10 : roll < 88 ? 25 : roll < 97 ? 50 : 100;
   candyBalances.set(id, candyBalance(id) + reward);
