@@ -1,0 +1,11 @@
+GAMETIK – PLANETEN-AUTOMAT & KRONEN-BONUS
+- 5 Walzen × 3 sichtbare Symbolreihen bleiben erhalten.
+- Planetensymbole: Erde, Mars, Jupiter, Saturn, Neptun, Uranus, Pluto, Sonne und Galaxie.
+- Die GameTik-Edelsteinkrone ist ein anklickbares Bonussymbol.
+- Drei oder mehr Kronen/Logos in einer Runde lösen 10 Freispiele aus.
+- Jede erschienene Krone kann einmal geöffnet werden; die Belohnung wird serverseitig per gewichteter Zufallsauswahl bestimmt: 5 (40 %), 10 (30 %), 25 (18 %), 50 (9 %) oder 100 virtuelle Süßigkeiten (3 %).
+- Die Kronenbelohnung wird serverseitig an ein einmaliges, nutzergebundenes Token gebunden.
+- Der Freispielstart hat eine eigene sichtbare Animation.
+- CyberNinja Arena 2.8.2 bleibt erhalten; ältere 2.8.0/2.8.1-Dateien werden entfernt.
+- admin.html ist bytegenau unverändert.
+- JavaScript-Syntax und ZIP-Integrität werden geprüft; ein echter Browser-/Render-Test ist in dieser Umgebung nicht verfügbar.

@@ -171,6 +171,7 @@ const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
 const candyFreeSpins = new Map();
+const candyCrownClaims = new Map(); // one-time crown-opening rewards
 const stories = [];
 const adminBlockedUsers = new Set();
 // Friend requests are held in memory in this demo backend; use a database for persistence.
@@ -1098,9 +1099,10 @@ app.post('/api/candy/spin', auth, (req, res) => {
   if (freeSpins > 0) candyFreeSpins.set(id, freeSpins - 1);
   else candyBalances.set(id, balance - 1);
   // Five reels × three rows. GameTik logo scatters anywhere; 3+ award 10 free spins.
-  const symbols = ['🥷','⚔️','🔷','🤖','🛡️','👾','⚡'];
+  const symbols = ['ERDE','MARS','JUPITER','SATURN','NEPTUN','URANUS','PLUTO','SONNE','GALAXIE'];
   const grid = Array.from({length:15}, () => symbols[Math.floor(Math.random()*symbols.length)]);
-  const logoCount = Math.random() < 0.14 ? 3 + Math.floor(Math.random()*2) : (Math.random() < 0.1 ? 2 : 0);
+  const scatterRoll = Math.random();
+  const logoCount = scatterRoll < 0.08 ? 3 + Math.floor(Math.random()*2) : (scatterRoll < 0.18 ? 2 : (scatterRoll < 0.48 ? 1 : 0));
   const positions = new Set();
   while (positions.size < logoCount) positions.add(Math.floor(Math.random()*15));
   positions.forEach(index => { grid[index] = 'GAMETIK'; });
@@ -1112,7 +1114,28 @@ app.post('/api/candy/spin', auth, (req, res) => {
     if (match >= 5) reward = 5; else if (match >= 4) reward = 3; else if (match >= 3) reward = 1;
   }
   candyBalances.set(id, candyBalance(id) + reward);
-  res.json({ ok: true, reward, balance: candyBalance(id), symbols: grid, logoCount, bonus: logoCount >= 3, freeSpins: Math.max(0,Number(candyFreeSpins.get(id)||0)), roundCost: freeSpins > 0 ? 0 : 1, note: 'Nur kostenlose virtuelle Süßigkeiten; kein Geldeinsatz und keine Auszahlung.' });
+  const crownToken = logoCount > 0 ? crypto.randomUUID() : null;
+  if (crownToken) {
+    const nowMs = Date.now();
+    for (const [token, claim] of candyCrownClaims) if (claim.expiresAt < nowMs) candyCrownClaims.delete(token);
+    candyCrownClaims.set(crownToken, { userId: id, expiresAt: nowMs + 10 * 60 * 1000 });
+  }
+  res.json({ ok: true, reward, balance: candyBalance(id), symbols: grid, logoCount, bonus: logoCount >= 3, crownToken, freeSpins: Math.max(0,Number(candyFreeSpins.get(id)||0)), roundCost: freeSpins > 0 ? 0 : 1, note: 'Nur kostenlose virtuelle Süßigkeiten; kein Geldeinsatz und keine Auszahlung.' });
+});
+app.post('/api/candy/crown-open', auth, (req, res) => {
+  const id = String(req.user.id);
+  const token = String(req.body.crownToken || '');
+  const claim = candyCrownClaims.get(token);
+  if (!claim || claim.userId !== id || claim.expiresAt < Date.now()) {
+    if (claim && claim.expiresAt < Date.now()) candyCrownClaims.delete(token);
+    return res.status(400).json({ error: 'Diese Krone wurde bereits geöffnet oder ist abgelaufen.' });
+  }
+  // Consume before awarding so a repeated request cannot claim the same crown twice.
+  candyCrownClaims.delete(token);
+  const roll = Math.random() * 100;
+  const reward = roll < 40 ? 5 : roll < 70 ? 10 : roll < 88 ? 25 : roll < 97 ? 50 : 100;
+  candyBalances.set(id, candyBalance(id) + reward);
+  res.json({ ok: true, reward, balance: candyBalance(id), note: 'Virtuelle Süßigkeiten; kein Echtgeld und keine Auszahlung.' });
 });
 app.post('/api/candy/gift', auth, (req, res) => {
   const roomId = String(req.body.liveRoomId || ''), amount = Math.max(1, Math.min(20, Math.floor(Number(req.body.amount) || 1)));
