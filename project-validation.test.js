@@ -34,6 +34,17 @@ test('Live gift renderer remains event-driven and available', () => {
   assert.ok(gifts.includes('new T.WebGLRenderer'));
   assert.ok(live.includes('GameTikGift3D?.play'));
 });
+
+test('Free candy sends display a visible stream overlay outside and inside duels', () => {
+  assert.ok(html.includes("burst.id='gtLiveCandyBurst'"));
+  assert.ok(html.includes('gtCandyStreamFly1941'));
+  assert.ok(html.includes('window.GameTikShowCandyBurst=showCandyBurst'));
+  assert.ok(live.includes("document.dispatchEvent(new CustomEvent('gametik:candy-sent'"));
+  assert.ok(live.includes('const isCandy = !!gift.free'));
+  assert.ok(server.includes("io.to('live:' + roomId).emit('live:gift'"));
+  assert.ok(server.includes('quantity: amount, emoji, free: true'));
+});
+
 test('Core JavaScript parses and CyberNinja 2.8.2 is retained', () => {
   for (const file of ['server.js','live.js','gift-3d.js']) assert.doesNotThrow(() => new vm.Script(read(file), {filename:file}));
   assert.ok(fs.existsSync(path.join(root, 'GameTik-Battle-Arena-2.8.2-CyberNinja-EMBEDDED.html')));

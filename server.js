@@ -1149,7 +1149,8 @@ app.post('/api/candy/gift', auth, (req, res) => {
     room.game.candyCount = Math.min(1000000000, Number(room.game.candyCount || 0) + amount);
     io.to('live:' + roomId).emit('live:game-state', { roomId, game: room.game });
   }
-  io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: 'Süßigkeiten 🍬 ×' + amount, points: amount, free: true, created_at: new Date().toISOString() });
+  const emoji = amount >= 10 ? '🍫' : amount >= 5 ? '🧁' : amount >= 3 ? '🍭' : '🍬';
+  io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: 'Süßigkeiten 🍬 ×' + amount, points: amount, amount, quantity: amount, emoji, free: true, created_at: new Date().toISOString() });
   res.json({ ok: true, spent: amount, balance: candyBalance(id) });
 });
 app.get('/api/demo-stats', (_req,res) => res.json({ sessions: sessions.size, videos: videos.length, messages: chatMessages.length, gifts: gifts.length }));
