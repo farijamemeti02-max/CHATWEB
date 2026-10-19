@@ -1075,7 +1075,7 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
       liveRoom.game.hostPoints = Math.min(1000000000, Number(liveRoom.game.hostPoints || 0) + giftPoints);
       io.to('live:' + saved.liveRoomId).emit('live:game-state', { roomId: saved.liveRoomId, game: liveRoom.game });
     }
-    io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, username: req.user.username, gift: saved.gift, points: giftPoints, paymentId: capture.id, created_at: giftRecord.created_at });
+    io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, userId: String(req.user.id), username: req.user.username, gift: saved.gift, points: giftPoints, paymentId: capture.id, created_at: giftRecord.created_at });
   }
 
   res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id });
@@ -1150,7 +1150,7 @@ app.post('/api/candy/gift', auth, (req, res) => {
     io.to('live:' + roomId).emit('live:game-state', { roomId, game: room.game });
   }
   const emoji = amount >= 10 ? '🍫' : amount >= 5 ? '🧁' : amount >= 3 ? '🍭' : '🍬';
-  io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: 'Süßigkeiten 🍬 ×' + amount, points: amount, amount, quantity: amount, emoji, free: true, created_at: new Date().toISOString() });
+  io.to('live:' + roomId).emit('live:gift', { roomId, userId: String(req.user.id), username: req.user.username, gift: 'Süßigkeiten 🍬 ×' + amount, points: amount, amount, quantity: amount, emoji, free: true, created_at: new Date().toISOString() });
   res.json({ ok: true, spent: amount, balance: candyBalance(id) });
 });
 app.get('/api/demo-stats', (_req,res) => res.json({ sessions: sessions.size, videos: videos.length, messages: chatMessages.length, gifts: gifts.length }));
@@ -1312,7 +1312,7 @@ io.on('connection', socket => {
     const room = liveRooms.get(id);
     const body = String(payload && payload.body || '').trim().slice(0, 300);
     if (!room || room.status !== 'live' || !body || !socket.rooms.has('live:' + id)) { if (ack) ack({ error: 'Live-Chat nicht verfügbar oder Nachricht leer.' }); return; }
-    const message = { id: crypto.randomUUID(), roomId: id, username: socket.user.username, body, created_at: new Date().toISOString() };
+    const message = { id: crypto.randomUUID(), roomId: id, userId: String(socket.user.id), username: socket.user.username, body, created_at: new Date().toISOString() };
     io.to('live:' + id).emit('live:chat-message', message);
     if (ack) ack({ ok: true });
   });

@@ -36,13 +36,26 @@ test('Live gift renderer remains event-driven and available', () => {
 });
 
 test('Free candy sends display a visible stream overlay outside and inside duels', () => {
-  assert.ok(html.includes("burst.id='gtLiveCandyBurst'"));
+  assert.ok(html.includes("burst.className='gt-live-candy-burst'"));
+  assert.ok(html.includes('.gt-live-candy-burst{position:absolute!important;z-index:9000!important;'));
+  assert.ok(!html.includes("const previous=document.getElementById('gtLiveCandyBurst')"));
   assert.ok(html.includes('gtCandyStreamFly1941'));
   assert.ok(html.includes('window.GameTikShowCandyBurst=showCandyBurst'));
   assert.ok(live.includes("document.dispatchEvent(new CustomEvent('gametik:candy-sent'"));
   assert.ok(live.includes('const isCandy = !!gift.free'));
   assert.ok(server.includes("io.to('live:' + roomId).emit('live:gift'"));
   assert.ok(server.includes('quantity: amount, emoji, free: true'));
+});
+
+test('Live stream names and chat users open full profiles', () => {
+  const app = read('app.js');
+  assert.ok(app.includes('window.GameTikOpenUserProfile = userId')); 
+  assert.ok(live.includes('openLiveUserProfile(currentStream?.hostId)'));
+  assert.ok(live.includes('[data-open-user-profile], #gtLiveProfilePill'));
+  assert.ok(live.includes('class=\"gt-live-user-link\" data-open-user-profile'));
+  assert.ok(live.includes('data-open-user-profile=\"${esc(stream.hostId)}\"'));
+  assert.ok(server.includes('userId: String(socket.user.id)'));
+  assert.ok(server.includes('userId: String(req.user.id)'));
 });
 
 test('Core JavaScript parses and CyberNinja 2.8.2 is retained', () => {
