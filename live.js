@@ -431,25 +431,22 @@
     const button=$('liveCasinoSpin'), reels=$('liveCasinoReels');
     if (button.disabled) return;
     button.disabled=true; button.textContent='🎰 AUTOMAT DREHT …';
-    const symbols=['🍒','🍋','🍇','🍉','🍬','🍭','🍫','🧁','⭐'];
     const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    const symbols=['🥷','⚔️','🔷','🤖','🛡️','👾','⚡','GAMETIK'];
     try {
-      // Visual reel spin first; the server remains the source of truth for the reward.
-      for(let i=0;i<24;i++) {
-        reels.textContent=[0,1,2].map(()=>symbols[Math.floor(Math.random()*symbols.length)]).join('　');
-        reels.style.transform=`translateY(${i%2 ? 3 : -3}px)`;
-        reels.style.filter=`blur(${i<18 ? 1.4 : 0}px)`;
-        await wait(65 + Math.min(i,18)*5);
+      for(let i=0;i<20;i++) {
+        window.GameTikCasinoGrid?.drawGrid(Array.from({length:15},()=>symbols[Math.floor(Math.random()*7)]));
+        if(reels){reels.style.transform=`translateY(${i%2?2:-2}px)`;reels.style.filter=`blur(${i<15?1.2:0}px)`;}
+        await wait(65+Math.min(i,15)*5);
       }
-      reels.style.transform='translateY(0)'; reels.style.filter='none';
       const d=await api('/api/candy/spin',{method:'POST',body:'{}'});
-      const finalSymbols=d.symbols||['🍬','🍭','🍬'];
-      reels.textContent=finalSymbols.join('　'); reels.classList.remove('gametik-reel-win');
-      if(d.reward) { void reels.offsetWidth; reels.classList.add('gametik-reel-win'); }
-      $('liveCasinoResult').textContent=d.reward ? `🎉 GEWONNEN! +${d.reward} kostenlose Süßigkeit(en)!` : 'Diesmal kein Gewinn. Probiere es später erneut.';
-      candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward) playGameJingle('win');
+      window.GameTikCasinoGrid?.drawGrid(d.symbols);
+      if(reels){reels.style.transform='translateY(0)';reels.style.filter='none';reels.classList.toggle('gametik-reel-win',Boolean(d.bonus||d.reward));}
+      const free=$('liveCasinoFreeSpins'); if(free)free.textContent=`Freispiele: ${Number(d.freeSpins||0)}`;
+      $('liveCasinoResult').textContent=d.bonus ? '👑 GAMETIK-BONUS! 10 Freispiele freigeschaltet!' : d.reward ? `✨ GEWONNEN! +${d.reward} kostenlose Süßigkeit(en)!` : d.roundCost===0 ? 'Freispiel gespielt. Kein Gewinn in dieser Runde.' : '1 🍬 eingesetzt. Diesmal kein Gewinn – versuche es erneut!';
+      candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); if(d.reward||d.bonus) playGameJingle('win');
     } catch(e) { $('liveCasinoResult').textContent=e.message; }
-    finally { reels.style.transform='translateY(0)'; reels.style.filter='none'; setTimeout(()=>{button.disabled=false;button.textContent='🎰 DREHEN';},1600); }
+    finally { if(reels){reels.style.transform='translateY(0)';reels.style.filter='none';} setTimeout(()=>{button.disabled=false;button.textContent='🎰 DREHEN · 1 🍬';},1000); }
   });
   document.querySelectorAll('.live-candy-send').forEach(button => button.addEventListener('click', async () => {
     if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; }
