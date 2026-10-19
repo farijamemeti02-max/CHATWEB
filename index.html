@@ -871,6 +871,9 @@ input,select,textarea{
 .gt-premium-nav .gt-nav-icon{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:13px!important}
 @media(max-width:700px){.profile-hero .profile-cover-glow{min-height:0!important;padding:0!important;justify-content:flex-end!important}.profile-gem-crown.profile-gem-crown-image{width:74px!important;max-width:100%!important;max-height:48px!important;margin:0 auto -5px!important;left:auto!important;transform:none!important}.gt-access-shortcuts{gap:8px!important;margin:9px 0 12px!important}.gt-access-btn{min-height:59px!important;padding:9px 11px!important;border-radius:15px!important;gap:10px!important}.gt-access-btn>span:first-child{width:35px!important;height:35px!important;flex-basis:35px!important;border-radius:11px!important;font-size:19px!important}.gt-access-btn strong{font-size:13px!important}.gt-access-btn small{font-size:10px!important}.gt-premium-nav{min-height:56px!important;padding:8px 10px!important}.gt-premium-nav .gt-nav-icon{width:34px!important;height:34px!important;flex-basis:34px!important}}
 @media(prefers-reduced-motion:reduce){.gt-access-btn{transition:none!important}}
+/* Final fit: keep the jeweled crown centered and smaller than the avatar. */
+body.gt-view-profile .profile-hero .profile-cover-glow .profile-gem-crown.profile-gem-crown-image{width:clamp(64px,7vw,92px)!important;max-width:90%!important;max-height:58px!important;height:auto!important;object-fit:contain!important;object-position:center bottom!important;left:auto!important;right:auto!important;transform:none!important;margin:0 auto -6px!important;align-self:center!important;}
+@media(max-width:700px){body.gt-view-profile .profile-hero .profile-cover-glow .profile-gem-crown.profile-gem-crown-image{width:62px!important;max-width:82%!important;max-height:40px!important;margin:0 auto -4px!important;}}
 </style>
 <style>
 /* GameTik profile gallery and profile-only management shortcuts */
@@ -1840,8 +1843,8 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 <style id="gametik-live-candy-stream-overlay-v1941">
 /* Free candies are shown directly on the video stream, whether or not a duel is active. */
 .gt-live-candy-burst{position:absolute!important;z-index:9000!important;inset:0!important;pointer-events:none!important;overflow:hidden!important;isolation:isolate!important;contain:layout style!important}
-.gt-live-candy-burst .gt-candy-particle{position:absolute!important;left:50%;top:66%;display:block!important;visibility:visible!important;opacity:1;font-size:clamp(34px,9vw,60px);line-height:1;filter:drop-shadow(0 0 9px #ff38c8) drop-shadow(0 0 16px #21d4fd);transform:translate(-50%,0) scale(.35) rotate(-18deg);animation:gtCandyStreamFly1941 1.65s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:var(--delay,0ms)}
-.gt-live-candy-burst .gt-candy-caption{position:absolute!important;display:block!important;visibility:visible!important;left:50%;top:48%;max-width:90%;padding:8px 13px;border:1px solid #ffffffb8;border-radius:999px;background:linear-gradient(105deg,rgba(255,35,190,.98),rgba(127,70,255,.98),rgba(28,205,255,.98));box-shadow:0 5px 24px #000a,0 0 28px #ff38c899;color:#fff;font-size:clamp(12px,3.4vw,16px);font-weight:950;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-shadow:0 1px 3px #13051e;transform:translate(-50%,8px) scale(.78);opacity:0;animation:gtCandyStreamCaption1941 1.8s ease-out forwards}
+.gt-live-candy-burst .gt-candy-particle{position:absolute;left:50%;top:66%;display:block;font-size:clamp(34px,9vw,60px);line-height:1;filter:drop-shadow(0 0 9px #ff38c8) drop-shadow(0 0 16px #21d4fd);transform:translate(-50%,0) scale(.35) rotate(-18deg);animation:gtCandyStreamFly1941 1.65s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:var(--delay,0ms)}
+.gt-live-candy-burst .gt-candy-caption{position:absolute;left:50%;top:48%;max-width:90%;padding:8px 13px;border:1px solid #ffffffb8;border-radius:999px;background:linear-gradient(105deg,rgba(255,35,190,.98),rgba(127,70,255,.98),rgba(28,205,255,.98));box-shadow:0 5px 24px #000a,0 0 28px #ff38c899;color:#fff;font-size:clamp(12px,3.4vw,16px);font-weight:950;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-shadow:0 1px 3px #13051e;transform:translate(-50%,8px) scale(.78);opacity:0;animation:gtCandyStreamCaption1941 1.8s ease-out forwards}
 @keyframes gtCandyStreamFly1941{0%{opacity:0;transform:translate(-50%,10px) scale(.35) rotate(-18deg)}14%{opacity:1;transform:translate(-50%,0) scale(1.12) rotate(8deg)}45%{opacity:1;transform:translate(calc(-50% + var(--drift,0px)),-54px) scale(1) rotate(-7deg)}100%{opacity:0;transform:translate(calc(-50% + var(--drift,0px)),-180px) scale(.68) rotate(24deg)}}
 @keyframes gtCandyStreamCaption1941{0%{opacity:0;transform:translate(-50%,8px) scale(.78)}15%,68%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-14px) scale(.9)}}
 #gtLiveProfilePill .gt-live-profile-avatar{overflow:hidden!important;padding:0!important;object-fit:cover!important}
@@ -1855,40 +1858,24 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  const oldPositions=[27,39,50,61,73,34,66];
  const drift=[-34,-18,0,19,36,-25,27];
  let burstSequence=0;
- function getVisibleStage(){
-  const stage=document.getElementById('liveVideoStage');
-  const outer=document.getElementById('liveStage');
-  if(!stage || !stage.isConnected || (outer && outer.classList.contains('hidden'))) return null;
-  return stage;
- }
  function showCandyBurst(detail){
-  const stage=getVisibleStage();
-  if(!stage){
-   // The stream UI can become visible a tick after the gift request resolves.
-   if(detail && !detail.__retried){const retry={...detail,__retried:true};window.setTimeout(()=>showCandyBurst(retry),180);}
-   return false;
-  }
-  stage.style.position='relative';
+  const stage=document.getElementById('liveVideoStage');
+  if(!stage || stage.classList.contains('hidden'))return;
   const emoji=String(detail.emoji||'🍬').slice(0,8);
   const amount=Math.max(1,Math.min(20,Number(detail.amount)||1));
   const count=Math.min(7,Math.max(3,Math.ceil(amount/2)+2));
-  let layer=stage.querySelector(':scope > .gt-live-candy-overlay-layer');
-  if(!layer){layer=document.createElement('div');layer.className='gt-live-candy-overlay-layer';layer.setAttribute('aria-live','polite');layer.style.cssText='position:absolute!important;inset:0!important;z-index:2147483000!important;pointer-events:none!important;overflow:hidden!important;display:block!important;';stage.appendChild(layer);}
-  const burst=document.createElement('div');burst.className='gt-live-candy-burst';burst.dataset.sequence=String(++burstSequence);burst.style.cssText='position:absolute!important;inset:0!important;z-index:2147483000!important;pointer-events:none!important;overflow:hidden!important;display:block!important;';
-  burst.setAttribute('aria-label','Süßigkeiten werden im LIVE-Stream angezeigt');
+  const burst=document.createElement('div');burst.className='gt-live-candy-burst';burst.dataset.sequence=String(++burstSequence);burst.setAttribute('aria-label','Süßigkeiten werden im LIVE-Stream angezeigt');
   const spread=[-16,0,16,8,-8,23,-23];
   for(let i=0;i<count;i++){
    const particle=document.createElement('span');particle.className='gt-candy-particle';particle.textContent=emoji;
    particle.style.left=(oldPositions[i]+spread[(i+burstSequence)%spread.length]*.4)+'%';particle.style.top=(62-(i%3)*8)+'%';particle.style.setProperty('--drift',drift[i]+'px');particle.style.setProperty('--delay',(i%3)*55+'ms');
-   particle.style.zIndex='2147483000';
    burst.appendChild(particle);
   }
   const caption=document.createElement('div');caption.className='gt-candy-caption';
   const sender=String(detail.username||'Community').slice(0,32);
   caption.textContent='🍬 '+sender+' sendet '+amount+'× '+emoji;
-  burst.appendChild(caption);layer.appendChild(burst);
-  window.setTimeout(()=>{if(burst.isConnected)burst.remove();if(layer.isConnected&&!layer.children.length)layer.remove();},2600);
-  return true;
+  burst.appendChild(caption);stage.appendChild(burst);
+  window.setTimeout(()=>{if(burst.isConnected)burst.remove();},2300);
  }
  document.addEventListener('gametik:candy-sent',event=>showCandyBurst(event.detail||{}));
  window.GameTikShowCandyBurst=showCandyBurst;
