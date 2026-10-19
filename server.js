@@ -170,6 +170,7 @@ const gifts = [];
 const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
+const candyFreeSpins = new Map();
 const stories = [];
 const adminBlockedUsers = new Set();
 // Friend requests are held in memory in this demo backend; use a database for persistence.
@@ -186,7 +187,7 @@ function snapshotPersistentState() {
     accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
-    candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()],
+    candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
   };
@@ -248,6 +249,7 @@ function applyPersistentState(d) {
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
   for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
   for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
+  for (const [k,v] of d.candyFreeSpins||[]) candyFreeSpins.set(k,v);
   for (const [k,v] of d.friendRequests||[]) friendRequests.set(k,v);
   for (const [k,v] of d.friendships||[]) friendships.set(k,new Set(v||[]));
   for (const id of d.adminBlockedUsers||[]) adminBlockedUsers.add(id);
@@ -960,7 +962,9 @@ app.post('/api/payments/paypal/create-order', auth, asyncRoute(async (req, res) 
   const giftName = String(req.body.gift || '').trim();
   const liveRoomId = req.body.liveRoomId == null ? null : String(req.body.liveRoomId);
   if (liveRoomId) { const liveRoom = liveRooms.get(liveRoomId); if (!liveRoom || liveRoom.status !== 'live') return res.status(404).json({ error: 'Der Live-Stream ist nicht mehr aktiv.' }); }
-  const product = giftCatalog[giftName];
+  const premiumMatch = /^GAMETIK-GIFT-(\d{1,4})$/.exec(giftName);
+  const premiumPrice = premiumMatch ? Number(premiumMatch[1]) : 0;
+  const product = giftCatalog[giftName] || (premiumPrice >= 5 && premiumPrice <= 1000 && premiumPrice % 5 === 0 ? { price: premiumPrice.toFixed(2), label: `GAMETIK 3D-Premium-Geschenk · ${premiumPrice} EUR` } : null);
   if (!product) return res.status(400).json({ error: 'Bitte ein gültiges Geschenk auswählen.' });
 
   const currency = String(process.env.PAYPAL_CURRENCY || 'EUR').toUpperCase();
@@ -1086,14 +1090,29 @@ app.post('/api/candy/claim', auth, (req, res) => {
 });
 app.post('/api/candy/spin', auth, (req, res) => {
   const id = String(req.user.id), now = Date.now(), last = Number(candySpinCooldowns.get(id) || 0);
-  if (now - last < 8000) return res.status(429).json({ error: 'Bitte warte kurz vor dem nächsten kostenlosen Dreh.', balance: candyBalance(id), waitMs: 8000 - (now-last) });
+  if (now - last < 8000) return res.status(429).json({ error: 'Bitte warte kurz vor dem nächsten Dreh.', balance: candyBalance(id), waitMs: 8000 - (now-last) });
+  const freeSpins = Math.max(0, Number(candyFreeSpins.get(id) || 0));
+  const balance = candyBalance(id);
+  if (freeSpins <= 0 && balance < 1) return res.status(400).json({ error: 'Du brauchst 1 kostenlose Süßigkeit pro Runde. Hole zuerst deine Gratis-Süßigkeiten ab.', balance, freeSpins });
   candySpinCooldowns.set(id, now);
-  // Free entertainment only; no purchased credits, deposits, prizes with cash value, or cash-out.
-  const rewards = [0, 1, 2, 3, 5], weights = [15, 35, 25, 18, 7];
-  let roll = Math.random()*weights.reduce((a,b)=>a+b,0), reward = 0;
-  for (let i=0;i<weights.length;i++) { roll -= weights[i]; if (roll < 0) { reward = rewards[i]; break; } }
+  if (freeSpins > 0) candyFreeSpins.set(id, freeSpins - 1);
+  else candyBalances.set(id, balance - 1);
+  // Five reels × three rows. GameTik logo scatters anywhere; 3+ award 10 free spins.
+  const symbols = ['🥷','⚔️','🔷','🤖','🛡️','👾','⚡'];
+  const grid = Array.from({length:15}, () => symbols[Math.floor(Math.random()*symbols.length)]);
+  const logoCount = Math.random() < 0.14 ? 3 + Math.floor(Math.random()*2) : (Math.random() < 0.1 ? 2 : 0);
+  const positions = new Set();
+  while (positions.size < logoCount) positions.add(Math.floor(Math.random()*15));
+  positions.forEach(index => { grid[index] = 'GAMETIK'; });
+  let reward = 0;
+  if (logoCount >= 3) { candyFreeSpins.set(id, Math.min(100, Number(candyFreeSpins.get(id)||0) + 10)); }
+  else {
+    const counts = new Map(); grid.filter(x=>x!=='GAMETIK').forEach(x=>counts.set(x,(counts.get(x)||0)+1));
+    const match = Math.max(0,...counts.values());
+    if (match >= 5) reward = 5; else if (match >= 4) reward = 3; else if (match >= 3) reward = 1;
+  }
   candyBalances.set(id, candyBalance(id) + reward);
-  res.json({ ok: true, reward, balance: candyBalance(id), symbols: reward >= 5 ? ['🍬','🍬','🍬'] : reward >= 3 ? ['🍭','🍬','🍭'] : reward ? ['🍬','🍭','🍬'] : ['🍒','🍋','🍇'] });
+  res.json({ ok: true, reward, balance: candyBalance(id), symbols: grid, logoCount, bonus: logoCount >= 3, freeSpins: Math.max(0,Number(candyFreeSpins.get(id)||0)), roundCost: freeSpins > 0 ? 0 : 1, note: 'Nur kostenlose virtuelle Süßigkeiten; kein Geldeinsatz und keine Auszahlung.' });
 });
 app.post('/api/candy/gift', auth, (req, res) => {
   const roomId = String(req.body.liveRoomId || ''), amount = Math.max(1, Math.min(20, Math.floor(Number(req.body.amount) || 1)));

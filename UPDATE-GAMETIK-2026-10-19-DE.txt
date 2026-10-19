@@ -1,0 +1,21 @@
+GameTik – Sammelupdate vom 19.10.2026
+
+Enthaltene UI- und Spielanpassungen:
+- Kompakter Einstellungen-Button statt des breiten Konto-/PayPal-/Admin-Streifens.
+- Konto erstellen/Anmelden als eigener Eintrag bei der Profilnavigation.
+- PayPal & Geschenke sowie Admin Login im Einstellungsmenü.
+- Controller-Schaltflächen öffnen ein GameTik-Spielemenü mit der bestehenden CyberNinja Battle Arena 2.8.2.
+- Kamera-/Videokamera-Kacheln mit metallischer, futuristischer Geräteoptik; Aufnahmefunktionen bleiben an den vorhandenen Bedienelementen.
+- Story-Kreisleiste im Posteingang im GameTik-Neonstil.
+- Bestehende kostenlosen Süßigkeiten und bezahlten LIVE-Geschenke nutzen weiterhin die 3D-Geschenk-Animation im Stream.
+- 200 Premium-Geschenkstufen von 5 EUR bis 1.000 EUR in 5-EUR-Schritten, auch im LIVE-Bereich auswählbar. Preise werden serverseitig geprüft und an PayPal übergeben.
+- Süßigkeiten-Automat: 5 Walzen × 3 Symbole; GameTik-Logo mit Schriftzug als Streu-Bonus, mindestens 3 Logos lösen 10 Freispiele aus. Eine Runde kostet eine kostenlose Süßigkeit; Freispiele kosten keine Süßigkeit. Gewinne werden nur als kostenlose Süßigkeiten gutgeschrieben. Keine Auszahlung.
+- Freispiele werden im vorhandenen persistenten Zustands-Snapshot mitgespeichert.
+
+Prüfung:
+- `npm run check` erfolgreich (41 Kernprüfungen und 7 Updateprüfungen).
+- Inline-JavaScript in index.html, paypal.html und battle-arena.html auf Syntax geprüft.
+- ZIP-Integrität wird nach Erstellung geprüft.
+- Kein echter Browser-/Render-/PayPal-Live-Kauf durchgeführt. Zahlungs- und Live-Verhalten muss nach dem Upload in der bereitgestellten Umgebung getestet werden.
+
+Wichtig: Die 200 Preisstufen sind im Katalog angelegt. Die 3D-Animation verwendet pro Preisbereich ein vorhandenes prozedurales 3D-Modell; es wurden nicht 200 separat modellierte 3D-Assets erstellt.
