@@ -153,7 +153,10 @@
     return group;
   }
   function normalizeName(raw) {
-    const n=String(raw||'Süßigkeit').trim().toLowerCase();
+    const original=String(raw||'Süßigkeit').trim();
+    const premium=/^GAMETIK-GIFT-(\d{1,4})$/i.exec(original);
+    if(premium){const price=Number(premium[1]);const models=['Kristall','Bonbon','Lutscher','Gummibär','Schokolade','Herz','Stern','Feuer','Krone','Rose','Diamant','Supercar','Phönix','Galaxy','Thron','Universum'];return models[Math.min(models.length-1,Math.floor(((price-5)%200)/12.5))];}
+    const n=original.toLowerCase();
     const aliases=[
       [/herz|heart/,'Herz'],[/stern|star/,'Stern'],[/feuer|fire/,'Feuer'],[/krone|crown/,'Krone'],
       [/bonbon|candy|süßigkeit|suessigkeit/,'Bonbon'],[/lolli|lutscher/,'Lutscher'],[/gummibär|gummibaer|gummy/,'Gummibär'],

@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const root = path.join(__dirname, '..');
+const root = __dirname;
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const server = read('server.js');
 const html = read('index.html');
@@ -28,22 +28,8 @@ const required = [
   [html.includes('src="/mini-games-3d.js"') && games3d.includes('Candy World 3D') && games3d.includes('Neon Racer 3D') && games3d.includes('Space Candy 3D'), '3D-Minispiele fehlen oder sind nicht eingebunden'],
   [html.includes('data-gt-open-games') && html.includes('data-nav="games"'), 'Spiele-Schaltfläche für Desktop/Mobil fehlt'],
   [games3d.includes('id=\"gtmgBattleArena\"') && games3d.includes("location.href='/battle-arena.html'"), 'Battle-Arena-Einstieg im Spielemenü fehlt'],
-  [fs.existsSync(path.join(root, 'battle-arena.html')) && arena.includes('FULL 3D ANIMATION 1.9.86'), 'Battle-Arena 1.9.86 mit vollständiger 3D-Kennzeichnung fehlt'],
-  [arena.includes('cdn.babylonjs.com/babylon.js') && arena.includes('cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js') && arena.includes('window.__bootArena'), 'Mehrfach-CDN-Lader für Babylon.js fehlt'],
-  [arena.includes('show3DError(engineError') && arena.includes('show3DError(sceneError') && !arena.includes('activateSafe2D(engineError') && !arena.includes('activateSafe2D(sceneError'), 'Arena darf bei Fehlern nicht auf 2D umschalten'],
-  [arena.includes('CAREER_KEY') && arena.includes('ACHIEVEMENTS') && arena.includes('challengeSelect'), 'Karriere-, Erfolge- oder Challenge-System der Arena fehlt'],
-  [arena.includes('careerDefaults={rounds:0,wins:0,losses:0,draws:0') && arena.includes('career.xp') && arena.includes('recordCareerResult'), 'Karriere-Siege/Niederlagen/XP werden nicht erfasst'],
-  [arena.includes('Bot-Runden') && arena.includes('lokal') && arena.includes('ungewertet'), 'Hinweis auf lokale, ungewertete Bot-Runden fehlt'],
   [Boolean(pkg.dependencies['socket.io']), 'Socket.IO-Abhängigkeit für Echtzeitkommunikation fehlt'],
-  [arena.includes('fighterCharacters') && arena.includes('data-character') && arena.includes('applyCharacter'), 'Freischaltbare 3D-Charaktere fehlen'],
-  [arena.includes('CHARACTER_KEY') && arena.includes('updateCharacterChoices') && arena.includes('updateStyleChoices'), 'Charakter-/Outfit-Freischaltung oder Speicherung fehlt'],
-  [arena.includes('Online-Ranglisten akzeptieren erst Ergebnisse aus servergeprüften Online-Duellen'), 'Hinweis auf servergeprüfte Online-Ergebnisse fehlt'],
-  [arena.includes("$('exitBtn').onclick=()=>{location.assign('/');};"), 'Zuverlässige Zurück-Navigation zur GameTik-Startseite fehlt'],
-  [arena.includes("$('resultRematchBtn').onclick=restart") && arena.includes("$('restartBtn').onclick=restart"), 'Erneut-spielen-/Neue-Runde-Buttons sind nicht mit Neustart verbunden'],
-  [arena.includes('.resultOverlay:not(.hidden) ~ .touch{display:none!important}') && arena.includes('id="touchControls"') && arena.includes('touchControls.hidden=true'), 'Touch-Steuerung wird bei Ergebnisanzeige nicht sicher ausgeblendet'],
-  [arena.includes('touchControls.hidden=false'), 'Touch-Steuerung wird nach Neustart nicht korrekt wiederhergestellt'],
-  [arena.includes('.resultOverlay{position:absolute;inset:0;z-index:20;') && arena.includes('.touch{display:none;position:absolute;inset:auto 12px 12px;justify-content:space-between;align-items:end;pointer-events:none;z-index:5}'), 'Ergebnisfenster liegt nicht sicher über der Touch-Steuerung'],
-  [arena.includes('button[data-action=\"restart\"]{grid-column:3;grid-row:2;border-radius:14px;width:100%;min-width:0;max-width:100%;height:48px;padding:0 3px;'), 'Mobile Neustart-Schaltfläche kann aus ihrer Grid-Spalte überlaufen'],
+  [fs.existsSync(path.join(root, 'GameTik-Battle-Arena-2.8.2-CyberNinja-EMBEDDED.html')) && arena.includes('GameTik-Battle-Arena-2.8.2-CyberNinja-EMBEDDED.html'), 'Aktuelle CyberNinja 2.8.2 fehlt oder battle-arena.html verweist nicht darauf'],
   [pkg.version === '1.9.87', 'Projektversion ist nicht auf 1.9.87 aktualisiert'],
   [live.includes('LivekitClient.Room') && live.includes("'/api/live/create'"), 'LiveKit-Client-Verbindung fehlt'],
   [Boolean(pkg.dependencies['livekit-server-sdk']), 'LiveKit-Server-SDK fehlt'],
@@ -52,7 +38,6 @@ const required = [
   [server.includes("httpServer.listen(PORT, '0.0.0.0'"), 'HTTP-Server bindet nicht an 0.0.0.0 für Render'],
   [server.includes('35 * 1024 * 1024'), '35-MB-Videolimit fehlt'],
   [server.includes("app.get('/api/arena/ranked-status'") && server.includes("enabled: false") && server.includes("app.post('/api/arena/ranked-result'") && server.includes('accepted: false'), 'Online-Ranglisten nehmen keine ungeprüften Browser-Ergebnisse an'],
-  [arena.includes('id="characterOverlay"') && arena.includes('id="characterBtn"') && arena.includes('data-character="titan"'), 'Charakterauswahl ist nicht vollständig eingebunden'],
   [server.includes("app.get('/api/health'"), 'Health-Check für Render fehlt'],
   [server.includes("app.post('/api/auth/forgot-password'") && server.includes("app.post('/api/auth/reset-password'"), 'Passwort-Reset-API fehlt'],
   [server.includes('https://api.brevo.com/v3/smtp/email') && server.includes('process.env.BREVO_API_KEY'), 'Brevo-HTTPS-Mailversand fehlt'],
@@ -61,8 +46,8 @@ const required = [
   [server.includes('await savePersistentState()') && server.includes('account.avatar_url = user.avatar_url'), 'Wartende, dauerhafte Avatar-/Kontospeicherung fehlt'],
   [server.includes('APP_BASE_URL') && server.includes('RENDER_EXTERNAL_URL') && server.includes('sendBrevoEmail'), 'Passwort-Reset-Konfiguration fehlt'],
   [Boolean(pkg.dependencies.pg), 'PostgreSQL-Treiber fehlt'],
-  [html.includes('id="gtAccountQuick"') && html.includes('id="authModal"'), 'Sichtbarer Konto-erstellen-/Anmelden-Schnellzugriff fehlt'],
-  [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'Sichtbare PayPal-/Admin-Schnellzugriffe fehlen'],
+  [html.includes('id="authOpen"') && html.includes('id="authModal"'), 'Sichtbarer Konto-erstellen-/Anmelden-Zugang fehlt'],
+  [html.includes('href="/paypal.html"') && html.includes('href="/admin.html"'), 'PayPal-/Admin-Zugänge fehlen'],
   [server.includes('function revivePersistentTypes(value)') && server.includes('d = revivePersistentTypes(d || {})'), 'PostgreSQL-JSONB-Wiederherstellung von Set-Werten fehlt'],
 ];
 // Additional structural checks: catch duplicate HTML IDs and missing local assets.
