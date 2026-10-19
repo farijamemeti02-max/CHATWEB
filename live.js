@@ -73,29 +73,53 @@
     $('liveChatForm')?.classList.remove('hidden');
     document.querySelector('#liveChatDock .gt-live-chat-heading')?.classList.remove('hidden');
   }
+  function openLiveUserProfile(userId) {
+    const id=String(userId||'').trim();
+    if(!id || id.startsWith('guest-')) return false;
+    if(typeof window.GameTikOpenUserProfile==='function') return window.GameTikOpenUserProfile(id);
+    return false;
+  }
   function bindLiveProfileTap() {
     const avatar = document.querySelector('#gtLiveProfilePill .gt-live-profile-avatar');
-    if (!avatar || avatar.dataset.profileTapBound === '1') return;
-    avatar.dataset.profileTapBound = '1';
-    avatar.setAttribute('role','button'); avatar.setAttribute('tabindex','0'); avatar.setAttribute('aria-label','Profil des Live-Streamers im unteren Bereich öffnen');
-    avatar.addEventListener('click', showInlineStreamerProfile);
-    avatar.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showInlineStreamerProfile(); } });
+    const name = document.querySelector('#gtLiveProfilePill .gt-live-profile-copy');
+    const pill = document.getElementById('gtLiveProfilePill');
+    const open = event => {
+      if(event?.target?.closest('#gtLiveFollowButton')) return;
+      if(!openLiveUserProfile(currentStream?.hostId)) showInlineStreamerProfile();
+    };
+    [avatar,name].forEach(target=>{
+      if(!target || target.dataset.profileTapBound==='1') return;
+      target.dataset.profileTapBound='1'; target.setAttribute('role','button'); target.setAttribute('tabindex','0');
+      target.setAttribute('aria-label','Vollständiges Profil des Streamers öffnen'); target.style.cursor='pointer';
+      target.addEventListener('click',open);
+      target.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open(event);}});
+    });
+    // A tap anywhere on the streamer pill (except Follow) also opens the full profile.
+    if(pill && pill.dataset.profilePillBound!=='1'){
+      pill.dataset.profilePillBound='1';
+      pill.addEventListener('click',event=>{if(event.target.closest('#gtLiveFollowButton')||event.target.closest('.gt-live-profile-avatar')||event.target.closest('.gt-live-profile-copy'))return;open(event);});
+    }
   }
 
-  function chatLine(username, body, time = new Date().toISOString(), gift = false) {
+  function liveUserLabel(username, userId) {
+    const id=String(userId||'').trim();
+    if(id && !id.startsWith('guest-')) return `<button type="button" class="gt-live-user-link" data-open-user-profile="${esc(id)}" aria-label="Vollständiges Profil von ${esc(username)} öffnen">${esc(username)}</button>`;
+    return `<b>${esc(username)}</b>`;
+  }
+  function chatLine(username, body, time = new Date().toISOString(), gift = false, userId = '') {
     const el = document.createElement('div');
     el.style.cssText = 'padding:4px 2px;overflow-wrap:anywhere;' + (gift ? 'color:#f9a8d4;font-weight:700' : '');
-    el.innerHTML = `<b>${esc(username)}</b> ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
+    el.innerHTML = `${liveUserLabel(username,userId)} ${esc(body)} <span class="muted tiny">${new Date(time).toLocaleTimeString()}</span>`;
     const messages=$('liveChatMessages');
-    const wasNearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 36;
-    messages.appendChild(el);
-    // TikTok-LIVE-Stil: mit neuen Nachrichten automatisch unten bleiben, aber manuelles Lesen alter Nachrichten respektieren.
-    if (wasNearBottom) messages.scrollTop = messages.scrollHeight;
+    if(messages){
+      const wasNearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 36;
+      messages.appendChild(el);
+      if (wasNearBottom) messages.scrollTop = messages.scrollHeight;
+    }
     const overlay = $('liveOverlayChat');
     if (overlay) {
       const line = document.createElement('div'); line.className = 'live-overlay-line';
-      line.innerHTML = `<b>${esc(username)}</b> ${esc(body)}`;
-      // Keep a viewer who is reading older messages in place; otherwise follow the newest line.
+      line.innerHTML = `${liveUserLabel(username,userId)} ${esc(body)}`;
       const overlayNearBottom = overlay.scrollHeight - overlay.scrollTop - overlay.clientHeight < 36;
       overlay.appendChild(line);
       while (overlay.children.length > 80) overlay.firstElementChild.remove();
@@ -143,7 +167,13 @@
     if (!card) {
       card = document.createElement('div'); card.id = key;
       card.style.cssText = 'min-height:150px;background:#07070d;border:1px solid #38384e;border-radius:12px;overflow:hidden;position:relative';
-      const label = document.createElement('div'); label.textContent = participant.name || participant.identity; label.style.cssText = 'padding:6px 9px;background:#141421;font-size:12px';
+      const label = document.createElement('div'); label.style.cssText = 'padding:6px 9px;background:#141421;font-size:12px';
+      const participantName = participant.name || participant.identity;
+      if (participant.identity && !String(participant.identity).startsWith('guest-')) {
+        const profileButton=document.createElement('button'); profileButton.type='button'; profileButton.className='gt-live-user-link'; profileButton.textContent=participantName;
+        profileButton.setAttribute('data-open-user-profile',String(participant.identity)); profileButton.setAttribute('aria-label','Vollständiges Profil von '+participantName+' öffnen');
+        label.appendChild(profileButton);
+      } else label.textContent=participantName;
       card.appendChild(label); grid.appendChild(card);
     }
     const element = track.attach();
@@ -279,10 +309,10 @@
     if (window.io) {
       chatSocket = window.io(apiBase || undefined, {auth: localStorage.getItem('gametik_token') ? {token: localStorage.getItem('gametik_token')} : {guestLiveRoomId: currentStream.id}});
       chatSocket.on('connect', () => chatSocket.emit('live:join-chat', {roomId: currentStream.id}, result => { if (result?.error) liveStatus(result.error); }));
-      chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at); });
+      chatSocket.on('live:chat-message', message => { if (message.roomId === currentStream?.id) chatLine('@'+message.username, message.body, message.created_at, false, message.userId || message.user_id || ''); });
       chatSocket.on('live:gift', gift => {
         if (gift.roomId === currentStream?.id) {
-          chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true);
+          chatLine('🎁 @'+gift.username, 'hat '+gift.gift+' gesendet!'+(gift.points ? ` (+${gift.points} Punkte)` : ''), gift.created_at, true, gift.userId || gift.user_id || '');
           const isCandy = !!gift.free || /süßigkeit|süßigkeiten|bonbon|candy/i.test(String(gift.gift || ''));
           const localUsername = String(localStorage.getItem('gametik_username') || '').trim().toLocaleLowerCase();
           const senderUsername = String(gift.username || '').trim().toLocaleLowerCase();
@@ -325,7 +355,7 @@
     try {
       const data = await api('/api/live');
       $('liveConfigStatus').textContent = data.enabled ? 'Live-Dienst konfiguriert' : 'LiveKit-Zugangsdaten fehlen';
-      $('liveStreams').innerHTML = data.streams.length ? data.streams.map(stream => `<div class="item" style="background:#11111c;border:1px solid #38384e;border-radius:12px;padding:12px"><b>🔴 ${esc(stream.title)}</b><div class="muted tiny">@${esc(stream.hostUsername)}</div><button type="button" class="secondary live-join" data-id="${esc(stream.id)}" style="margin-top:8px">Live ansehen</button></div>`).join('') : '<div class="muted tiny">Aktuell ist niemand live. Starte den ersten Stream!</div>';
+      $('liveStreams').innerHTML = data.streams.length ? data.streams.map(stream => `<div class="item" style="background:#11111c;border:1px solid #38384e;border-radius:12px;padding:12px"><b>🔴 ${esc(stream.title)}</b><div class="muted tiny">von <button type="button" class="gt-live-user-link" data-open-user-profile="${esc(stream.hostId)}" aria-label="Vollständiges Profil von @${esc(stream.hostUsername)} öffnen">@${esc(stream.hostUsername)}</button></div><button type="button" class="secondary live-join" data-id="${esc(stream.id)}" style="margin-top:8px">Live ansehen</button></div>`).join('') : '<div class="muted tiny">Aktuell ist niemand live. Starte den ersten Stream!</div>';
     } catch (error) { $('liveConfigStatus').textContent = error.message; $('liveStreams').innerHTML = '<div class="muted tiny">Streams konnten nicht geladen werden.</div>'; }
   }
   $('liveStartBtn').addEventListener('click', async () => {
@@ -528,7 +558,8 @@
   }
   $('liveLikeBtn')?.addEventListener('click', sendLiveLike);
   $('liveVideoStage')?.addEventListener('click', event => {
-    if (event.target.closest('button, input, select, a, form')) return;
+    // Profile/avatar taps open profiles; never count those taps as video likes.
+    if (event.target.closest('button, input, select, a, form, [role="button"], [data-open-user-profile], #gtLiveProfilePill, .gt-live-profile-copy, .gt-live-profile-avatar')) return;
     sendLiveLike();
   });
   ['liveBeauty','liveBrightness','liveSaturation'].forEach(id => $(id)?.addEventListener('input', applyCameraEffect));

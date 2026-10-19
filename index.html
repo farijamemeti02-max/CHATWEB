@@ -994,6 +994,12 @@ header.top{position:relative!important;padding-right:12px!important;padding-bott
 @media(max-width:380px){.gt-access-shortcuts{top:60px!important}.gt-access-shortcuts .gt-access-btn{padding:5px 7px!important}}
 </style>
 
+
+<style id="gametik-live-clickable-profiles-v1">
+.gt-live-user-link{display:inline!important;width:auto!important;min-width:0!important;margin:0!important;padding:0 2px!important;border:0!important;border-radius:5px!important;background:transparent!important;color:#8beaff!important;font:inherit!important;font-weight:850!important;text-shadow:0 0 9px #24dfff44!important;box-shadow:none!important;text-decoration:underline;text-decoration-color:#ff28d277;text-underline-offset:2px;cursor:pointer!important;vertical-align:baseline}
+.gt-live-user-link:hover,.gt-live-user-link:focus-visible{color:#fff!important;background:#54266b88!important;outline:1px solid #24dfff88;outline-offset:2px}
+#gtLiveProfilePill .gt-live-profile-copy{cursor:pointer}
+</style>
 </head>
 <body>
 <header class="top">
@@ -1833,32 +1839,33 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 
 <style id="gametik-live-candy-stream-overlay-v1941">
 /* Free candies are shown directly on the video stream, whether or not a duel is active. */
-#gtLiveCandyBurst{position:absolute;z-index:40;inset:16% 3% 8%;pointer-events:none;overflow:visible;isolation:isolate}
-#gtLiveCandyBurst .gt-candy-particle{position:absolute;left:50%;top:66%;display:block;font-size:clamp(34px,9vw,60px);line-height:1;filter:drop-shadow(0 0 9px #ff38c8) drop-shadow(0 0 16px #21d4fd);transform:translate(-50%,0) scale(.35) rotate(-18deg);animation:gtCandyStreamFly1941 1.65s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:var(--delay,0ms)}
-#gtLiveCandyBurst .gt-candy-caption{position:absolute;left:50%;top:48%;max-width:90%;padding:8px 13px;border:1px solid #ffffffb8;border-radius:999px;background:linear-gradient(105deg,rgba(255,35,190,.96),rgba(127,70,255,.96),rgba(28,205,255,.96));box-shadow:0 5px 20px #0008,0 0 22px #ff38c866;color:#fff;font-size:clamp(12px,3.4vw,16px);font-weight:950;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-shadow:0 1px 3px #13051e;transform:translate(-50%,8px) scale(.78);opacity:0;animation:gtCandyStreamCaption1941 1.8s ease-out forwards}
+.gt-live-candy-burst{position:absolute!important;z-index:9000!important;inset:0!important;pointer-events:none!important;overflow:hidden!important;isolation:isolate!important;contain:layout style!important}
+.gt-live-candy-burst .gt-candy-particle{position:absolute;left:50%;top:66%;display:block;font-size:clamp(34px,9vw,60px);line-height:1;filter:drop-shadow(0 0 9px #ff38c8) drop-shadow(0 0 16px #21d4fd);transform:translate(-50%,0) scale(.35) rotate(-18deg);animation:gtCandyStreamFly1941 1.65s cubic-bezier(.2,.75,.25,1) forwards;animation-delay:var(--delay,0ms)}
+.gt-live-candy-burst .gt-candy-caption{position:absolute;left:50%;top:48%;max-width:90%;padding:8px 13px;border:1px solid #ffffffb8;border-radius:999px;background:linear-gradient(105deg,rgba(255,35,190,.98),rgba(127,70,255,.98),rgba(28,205,255,.98));box-shadow:0 5px 24px #000a,0 0 28px #ff38c899;color:#fff;font-size:clamp(12px,3.4vw,16px);font-weight:950;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-shadow:0 1px 3px #13051e;transform:translate(-50%,8px) scale(.78);opacity:0;animation:gtCandyStreamCaption1941 1.8s ease-out forwards}
 @keyframes gtCandyStreamFly1941{0%{opacity:0;transform:translate(-50%,10px) scale(.35) rotate(-18deg)}14%{opacity:1;transform:translate(-50%,0) scale(1.12) rotate(8deg)}45%{opacity:1;transform:translate(calc(-50% + var(--drift,0px)),-54px) scale(1) rotate(-7deg)}100%{opacity:0;transform:translate(calc(-50% + var(--drift,0px)),-180px) scale(.68) rotate(24deg)}}
 @keyframes gtCandyStreamCaption1941{0%{opacity:0;transform:translate(-50%,8px) scale(.78)}15%,68%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-14px) scale(.9)}}
 #gtLiveProfilePill .gt-live-profile-avatar{overflow:hidden!important;padding:0!important;object-fit:cover!important}
 #gtLiveProfilePill .gt-live-profile-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 #liveChatMessages{scroll-behavior:smooth;overscroll-behavior:contain}
-@media(prefers-reduced-motion:reduce){#gtLiveCandyBurst .gt-candy-particle{animation-duration:.9s}#gtLiveCandyBurst .gt-candy-caption{animation-duration:1s}}
+@media(prefers-reduced-motion:reduce){.gt-live-candy-burst .gt-candy-particle{animation-duration:.9s}.gt-live-candy-burst .gt-candy-caption{animation-duration:1s}}
 </style>
 <script id="gametik-live-candy-stream-overlay-v1941-script">
 (function(){
  'use strict';
  const oldPositions=[27,39,50,61,73,34,66];
  const drift=[-34,-18,0,19,36,-25,27];
+ let burstSequence=0;
  function showCandyBurst(detail){
   const stage=document.getElementById('liveVideoStage');
-  if(!stage)return;
-  const previous=document.getElementById('gtLiveCandyBurst');if(previous)previous.remove();
+  if(!stage || stage.classList.contains('hidden'))return;
   const emoji=String(detail.emoji||'🍬').slice(0,8);
   const amount=Math.max(1,Math.min(20,Number(detail.amount)||1));
   const count=Math.min(7,Math.max(3,Math.ceil(amount/2)+2));
-  const burst=document.createElement('div');burst.id='gtLiveCandyBurst';burst.setAttribute('aria-label','Süßigkeiten werden im LIVE-Stream angezeigt');
+  const burst=document.createElement('div');burst.className='gt-live-candy-burst';burst.dataset.sequence=String(++burstSequence);burst.setAttribute('aria-label','Süßigkeiten werden im LIVE-Stream angezeigt');
+  const spread=[-16,0,16,8,-8,23,-23];
   for(let i=0;i<count;i++){
    const particle=document.createElement('span');particle.className='gt-candy-particle';particle.textContent=emoji;
-   particle.style.left=oldPositions[i]+'%';particle.style.top=(65-(i%3)*7)+'%';particle.style.setProperty('--drift',drift[i]+'px');particle.style.setProperty('--delay',(i%3)*55+'ms');
+   particle.style.left=(oldPositions[i]+spread[(i+burstSequence)%spread.length]*.4)+'%';particle.style.top=(62-(i%3)*8)+'%';particle.style.setProperty('--drift',drift[i]+'px');particle.style.setProperty('--delay',(i%3)*55+'ms');
    burst.appendChild(particle);
   }
   const caption=document.createElement('div');caption.className='gt-candy-caption';

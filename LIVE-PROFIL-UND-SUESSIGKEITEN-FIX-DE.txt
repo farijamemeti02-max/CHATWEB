@@ -1,0 +1,14 @@
+GAMETIK LIVE – PROFIL- UND SÜSSIGKEITEN-KORREKTUR
+
+Änderungen:
+- Tipp auf das Profilbild oder den Namen des Streamers öffnet das vollständige bestehende Community-Profil.
+- Namen im Stream-Chat, in Teilnehmerkacheln und in der Streamliste öffnen ebenfalls das passende Profil, sofern es sich um ein registriertes Konto handelt.
+- Der Server sendet die Profil-ID zusammen mit Live-Chat- und Geschenkereignissen, damit Namen sicher dem richtigen Profil zugeordnet werden.
+- Süßigkeiten erscheinen als gut sichtbare 2D-Animation direkt über dem Videobild – auch ohne laufendes Duell.
+- Mehrere kurz nacheinander gesendete Süßigkeiten brechen die vorherige Animation nicht mehr ab.
+- Profil-Taps lösen nicht zusätzlich ein Stream-Like aus.
+
+Prüfung:
+- JavaScript-Syntaxprüfung bestanden.
+- Projektprüfungen und 8 automatisierte Tests bestanden.
+- Kein echter Browser-Live-Stream in dieser Arbeitsumgebung gestartet; Bereitstellung bitte im laufenden Stream gegenprüfen.
