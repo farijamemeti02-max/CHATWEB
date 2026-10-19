@@ -1,0 +1,10 @@
+GAMETIK – KORREKTUR PLANETEN-AUTOMAT / LIVE-3D-GESCHENKE
+
+- Automaten-Symbole sind keine Text-Platzhalter mehr: Erde, Mars, Jupiter, Saturn, Neptun, Uranus, Pluto, Sonne und Galaxie werden als plastisch beleuchtete Kugeln mit Oberflächendetails gerendert.
+- 5 Walzen und 3 sichtbare Reihen bleiben erhalten.
+- GameTik-Krone ist ein anklickbares Bonussymbol; 3 oder mehr Kronen/Logos geben 10 Freispiele.
+- Kronenüberraschung: einmaliges, serverseitig nutzergebundenes Token und gewichtete Zufallsbelohnung: 5 (40 %), 10 (30 %), 25 (18 %), 50 (9 %) oder 100 virtuelle Süßigkeiten (3 %).
+- 1 virtuelle Süßigkeit pro bezahlter Spielrunde; Freispiele kosten keine Süßigkeit. Keine Echtgeld-Auszahlung.
+- Der vorhandene gift-3d.js-Renderer bleibt aktiv und animiert Geschenke nur beim Senden/Empfangen; andere UI-Elemente werden durch diese Änderung nicht animiert.
+- CyberNinja Arena 2.8.2 bleibt enthalten. admin.html wurde bytegenau nicht verändert.
+- JavaScript-Syntax und ZIP-Integrität geprüft. Kein echter Browser-/Render-Live-Test in dieser Umgebung.

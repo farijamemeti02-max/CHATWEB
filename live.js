@@ -441,6 +441,7 @@
       }
       const d=await api('/api/candy/spin',{method:'POST',body:'{}'});
       window.GameTikCrownToken=d.crownToken||null;
+      if(d.bonus){const intro=$('gtFreeSpinIntro');if(intro)intro.hidden=false;}
       window.GameTikCasinoGrid?.drawGrid(d.symbols);
       if(reels){reels.style.transform='translateY(0)';reels.style.filter='none';reels.classList.toggle('gametik-reel-win',Boolean(d.bonus||d.reward));}
       const free=$('liveCasinoFreeSpins'); if(free)free.textContent=`Freispiele: ${Number(d.freeSpins||0)}`;
@@ -453,42 +454,30 @@
     const crown = event.target.closest('[data-crown-symbol]');
     if (!crown || crown.disabled) return;
     const token = window.GameTikCrownToken;
-    if (!token) {
-      $('liveCasinoResult').textContent = 'Dreh zuerst den Automaten, bis eine Krone erscheint.';
-      return;
-    }
-    crown.disabled = true;
-    const overlay = $('gtCrownRewardOverlay');
-    const title = $('gtCrownRewardTitle');
-    const text = $('gtCrownRewardText');
-    const close = $('gtCrownRewardClose');
-    if (overlay) overlay.hidden = false;
-    if (title) title.textContent = 'Die GameTik-Krone öffnet sich …';
-    if (text) text.textContent = 'Der Zufallsgenerator bestimmt deine Überraschung.';
-    if (close) close.textContent = 'Belohnung wird geöffnet …';
+    if (!token) { $('liveCasinoResult').textContent='Dreh zuerst den Automaten, bis eine Krone erscheint.'; return; }
+    crown.disabled=true;
+    const overlay=$('gtCrownRewardOverlay'), title=$('gtCrownRewardTitle'), text=$('gtCrownRewardText'), close=$('gtCrownRewardClose');
+    if(overlay) overlay.hidden=false;
+    if(title) title.textContent='Die GameTik-Krone öffnet sich …';
+    if(text) text.textContent='Der Zufallsgenerator bestimmt deine Überraschung.';
+    if(close) close.textContent='Belohnung wird geöffnet …';
     try {
-      await new Promise(resolve => setTimeout(resolve, 950));
-      const d = await api('/api/candy/crown-open', {method:'POST', body:JSON.stringify({crownToken:token})});
-      window.GameTikCrownToken = null;
-      if (title) title.textContent = `✨ +${d.reward} Süßigkeiten!`;
-      if (text) text.textContent = `Dein virtuelles Guthaben beträgt jetzt ${d.balance} 🍬.`;
-      if (close) close.textContent = 'Weiter spielen';
-      crown.classList.add('gt-crown-opened');
-      candyBalanceCache = Number(d.balance || 0);
-      await refreshCandyBalance();
-      playGameJingle('win');
-      $('liveCasinoResult').textContent = `👑 Kronen-Überraschung: +${d.reward} kostenlose Süßigkeit(en)!`;
-    } catch (error) {
-      if (overlay) overlay.hidden = true;
-      if (title) title.textContent = 'Krone konnte nicht geöffnet werden';
-      $('liveCasinoResult').textContent = error.message || 'Die Kronenbelohnung konnte nicht geladen werden.';
-      crown.disabled = false;
+      await new Promise(resolve=>setTimeout(resolve,1050));
+      const d=await api('/api/candy/crown-open',{method:'POST',body:JSON.stringify({crownToken:token})});
+      window.GameTikCrownToken=null;
+      if(title) title.textContent=`✨ +${d.reward} Süßigkeiten!`;
+      if(text) text.textContent=`Dein virtuelles Guthaben beträgt jetzt ${d.balance} 🍬.`;
+      if(close) close.textContent='Weiter spielen';
+      candyBalanceCache=Number(d.balance||0); await refreshCandyBalance(); playGameJingle('win');
+      $('liveCasinoResult').textContent=`👑 Kronen-Überraschung: +${d.reward} kostenlose Süßigkeit(en)!`;
+    } catch(error) {
+      if(overlay) overlay.hidden=true;
+      $('liveCasinoResult').textContent=error.message||'Die Kronenbelohnung konnte nicht geladen werden.';
+      crown.disabled=false;
     }
   });
-  $('gtCrownRewardClose')?.addEventListener('click', () => {
-    const overlay = $('gtCrownRewardOverlay');
-    if (overlay) overlay.hidden = true;
-  });
+  $('gtCrownRewardClose')?.addEventListener('click',()=>{const overlay=$('gtCrownRewardOverlay');if(overlay)overlay.hidden=true;});
+  $('gtFreeSpinStart')?.addEventListener('click',()=>{const intro=$('gtFreeSpinIntro');if(intro)intro.hidden=true;playGameJingle('win');});
   document.querySelectorAll('.live-candy-send').forEach(button => button.addEventListener('click', async () => {
     if (!currentStream) { $('liveGiftStatus').textContent='Öffne zuerst einen LIVE-Stream.'; return; }
     if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
