@@ -1,0 +1,9 @@
+GameTik – Navigationskorrektur und CyberNinja 2.8.2
+
+- Konto erstellen/Anmelden, PayPal & Geschenke und Admin Login sind als kompakte horizontal scrollbarere Buttons oben rechts angeordnet.
+- Der große blaue Shortcut-Streifen in der Profilansicht wurde entfernt; die Profilfläche bleibt freier.
+- battle-arena.html leitet direkt auf GameTik-Battle-Arena-2.8.2-CyberNinja-EMBEDDED.html weiter.
+- Veraltete CyberNinja-Dateien 2.8.0 und 2.8.1 sowie die alte gametik_cyberninja_arena.html wurden aus diesem Paket entfernt.
+- admin.html wurde nicht bearbeitet.
+
+Hinweis: Automatische Syntax-/Projektprüfungen sind kein Ersatz für einen Live-Test in Render und einem echten Smartphone-Browser.
