@@ -1,0 +1,14 @@
+GameTik – Live-Duell-Update 2026-10-20
+
+Umgesetzt:
+- Entfernt die redundante schwebende GameTik-Profil-Pille im Livebild.
+- Ergänzt rechts im Live-Aktionsmenü die Aktionen „Einladen“ und „Mixer“.
+- Einladungsaktion fragt den GameTik-Nutzernamen ab und öffnet das Teilen-Menü bzw. bietet den Einladungstext zum Kopieren an. Das direkte Versenden an einen bestimmten Nutzer erfordert einen vorhandenen privaten Nachrichten-/Einladungs-Endpunkt.
+- Fügt einen kurzen Neon-Blitz beim Start des Duells/Spiels hinzu.
+- Ergänzt einen Süßigkeiten-Fortschrittsbalken und zählt je 10 gesendete Süßigkeiten einen Punkt lokal im Livebild.
+- Bestehende Live-Geschenkereignisse werden an die Fortschrittsanzeige weitergereicht.
+
+Prüfung:
+- live.js mit node --check geprüft.
+- ZIP-Archiv wird nach Erstellung mit unzip -t geprüft.
+- Kein Browser-/Render-End-to-End-Test durchgeführt.
