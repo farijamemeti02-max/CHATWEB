@@ -1699,10 +1699,10 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   // Remove the oversized duplicate name pill that obscured the stream.
   document.getElementById('gtLiveProfilePill')?.remove();
   make('gtLiveInviteAction','＋','Einladen',()=>{const name=prompt('GameTik-Nutzername für die Duell-Einladung:');if(!name||!name.trim())return;const url=location.href;const message='⚔️ '+(localStorage.getItem('gametik_username')||'GameTik')+' lädt dich zum GameTik-LIVE-Duell ein! '+url; if(navigator.share){navigator.share({title:'GameTik-Duell',text:message,url}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(message).then(()=>alert('Einladung kopiert. Öffne den GameTik-Chat mit @'+name.trim()+' und füge sie ein.')).catch(()=>prompt('Einladung kopieren und an @'+name.trim()+' senden:',message));}else prompt('Einladung kopieren und an @'+name.trim()+' senden:',message);});
-  make('gtLiveMixerAction','🎙️','Mixer',()=>{const mixer=document.getElementById('liveAudioMixer');if(mixer){mixer.classList.remove('hidden');mixer.scrollIntoView({behavior:'smooth',block:'nearest'});}else document.getElementById('liveAudioToggle')?.click();});
+  make('gtLiveMixerAction','🎙️','Mixer',()=>{const mixer=document.getElementById('liveAudioMixer');if(!mixer){document.getElementById('liveAudioToggle')?.click();return;}const stage=document.getElementById('liveVideoStage');if(stage&&!stage.contains(mixer)){mixer.dataset.gtMixerDocked='1';stage.appendChild(mixer);}const open=mixer.classList.contains('hidden');mixer.classList.toggle('hidden',!open);mixer.classList.toggle('mixer-open',open);mixer.setAttribute('role','dialog');mixer.setAttribute('aria-label','Kompakter Live-Audio-Mixer');document.getElementById('liveAudioToggle')?.setAttribute('aria-expanded',String(open));const icon=document.getElementById('liveAudioToggleIcon');if(icon)icon.textContent=open?'−':'＋';});
   overlay.appendChild(rail);
   const gameToggle=document.createElement('button');gameToggle.type='button';gameToggle.id='gtLiveGameToggle';gameToggle.textContent='🎮 GameTik-Spiel';gameToggle.setAttribute('aria-expanded','false');
-  gameToggle.addEventListener('click',()=>{if(!gamePanel)return;const active=gameToggle.getAttribute('aria-expanded')!=='true';gameToggle.setAttribute('aria-expanded',String(active));gameToggle.textContent=active?'✕ Spiel schließen':'🎮 GameTik-Spiel';/* Keep the real video unobstructed: never place the full game controls over the stream. */gamePanel.style.display=active?'block':'none';stage.classList.toggle('gt-game-overlay-active',active);const duelHud=document.getElementById('liveDuelOverlay');if(duelHud)duelHud.style.display=active?'block':'';if(active){gamePanel.scrollIntoView({behavior:'smooth',block:'nearest'});}});
+  gameToggle.addEventListener('click',()=>{if(!gamePanel)return;const active=gameToggle.getAttribute('aria-expanded')!=='true';gameToggle.setAttribute('aria-expanded',String(active));gameToggle.textContent=active?'✕ Spiel schließen':'🎮 GameTik-Spiel';/* Keep the real video unobstructed: never place the full game controls over the stream. */gamePanel.style.display=active?'block':'none';stage.classList.toggle('gt-game-overlay-active',active);const duelHud=document.getElementById('liveDuelOverlay');if(duelHud)duelHud.style.display=active?'none':'';if(active){gamePanel.scrollIntoView({behavior:'smooth',block:'nearest'});}});
   overlay.appendChild(gameToggle);
   if(gamePanel){gamePanel.style.display='none';gamePanel.dataset.gtOriginalParent=gamePanel.parentElement?.id||'';}
   if(gifts&&!document.getElementById('gtLiveGiftDrawer')){
@@ -1965,17 +1965,67 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  const stage=document.getElementById('liveVideoStage');if(!stage)return;
  // Hide the redundant floating username badge seen in the supplied screenshot.
  const removeBadge=()=>{document.querySelectorAll('#liveVideoStage [class*="username"],#liveVideoStage [class*="user-name"],#liveVideoStage [data-testid*="username"]').forEach(el=>{if(el.id!=='gtLiveProfileName'&&el.textContent.trim()===(localStorage.getItem('gametik_username')||'TheGameTika2'))el.remove();});};removeBadge();new MutationObserver(removeBadge).observe(stage,{childList:true,subtree:true});
- let candy=0,points=0;
+ let candy=0,points=0,lastGiftKey='',lastGiftAt=0;
  const progress=document.createElement('div');progress.id='gtDuelCandyProgress';progress.innerHTML='<div>🍬 Duell-Punkte: <span id="gtDuelCandyPoints">0</span> · <span id="gtDuelCandyCount">0</span> Süßigkeiten</div><div class="track"><div class="fill" id="gtDuelCandyFill"></div></div>';stage.appendChild(progress);
  const update=()=>{document.getElementById('gtDuelCandyPoints').textContent=String(points);document.getElementById('gtDuelCandyCount').textContent=String(candy);document.getElementById('gtDuelCandyFill').style.width=(candy%10)*10+'%';};
  const flash=()=>{const old=stage.querySelector('.gt-duel-lightning');old?.remove();const el=document.createElement('div');el.className='gt-duel-lightning';el.setAttribute('aria-hidden','true');el.textContent='ϟ';stage.appendChild(el);setTimeout(()=>el.remove(),1000);};
- document.addEventListener('gametik:candy-sent',e=>{const n=Math.max(0,Number(e.detail?.amount)||0);if(!n)return;candy+=n;const next=Math.floor(candy/10);if(next>points){const gained=next-points;points=next;const score=document.getElementById('liveDuelHostScore');if(score)score.textContent=String(Number(score.textContent||0)+gained);}update();});
- // The actual gift event is broadcast by the existing live socket listener.
- document.addEventListener('gametik:live-gift-received',e=>{const n=Math.max(0,Number(e.detail?.quantity)||0);if(n){candy+=n;points=Math.floor(candy/10);update();}});
+ function countCandy(n,side='community',key=''){n=Math.max(0,Math.floor(Number(n)||0));if(!n)return;if(key&&key===lastGiftKey&&Date.now()-lastGiftAt<1800)return;if(key){lastGiftKey=key;lastGiftAt=Date.now();}const before=Math.floor(candy/10);candy+=n;const next=Math.floor(candy/10),gained=next-before;points=next;if(gained>0){const id=side==='host'?'liveDuelHostScore':'liveDuelCommunityScore';const score=document.getElementById(id);if(score)score.textContent=String(Number(score.textContent||0)+gained);const oldId=side==='host'?'liveGameHostPoints':'liveGameCommunityPoints';const oldScore=document.getElementById(oldId);if(oldScore)oldScore.textContent=String(Number(oldScore.textContent||0)+gained);}update();}
+ document.addEventListener('gametik:candy-sent',e=>{countCandy(e.detail?.amount,'community',e.detail?.giftId||'');});
+ // Count gifts received from the live socket; one point is awarded for each complete ten candies.
+ document.addEventListener('gametik:live-gift-received',e=>{const d=e.detail||{};countCandy(d.quantity,'community',d.giftId||'');});
  document.getElementById('gtLiveDuelStartButton')?.addEventListener('click',()=>{candy=0;points=0;update();flash();});
  document.getElementById('liveGameStart')?.addEventListener('click',flash);
  document.getElementById('gtLiveGameToggle')?.addEventListener('click',()=>{if(document.getElementById('gtLiveGameToggle')?.getAttribute('aria-expanded')==='true')flash();});
  update();
+})();
+</script>
+
+
+<style id="gametik-live-mixer-and-duel-repair-20261020">
+/* Compact mixer docked inside the live video; never pushes the chat down. */
+#liveVideoStage #liveAudioMixer[data-gt-mixer-docked="1"]{position:absolute!important;z-index:30!important;left:8px!important;right:8px!important;bottom:8px!important;width:auto!important;max-width:420px!important;max-height:48%!important;overflow:auto!important;margin:0 auto!important;padding:10px!important;border:1px solid #ff42c8!important;border-radius:15px!important;background:linear-gradient(135deg,rgba(15,12,29,.97),rgba(5,18,34,.97))!important;box-shadow:0 0 0 1px #24dfff44,0 0 20px #ff42c855,0 0 24px #24dfff33!important;backdrop-filter:blur(18px)!important;color:#fff!important}
+#liveAudioMixer[data-gt-mixer-docked="1"]>div:first-child{font-size:13px!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] .row{gap:8px!important;margin-top:7px!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] label{font-size:11px!important;min-width:0!important;flex:1 1 28%!important;color:#f5eaff!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] input[type=range]{appearance:none!important;height:5px!important;border-radius:99px!important;background:linear-gradient(90deg,#ff35c8,#9b5cff,#24dfff)!important;padding:0!important;margin:8px 0!important;accent-color:#24dfff!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] input[type=range]::-webkit-slider-thumb{appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid #24dfff;box-shadow:0 0 10px #24dfff,0 0 14px #ff35c8}
+#liveAudioMixer[data-gt-mixer-docked="1"] select,#liveAudioMixer[data-gt-mixer-docked="1"] button{font-size:11px!important;padding:7px 9px!important;border-radius:10px!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] #liveAudioStatus{font-size:10px!important;line-height:1.3!important;margin-top:5px!important}
+#liveAudioMixer[data-gt-mixer-docked="1"] .tiny{font-size:9px!important}
+#liveVideoStage #liveAudioMixer[data-gt-mixer-docked="1"]~*{pointer-events:auto}
+#liveVideoStage #liveAudioMixer[data-gt-mixer-docked="1"]:after{content:"PINK • CYAN STUDIO";display:block;font-size:8px;letter-spacing:1.5px;color:#8defff;text-align:right;margin-top:4px}
+#liveVideoStage #liveDuelCandyProgress{z-index:6!important;bottom:8px!important;max-width:calc(100% - 72px)!important}
+#liveVideoStage #liveDuelOverlay[style*="display: none"]{display:none!important}
+@media(max-width:600px){#liveVideoStage #liveAudioMixer[data-gt-mixer-docked="1"]{left:6px!important;right:48px!important;bottom:7px!important;max-width:none!important;max-height:44%!important;padding:8px!important}#liveAudioMixer[data-gt-mixer-docked="1"] .row{flex-wrap:wrap!important}#liveAudioMixer[data-gt-mixer-docked="1"] label{flex:1 1 42%!important}}
+</style>
+<script id="gametik-live-mixer-dock-repair-20261020">
+(()=>{
+ const mixer=document.getElementById('liveAudioMixer');
+ const stage=document.getElementById('liveVideoStage');
+ const toggle=document.getElementById('liveAudioToggle');
+ const railButton=document.getElementById('gtLiveMixerAction');
+ if(!mixer||!stage||mixer.dataset.gtDockRepair==='2')return;
+ mixer.dataset.gtDockRepair='2';
+ const icon=document.getElementById('liveAudioToggleIcon');
+ const dock=()=>{if(!stage.contains(mixer))stage.appendChild(mixer);mixer.dataset.gtMixerDocked='1';};
+ const setOpen=(open)=>{
+   dock();
+   mixer.classList.toggle('hidden',!open);
+   mixer.classList.toggle('mixer-open',open);
+   mixer.setAttribute('role','dialog');
+   mixer.setAttribute('aria-label','Kompakter Live-Audio-Mixer');
+   toggle?.setAttribute('aria-expanded',String(open));
+   railButton?.setAttribute('aria-expanded',String(open));
+   if(icon)icon.textContent=open?'−':'＋';
+ };
+ const flip=()=>setOpen(mixer.classList.contains('hidden'));
+ // Attach real listeners after both controls and the stream stage exist.
+ railButton?.addEventListener('click',(event)=>{event.preventDefault();event.stopPropagation();flip();});
+ toggle?.addEventListener('click',(event)=>{event.preventDefault();event.stopPropagation();flip();});
+ // The mixer must stay inside the video stage, but opening it must not require camera activation.
+ mixer.querySelector('[aria-label="Mixer schließen"]')?.addEventListener('click',()=>setOpen(false));
+ document.addEventListener('keydown',(event)=>{if(event.key==='Escape'&&!mixer.classList.contains('hidden'))setOpen(false);});
+ setOpen(false);
 })();
 </script>
 
@@ -2265,4 +2315,10 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoStage #liveOverlayChat::-webkit-scrollbar{width:4px!important}
 #liveVideoStage #liveOverlayChat::-webkit-scrollbar-thumb{background:rgba(83,231,255,.72)!important;border-radius:8px!important}
 @media(max-width:600px){#liveVideoStage #liveOverlayChat{left:6px!important;right:52px!important;bottom:40px!important;max-height:30%!important;gap:4px!important;padding-right:3px!important}#liveVideoStage #liveOverlayChat .live-overlay-line{font-size:12px!important;line-height:1.25!important;padding:4px 7px!important}}
+</style>
+
+<style id="gametik-live-mixer-click-fix-20261020">
+#gtLiveActionRail{pointer-events:auto!important;z-index:45!important}
+#gtLiveActionRail button{pointer-events:auto!important;position:relative;z-index:46!important;touch-action:manipulation}
+#liveVideoStage #liveAudioMixer[data-gt-mixer-docked="1"]{pointer-events:auto!important}
 </style>
