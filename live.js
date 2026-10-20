@@ -482,24 +482,19 @@
   });
   ['liveBeauty','liveBrightness','liveSaturation'].forEach(id => $(id)?.addEventListener('input', applyCameraEffect));
   async function shareLive() {
-    if (!currentStream) return;
-    const url = new URL(location.href); url.searchParams.set('live', currentStream.id); url.hash = 'feedView';
-    const shareData = {title: 'GameTik LIVE: ' + currentStream.title, text: `Schau @${currentStream.hostUsername} live auf GameTik!`, url: url.toString()};
-    try { if (navigator.share) await navigator.share(shareData); else { await navigator.clipboard.writeText(shareData.url); $('liveGiftStatus').textContent = 'Live-Link kopiert. Du kannst ihn jetzt teilen.'; } }
-    catch (error) { if (error.name !== 'AbortError') { try { await navigator.clipboard.writeText(shareData.url); $('liveGiftStatus').textContent = 'Live-Link kopiert.'; } catch { prompt('Diesen Live-Link kopieren:', shareData.url); } } }
+    const url = new URL(location.href);
+    if (currentStream) url.searchParams.set('live', currentStream.id);
+    url.hash = 'feedView';
+    window.gtShareUrl = url.toString();
+    if (typeof window.gtOpenInviteModal === 'function') window.gtOpenInviteModal('share');
+    else if ($('liveGiftStatus')) $('liveGiftStatus').textContent = 'Teilen-Fenster konnte nicht geladen werden. Bitte Seite neu laden.';
   }
   $('liveShareBtn')?.addEventListener('click', shareLive);
-  $('liveInviteBtn')?.addEventListener('click', async () => {
-    if (!currentStream) return;
-    const url = new URL(location.href); url.searchParams.set('live', currentStream.id);
-    const text = `Schau meinen GameTik-Livestream: ${url.toString()}`;
-    const encoded = encodeURIComponent(text); const options = [
-      ['WhatsApp', `https://wa.me/?text=${encoded}`], ['TikTok', 'https://www.tiktok.com/'], ['Instagram', 'https://www.instagram.com/']
-    ];
-    const status = $('liveGiftStatus');
-    if (navigator.share) { try { await navigator.share({title:'GameTik LIVE',text,url:url.toString()}); return; } catch(e) { if(e.name==='AbortError')return; } }
-    status.innerHTML = options.map(([label,href]) => `<a href="${href}" target="_blank" rel="noopener noreferrer" style="margin-right:12px">${label}</a>`).join('') + `<button type="button" class="secondary" id="copyLiveInvite">Link kopieren</button>`;
-    $('copyLiveInvite')?.addEventListener('click', async () => { try { await navigator.clipboard.writeText(url.toString()); status.textContent = 'Live-Link kopiert.'; } catch { prompt('Live-Link kopieren:',url.toString()); } });
+  // Use the in-app TikTok-style recipient sheet; never fall back to a browser prompt.
+  $('liveInviteBtn')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (typeof window.gtOpenInviteModal === 'function') window.gtOpenInviteModal('live-invite');
+    else if ($('liveGiftStatus')) $('liveGiftStatus').textContent = 'Einladungsfenster konnte nicht geladen werden. Bitte Seite neu laden.';
   });
   $('liveEffect')?.addEventListener('change', applyCameraEffect);
   $('liveQuality')?.addEventListener('change', () => { if (currentRole === 'host') $('liveGiftStatus').textContent = 'Die Qualitätsänderung gilt beim nächsten Start des Streams. 4K hängt von Kamera, Browser, Upload und LiveKit ab.'; });
