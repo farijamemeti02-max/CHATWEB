@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const root = __dirname;
+const root = path.join(__dirname, '..');
 const requiredCore = ['server.js', 'app.js', 'index.html', 'live.js', 'gift-3d.js', 'mini-games-3d.js', 'package.json'];
 const jsFiles = ['server.js', 'app.js', 'live.js', 'gift-3d.js', 'mini-games-3d.js'];
 let failed = false;
