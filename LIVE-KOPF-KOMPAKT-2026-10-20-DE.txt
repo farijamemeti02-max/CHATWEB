@@ -1,0 +1,5 @@
+GameTik LIVE – kompakter Kopf (20.10.2026)
+
+Änderung: Die LIVE-Kopfzeile, Statusbeschreibung, Stream-Bühne und Chatbox werden auf Desktop und Smartphone kompakter dargestellt. Bestehende IDs und Funktionen bleiben erhalten.
+
+Prüfung: HTML-Stilblock eingefügt; Archivintegrität und JavaScript-Syntax werden separat geprüft. Kein Live-Render-/Smartphone-Test durchgeführt.
