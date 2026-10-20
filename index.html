@@ -2049,6 +2049,52 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 (()=>{const modal=document.getElementById('gtInviteModal'),list=document.getElementById('gtInviteList'),search=document.getElementById('gtInviteSearch');if(!modal||!list)return;const own=(localStorage.getItem('gametik_username')||'TheGameTika2').replace(/^@/,'');const users=[{name:own,handle:'@'+own,kind:'Dein Konto',icon:'👑'}, {name:'GameTik Test 01',handle:'@GameTikBot01',kind:'Testkonto · Bot',icon:'🤖'}, {name:'GameTik Test 02',handle:'@GameTikBot02',kind:'Testkonto · Bot',icon:'🤖'}, {name:'GameTik Test 03',handle:'@GameTikBot03',kind:'Testkonto · Bot',icon:'🤖'}, {name:'GameTik Test 04',handle:'@GameTikBot04',kind:'Testkonto · Bot',icon:'🤖'}];const selected=new Set();function render(){const q=(search.value||'').toLowerCase().trim();list.innerHTML='';users.filter(u=>(u.name+' '+u.handle+' '+u.kind).toLowerCase().includes(q)).forEach(u=>{const row=document.createElement('label');row.className='gt-invite-user';const avatar=document.createElement('span');avatar.className='gt-invite-avatar';avatar.textContent=u.icon;const info=document.createElement('span');info.className='gt-invite-info';const name=document.createElement('strong');name.textContent=u.name;const sub=document.createElement('small');sub.textContent=u.handle+' · '+u.kind;info.append(name,sub);const cb=document.createElement('input');cb.type='checkbox';cb.className='gt-invite-check';cb.checked=selected.has(u.handle);cb.addEventListener('change',()=>{cb.checked?selected.add(u.handle):selected.delete(u.handle);});row.append(avatar,info,cb);list.append(row);});if(!list.children.length)list.innerHTML='<div class="empty">Keine passenden Nutzer gefunden.</div>';}function close(){modal.classList.remove('open');}window.gtOpenInviteModal=(mode='live-invite')=>{modal.dataset.mode=mode;document.getElementById('gtInviteTitle').textContent=mode==='share'?'Senden an':'Freunde einladen';document.getElementById('gtInviteSend').textContent=mode==='share'?'Teilen':'Einladung teilen';modal.classList.add('open');search.value='';selected.clear();render();search.focus({preventScroll:true});};document.getElementById('gtInviteClose').onclick=close;document.getElementById('gtInviteCancel').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal)close();});search.addEventListener('input',render);document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});document.getElementById('gtInviteSend').addEventListener('click',async()=>{if(!selected.size){const target=window.gtShareUrl||location.href;const msg=modal.dataset.mode==='share'?'Schau dir das auf GameTik an: '+target:'⚔️ '+own+' lädt dich zum GameTik-LIVE-Duell ein: '+target;try{if(navigator.share)await navigator.share({title:modal.dataset.mode==='share'?'GameTik':'GameTik-Duell',text:msg,url:target});else{await navigator.clipboard.writeText(msg);alert('Einladungslink kopiert. Du kannst ihn im GameTik-Chat teilen.');}}catch(e){}close();return;}const names=[...selected].join(', ');const target=window.gtShareUrl||location.href;const msg=modal.dataset.mode==='share'?'GameTik geteilt mit '+names+': '+target:'⚔️ '+own+' lädt '+names+' zum GameTik-LIVE-Duell ein! '+target;try{if(navigator.share)await navigator.share({title:modal.dataset.mode==='share'?'GameTik':'GameTik-Duell',text:msg,url:target});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(msg);alert('Einladung kopiert. Teile sie im GameTik-Chat mit: '+names);}else {const area=document.createElement('textarea');area.value=msg;area.setAttribute('readonly','');area.style.position='fixed';area.style.opacity='0';document.body.append(area);area.select();const copied=document.execCommand('copy');area.remove();if(!copied)throw new Error('Kopieren nicht verfügbar');}}catch(e){}close();});})();
 </script>
 
+
+<style id="gametik-live-truthmode-final-layout-20261020">
+/* Final override: stable mobile live header, no collisions with profile/likes. */
+#liveVideoStage{position:relative!important;isolation:isolate!important}
+#liveVideoStage #gtLiveProfilePill{position:absolute!important;top:9px!important;left:8px!important;right:auto!important;z-index:60!important;max-width:calc(100% - 150px)!important;min-width:0!important;display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+#liveVideoStage #gtLiveProfilePill .gt-live-profile-copy{min-width:0!important}
+#liveVideoStage #gtLiveProfilePill .gt-live-profile-copy b{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#liveVideoStage #gtDuelCandyProgress{position:absolute!important;top:62px!important;left:8px!important;right:68px!important;bottom:auto!important;transform:none!important;z-index:25!important;width:max-content!important;max-width:calc(100% - 84px)!important;box-sizing:border-box!important;margin:0!important}
+#liveVideoStage #gtDuelCandyProgress .gt-candy-summary{white-space:normal!important;flex-wrap:wrap!important;line-height:1.25!important}
+#liveVideoStage #gtDuelCandyProgress .track{display:none!important}
+#liveVideoStage #gtDuelCandyProgress.gt-candy-expanded{width:min(300px,calc(100% - 84px))!important;max-width:calc(100% - 84px)!important;white-space:normal!important}
+#liveVideoStage #gtDuelCandyProgress.gt-candy-expanded .track{display:block!important}
+#liveVideoStage .gt-live-metrics{z-index:58!important;right:66px!important;top:13px!important;max-width:calc(100% - 160px)!important;flex-wrap:nowrap!important}
+#liveVideoStage .gt-live-metric{white-space:nowrap!important}
+#liveVideoStage .gt-live-metric.gt-live-likes{max-width:74px!important;overflow:hidden!important}
+@media(max-width:600px){
+ #liveVideoStage #gtLiveProfilePill{top:8px!important;left:7px!important;max-width:calc(100% - 158px)!important;padding:4px!important;gap:5px!important}
+ #liveVideoStage #gtLiveProfilePill .gt-live-profile-avatar{width:35px!important;height:35px!important;flex-basis:35px!important}
+ #liveVideoStage #gtDuelCandyProgress{top:59px!important;left:7px!important;right:64px!important;max-width:calc(100% - 78px)!important;font-size:10px!important;padding:5px 7px!important}
+ #liveVideoStage #gtDuelCandyProgress.gt-candy-expanded{width:min(280px,calc(100% - 78px))!important;max-width:calc(100% - 78px)!important}
+ #liveVideoStage .gt-live-metrics{top:13px!important;right:60px!important;gap:4px!important;max-width:calc(100% - 158px)!important}
+ #liveVideoStage .gt-live-metric{font-size:9px!important;padding:5px 6px!important;min-height:26px!important}
+}
+</style>
+<script id="gametik-live-status-consistency-20261020">
+(()=>{
+ const stage=document.getElementById('liveVideoStage');
+ const status=document.getElementById('liveStageStatus');
+ if(!stage||!status)return;
+ function hasActiveLocalCamera(){
+   const videos=[...stage.querySelectorAll('video')];
+   return videos.some(v=>v.srcObject && [...(v.srcObject.getVideoTracks?.()||[])].some(t=>t.readyState==='live'&&t.enabled));
+ }
+ function normalizeStatus(){
+   const text=(status.textContent||'').trim().toLowerCase();
+   if(text.includes('live-stream nicht verfügbar')&&hasActiveLocalCamera()){
+     status.textContent='Du bist live. Kamera und Mikrofon sind aktiv.';
+     status.dataset.gtStatusCorrected='active-camera';
+   }
+ }
+ normalizeStatus();
+ new MutationObserver(()=>{normalizeStatus();}).observe(status,{childList:true,subtree:true,characterData:true});
+ new MutationObserver(()=>{normalizeStatus();}).observe(stage,{childList:true,subtree:true});
+})();
+</script>
+
 </body>
 
 
