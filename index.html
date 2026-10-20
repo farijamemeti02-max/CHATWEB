@@ -2365,3 +2365,44 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoStage.gt-duel-running #gtDuelCandyProgress{display:block!important}
 @media(max-width:600px){#gtLiveProfilePill{top:7px!important;left:6px!important;max-width:calc(100% - 100px)!important}#gtDuelHud{width:min(82%,340px)!important;bottom:48px!important}#gtDuelCandyProgress{top:7px!important;max-width:calc(100% - 128px)!important;font-size:10px!important;padding:6px 8px!important}}
 </style>
+
+<style id="gametik-live-profile-and-candy-layout-final-20261020">
+/* Keep profile in the upper-left and move the collapsible candy counter below the top metrics. */
+#liveVideoStage #gtLiveProfilePill{display:flex!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:8px!important;left:8px!important;right:auto!important;z-index:40!important;max-width:calc(100% - 150px)!important;pointer-events:auto!important}
+#liveVideoStage #gtLiveProfilePill *{pointer-events:auto!important}
+#liveVideoStage #gtDuelCandyProgress{top:54px!important;left:8px!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:22!important;max-width:calc(100% - 100px)!important;width:max-content!important;min-height:30px!important;padding:6px 9px!important;box-sizing:border-box!important}
+#liveVideoStage #gtDuelCandyProgress .track{display:none!important}
+#liveVideoStage #gtDuelCandyProgress.gt-candy-expanded{max-width:calc(100% - 100px)!important;width:min(320px,calc(100% - 100px))!important;white-space:normal!important}
+#liveVideoStage #gtDuelCandyProgress.gt-candy-expanded .track{display:block!important}
+#liveVideoStage #gtDuelCandyProgress .gt-candy-summary{white-space:normal!important;flex-wrap:wrap!important;line-height:1.25!important}
+@media(max-width:600px){#liveVideoStage #gtLiveProfilePill{top:7px!important;left:6px!important;max-width:calc(100% - 130px)!important}#liveVideoStage #gtDuelCandyProgress{top:50px!important;left:6px!important;max-width:calc(100% - 92px)!important;font-size:10px!important;padding:5px 7px!important}#liveVideoStage #gtDuelCandyProgress.gt-candy-expanded{width:min(290px,calc(100% - 92px))!important;max-width:calc(100% - 92px)!important}}
+</style>
+<script id="gametik-live-profile-fallback-20261020">
+(function(){
+ function ensureProfile(){
+  const stage=document.getElementById('liveVideoStage');
+  const overlay=document.getElementById('liveVideoOverlay');
+  if(!stage||!overlay)return;
+  let pill=document.getElementById('gtLiveProfilePill');
+  if(!pill){
+   pill=document.createElement('button');pill.type='button';pill.id='gtLiveProfilePill';pill.className='gt-live-profile-pill';
+   pill.innerHTML='<span class="gt-live-profile-avatar" aria-hidden="true">👤</span><span class="gt-live-profile-copy"><b id="gtLiveProfileName"></b></span>';
+   pill.style.cssText='position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:#0b0d19d9;color:#fff;border:1px solid #ff38c866;z-index:41;cursor:pointer;';
+   overlay.appendChild(pill);
+   pill.addEventListener('click',function(){
+    const profileNav=document.querySelector('[data-view="profile"], [data-nav="profile"], #profileNav, #profileBtn');
+    if(profileNav){profileNav.click();return;}
+    const username=localStorage.getItem('gametik_username')||localStorage.getItem('username')||'TheGameTika2';
+    const target=document.getElementById('profilePanel')||document.querySelector('[data-view-panel="profile"]');
+    if(target){target.classList.remove('hidden');target.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    if(typeof window.openProfile==='function')window.openProfile(username);
+   });
+  }
+  const username=localStorage.getItem('gametik_username')||localStorage.getItem('username')||'TheGameTika2';
+  const name=pill.querySelector('#gtLiveProfileName');if(name&&!name.textContent.trim())name.textContent='@'+username.replace(/^@/,'');
+  pill.style.setProperty('display','flex','important');pill.style.setProperty('visibility','visible','important');pill.style.setProperty('opacity','1','important');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureProfile,{once:true});else ensureProfile();
+ new MutationObserver(ensureProfile).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
