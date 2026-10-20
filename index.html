@@ -2452,3 +2452,16 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  new MutationObserver(ensureProfile).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="gametik-live-action-rail-lower-and-single-duel-20261021">
+/* Final mobile polish: lower the seven stream actions so the Like heart no longer crowds the top metrics. */
+#liveVideoStage #gtLiveActionRail{top:54%!important;transform:translateY(-30%)!important;right:7px!important;gap:10px!important;z-index:45!important}
+#liveVideoStage #gtLiveActionRail button{pointer-events:auto!important;touch-action:manipulation!important}
+@media(max-width:600px){#liveVideoStage #gtLiveActionRail{top:54%!important;right:5px!important;gap:9px!important;transform:translateY(-28%)!important}}
+/* Use the custom compact duel HUD as the only in-video start/score interface. */
+#liveVideoStage #liveDuelOverlay{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#liveVideoStage #liveVideoOverlay #gtLiveDuelStartButton{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#liveVideoStage #gtDuelHud{z-index:32!important}
+/* Prevent duplicate username pills while retaining the clickable profile pill. */
+#liveVideoStage #gtLiveProfilePill~[class*="username"],#liveVideoStage #gtLiveProfilePill~[class*="user-name"],#liveVideoStage [data-testid*="username"]{display:none!important}
+</style>
