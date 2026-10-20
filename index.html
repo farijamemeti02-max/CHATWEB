@@ -1233,7 +1233,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const hud=document.createElement('div');
   hud.id='gtDuelHud';
   hud.setAttribute('aria-live','polite');
-  hud.innerHTML='<div class="gt-duel-hud-card"><div class="gt-duel-hud-top"><span><i class="gt-duel-live-dot"></i>GAMETIK LIVE-DUELL</span><span class="gt-duel-clock" id="gtDuelHudClock">03:00</span></div><div class="gt-duel-scoreline"><div class="gt-duel-team"><div class="gt-duel-team-name">🎁 DU</div><div class="gt-duel-score" id="gtDuelHudHost">0</div></div><div class="gt-duel-vs" id="gtDuelHudVs">VS</div><div class="gt-duel-team community"><div class="gt-duel-team-name">🍬 GEGNER</div><div class="gt-duel-score" id="gtDuelHudCommunity">0</div></div></div><div class="gt-duel-progress" aria-label="Punktefortschritt"><div id="gtDuelHostFill3D"></div><div id="gtDuelCommunityFill3D"></div></div><button type="button" id="gtDuelEndButton" class="secondary" style="display:none;width:100%;margin-top:7px;padding:6px 9px;border:1px solid #ff42c8;color:#fff;background:#241026;font-size:11px">■ Duell beenden</button></div>';
+  hud.innerHTML='<div class="gt-duel-hud-card"><button type="button" id="gtDuelStartButton" class="gt-duel-start-button">▶ DUELL STARTEN</button><div class="gt-duel-hud-top"><span><i class="gt-duel-live-dot"></i>GAMETIK LIVE-DUELL</span><span class="gt-duel-clock" id="gtDuelHudClock">03:00</span></div><div class="gt-duel-scoreline"><div class="gt-duel-team"><div class="gt-duel-team-name">🎁 DU</div><div class="gt-duel-score" id="gtDuelHudHost">0</div></div><div class="gt-duel-vs" id="gtDuelHudVs">VS</div><div class="gt-duel-team community"><div class="gt-duel-team-name">🍬 GEGNER</div><div class="gt-duel-score" id="gtDuelHudCommunity">0</div></div></div><div class="gt-duel-progress" aria-label="Punktefortschritt"><div id="gtDuelHostFill3D"></div><div id="gtDuelCommunityFill3D"></div></div><button type="button" id="gtDuelEndButton" class="secondary" style="display:none;width:100%;margin-top:7px;padding:6px 9px;border:1px solid #ff42c8;color:#fff;background:#241026;font-size:11px">■ Duell beenden</button></div>';
   stage.appendChild(hud);
   const start=document.getElementById('liveGameStart');
   const overlayStart=document.getElementById('gtLiveDuelStartButton');
@@ -1269,6 +1269,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       /läuft|running|gestartet|runde läuft/i.test(result?.textContent||'');
     running=isRunning;
     const endButton=document.getElementById('gtDuelEndButton');if(endButton)endButton.style.display=isRunning?'block':'none';
+    const compactStart=document.getElementById('gtDuelStartButton');if(compactStart)compactStart.style.display=isRunning?'none':'block';
     hud.classList.toggle('gt-duel-visible',isRunning);
     stage.classList.toggle('gt-duel-running',isRunning);
     if(overlayStart){overlayStart.style.display=isRunning?'none':'block';overlayStart.setAttribute('aria-pressed',String(isRunning));}
@@ -1279,6 +1280,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(endedHost&&endedCommunity){endedHost.style.width='50%';endedCommunity.style.width='50%';}
     }
   }
+  document.getElementById('gtDuelStartButton')?.addEventListener('click',()=>{if(start&&!start.disabled)start.click();});
   document.getElementById('gtDuelEndButton')?.addEventListener('click',()=>{if(!running)return;if(!confirm('Möchtest du das Duell wirklich beenden?'))return;const r=document.getElementById('liveGameResult');if(stop){stop.classList.remove('hidden');stop.disabled=false;stop.click();}if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';if(start)start.disabled=false;const hud=document.getElementById('gtDuelHud');hud?.classList.remove('gt-duel-visible');stage.classList.remove('gt-duel-running');running=false;const end=document.getElementById('gtDuelEndButton');if(end)end.style.display='none';setTimeout(sync,150);setTimeout(()=>{if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';stage.classList.remove('gt-duel-running');hud?.classList.remove('gt-duel-visible');},500);});
   overlayStart?.addEventListener('click',()=>{if(!start||start.disabled)return;overlayStart.classList.remove('gt-starting');void overlayStart.offsetWidth;overlayStart.classList.add('gt-starting');start.click();setTimeout(()=>overlayStart?.classList.remove('gt-starting'),1000);});
   start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;hud.classList.remove('gt-duel-start-flash');void hud.offsetWidth;hud.classList.add('gt-duel-start-flash');setTimeout(()=>hud.classList.remove('gt-duel-start-flash'),1250);setTimeout(sync,80);setTimeout(sync,350);});
@@ -1698,8 +1700,9 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   make('gtLiveGiftAction','🎁','Geschenke',()=>{const drawer=document.getElementById('gtLiveGiftDrawer');const messages=document.getElementById('liveChatMessages');if(drawer){drawer.hidden=!drawer.hidden;const action=document.getElementById('gtLiveGiftAction');action?.setAttribute('aria-expanded',String(!drawer.hidden));if(!drawer.hidden&&messages){messages.scrollTop=messages.scrollHeight;}}});
   make('gtLiveGameAction','<svg viewBox="0 0 64 44" aria-hidden="true" focusable="false"><path d="M14 9h36c6 0 10 4 12 11l2 11c1 6-5 9-10 5L43 27H21L10 36C5 40-1 37 0 31l2-11C4 13 8 9 14 9Z" fill="#e8edf7" stroke="#8fa6d8" stroke-width="2"/><path d="M15 16v12M9 22h12" stroke="#1b2340" stroke-width="3" stroke-linecap="round"/><circle cx="47" cy="18" r="3" fill="#ff3c9e"/><circle cx="53" cy="24" r="3" fill="#20dfff"/><circle cx="43" cy="25" r="3" fill="#b18cff"/></svg>','Spiel',()=>document.getElementById('gtLiveGameToggle')?.click());
   make('gtLiveShareAction','↗','Teilen',()=>document.getElementById('liveShareBtn')?.click());
-  // Remove the oversized duplicate name pill that obscured the stream.
-  document.getElementById('gtLiveProfilePill')?.remove();
+  // Keep the live profile pill in the upper-left; it opens the streamer's profile.
+  const profilePill=document.getElementById('gtLiveProfilePill');
+  if(profilePill){profilePill.style.setProperty('display','flex','important');profilePill.style.setProperty('z-index','50','important');}
   make('gtLiveInviteAction','＋','Einladen',()=>{if(window.gtOpenInviteModal)window.gtOpenInviteModal();else document.getElementById('liveInviteBtn')?.click();});
   make('gtLiveMixerAction','🎙️','Mixer',()=>{const b=document.getElementById('gtLiveMixerAction');if(b)b.dispatchEvent(new CustomEvent('gametik-mixer-toggle',{bubbles:false,cancelable:true}));});
   overlay.appendChild(rail);
@@ -1950,7 +1953,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 
 
 <style id="gametik-duel-controls-followup-20261020">
-#gtLiveProfilePill{display:none!important}
+#gtLiveProfilePill{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:50!important}
 #gtLiveActionRail #gtLiveInviteAction{border-color:#ff42c8!important;color:#fff!important}
 #gtLiveActionRail #gtLiveMixerAction{border-color:#24dfff!important;color:#fff!important}
 .gt-duel-lightning{position:absolute;inset:0;z-index:12;display:grid;place-items:center;pointer-events:none;font-size:clamp(100px,32vw,240px);font-weight:1000;color:#fff;filter:drop-shadow(0 0 7px #fff) drop-shadow(0 0 18px #27eaff) drop-shadow(0 0 36px #ff35c9);transform-style:preserve-3d;text-shadow:5px 7px 0 #422077,0 0 12px #fff,0 0 30px #27eaff,0 0 65px #ff35c9;animation:gtDuelLightning .95s cubic-bezier(.15,.8,.2,1) forwards}
@@ -1968,7 +1971,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  // Hide the redundant floating username badge seen in the supplied screenshot.
  const removeBadge=()=>{document.querySelectorAll('#liveVideoStage [class*="username"],#liveVideoStage [class*="user-name"],#liveVideoStage [data-testid*="username"]').forEach(el=>{if(el.id!=='gtLiveProfileName'&&el.textContent.trim()===(localStorage.getItem('gametik_username')||'TheGameTika2'))el.remove();});};removeBadge();new MutationObserver(removeBadge).observe(stage,{childList:true,subtree:true});
  let candy=0,points=0,lastGiftKey='',lastGiftAt=0;
- const progress=document.createElement('div');progress.id='gtDuelCandyProgress';progress.innerHTML='<div>🍬 Duell-Punkte: <span id="gtDuelCandyPoints">0</span> · <span id="gtDuelCandyCount">0</span> Süßigkeiten</div><div class="track"><div class="fill" id="gtDuelCandyFill"></div></div>';stage.appendChild(progress);
+ const progress=document.createElement('button');progress.type='button';progress.id='gtDuelCandyProgress';progress.setAttribute('aria-expanded','false');progress.innerHTML='<span class="gt-candy-summary">🍬 <b>Duell-Punkte: <span id="gtDuelCandyPoints">0</span></b> · <span id="gtDuelCandyCount">0</span> Süßigkeiten <span class="gt-candy-chevron">＋</span></span><span class="track"><span class="fill" id="gtDuelCandyFill"></span></span>';progress.addEventListener('click',()=>{const open=progress.classList.toggle('gt-candy-expanded');progress.setAttribute('aria-expanded',String(open));});stage.appendChild(progress);
  const update=()=>{document.getElementById('gtDuelCandyPoints').textContent=String(points);document.getElementById('gtDuelCandyCount').textContent=String(candy);document.getElementById('gtDuelCandyFill').style.width=(candy%10)*10+'%';};
  const flash=()=>{const old=stage.querySelector('.gt-duel-lightning');old?.remove();const el=document.createElement('div');el.className='gt-duel-lightning';el.setAttribute('aria-hidden','true');el.textContent='ϟ';stage.appendChild(el);setTimeout(()=>el.remove(),1000);};
  function countCandy(n,side='community',key=''){n=Math.max(0,Math.floor(Number(n)||0));if(!n)return;if(key&&key===lastGiftKey&&Date.now()-lastGiftAt<1800)return;if(key){lastGiftKey=key;lastGiftAt=Date.now();}const before=Math.floor(candy/10);candy+=n;const next=Math.floor(candy/10),gained=next-before;points=next;if(gained>0){const id=side==='host'?'liveDuelHostScore':'liveDuelCommunityScore';const score=document.getElementById(id);if(score)score.textContent=String(Number(score.textContent||0)+gained);const oldId=side==='host'?'liveGameHostPoints':'liveGameCommunityPoints';const oldScore=document.getElementById(oldId);if(oldScore)oldScore.textContent=String(Number(oldScore.textContent||0)+gained);}update();}
@@ -2343,4 +2346,22 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 <style id="gametik-camera-3d-polish-20261020">
 .camera-action{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(125deg,#101629,#1d1230 48%,#0d2034)!important;border-color:#ff39c9!important;box-shadow:inset 0 1px 0 #ffffff25,0 0 0 1px #22ddff22,0 8px 24px #0008,0 0 18px #22ddff19!important;transform-style:preserve-3d}.camera-action:after{content:"";position:absolute;inset:-60% auto -60% -40%;width:35%;background:linear-gradient(90deg,transparent,#ffffff20,transparent);transform:rotate(22deg);animation:gtCameraSweep 5s ease-in-out infinite;pointer-events:none}.camera-action .camera-icon{font-size:28px!important;background:radial-gradient(circle at 30% 20%,#ffffff55,#24dfff22 30%,#ff31c833 68%,#0b1020)!important;border:1px solid #57eaff!important;box-shadow:inset 0 3px 7px #ffffff35,inset 0 -5px 8px #0009,0 0 12px #24dfff55,0 0 20px #ff31c833!important;animation:gtCameraFloat 3.2s ease-in-out infinite;transform:perspective(180px) rotateY(-8deg)}.camera-action:nth-child(2) .camera-icon{animation-delay:-1.6s}@keyframes gtCameraFloat{0%,100%{transform:perspective(180px) rotateY(-8deg) translateY(0) rotateZ(-2deg)}50%{transform:perspective(180px) rotateY(10deg) translateY(-3px) rotateZ(2deg)}}@keyframes gtCameraSweep{0%,70%,100%{left:-45%;opacity:0}35%{left:120%;opacity:1}}
 @media(prefers-reduced-motion:reduce){.camera-action:after,.camera-action .camera-icon{animation:none!important}}
+</style>
+
+<style id="gametik-live-profile-duel-layout-fix-20261020">
+/* Restore clickable streamer profile and keep duel controls clear of the action rail. */
+#gtLiveProfilePill{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;z-index:50!important;top:8px!important;left:8px!important;max-width:calc(100% - 135px)!important}
+#gtLiveProfilePill .gt-live-profile-avatar{cursor:pointer!important;pointer-events:auto!important}
+#gtDuelHud{z-index:30!important;left:50%!important;right:auto!important;bottom:54px!important;top:auto!important;width:min(78%,360px)!important;max-width:360px!important;transform:translateX(-50%)!important;pointer-events:auto!important}
+#gtDuelHud .gt-duel-hud-card{pointer-events:auto!important}
+#gtDuelStartButton{display:block;width:100%;margin:0 0 6px;padding:9px 12px;border:1px solid #ffffffa8;border-radius:10px;color:#fff;font-weight:900;background:linear-gradient(100deg,#ff2fc8,#8a55ff 52%,#22d8ff);box-shadow:0 0 12px #ff35c855,0 0 12px #22d8ff33;touch-action:manipulation}
+#gtDuelCandyProgress{position:absolute!important;top:8px!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%)!important;z-index:35!important;display:block;max-width:calc(100% - 140px)!important;width:max-content!important;min-width:0!important;padding:7px 10px!important;border:1px solid #a96bff!important;border-radius:999px!important;background:#090b19eF!important;color:#fff!important;font-size:11px!important;text-align:left!important;pointer-events:auto!important;box-shadow:0 0 12px #ff38c833,0 0 12px #21d4fd22!important;cursor:pointer!important}
+#gtDuelCandyProgress .gt-candy-summary{display:flex;align-items:center;gap:4px;white-space:nowrap}
+#gtDuelCandyProgress .gt-candy-chevron{margin-left:3px;color:#27dcff}
+#gtDuelCandyProgress .track{display:none!important;height:5px;margin-top:5px;background:#20283b;border-radius:99px;overflow:hidden}
+#gtDuelCandyProgress .fill{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff31c8,#25dfff);transition:width .35s ease}
+#gtDuelCandyProgress.gt-candy-expanded{border-radius:12px!important;white-space:normal!important}
+#gtDuelCandyProgress.gt-candy-expanded .track{display:block!important}
+#liveVideoStage.gt-duel-running #gtDuelCandyProgress{display:block!important}
+@media(max-width:600px){#gtLiveProfilePill{top:7px!important;left:6px!important;max-width:calc(100% - 100px)!important}#gtDuelHud{width:min(82%,340px)!important;bottom:48px!important}#gtDuelCandyProgress{top:7px!important;max-width:calc(100% - 128px)!important;font-size:10px!important;padding:6px 8px!important}}
 </style>
