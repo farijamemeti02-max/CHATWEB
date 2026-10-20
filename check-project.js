@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const root = path.join(__dirname, '..');
+const root = __dirname;
 const read = name => fs.readFileSync(path.join(root, name), 'utf8');
 const html = read('index.html'), server = read('server.js'), live = read('live.js'), paypal = read('paypal.html');
 const checks = [

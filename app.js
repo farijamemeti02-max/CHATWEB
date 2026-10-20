@@ -103,7 +103,14 @@
       $('socialProfileContent').innerHTML=`<div class="social-profile-hero">${avatar}<div><span class="muted tiny">GAMETIK COMMUNITY</span><h2 id="socialProfileTitle">@${esc(user.username)}</h2><p>${esc(user.bio||'Noch keine Biografie hinterlegt.')}</p></div></div><div class="social-profile-stats"><div><b>${Number(user.followers_count)||0}</b><span>Follower</span></div><div><b>${Number(user.following_count)||0}</b><span>Folgt</span></div><div><b>${Number(user.posts_count)||0}</b><span>Beiträge</span></div></div><div class="social-profile-actions">${actionButtons}</div><h3 class="social-profile-posts-title">Beiträge</h3><div class="social-profile-posts">${posts||(data.user.social_visibility!=='public'&&!data.is_self?'<div class="empty">Dieses Profil ist sichtbar, Beiträge sind jedoch privat.</div>':'<div class="empty">Noch keine öffentlichen Beiträge.</div>')}</div>`;
     } catch(error) { $('socialProfileContent').innerHTML=`<div class="empty">${esc(error.message)}</div>`; }
   }
-  document.addEventListener('click',e=>{const trigger=e.target.closest('[data-open-user-profile]');if(trigger){e.preventDefault();openSocialProfile(trigger.dataset.openUserProfile);}});
+  // Shared with LIVE: open the same complete profile used by search/feed/social cards.
+  window.GameTikOpenUserProfile = userId => {
+    const id=String(userId||'').trim();
+    if(!id || id.startsWith('guest-')) return false;
+    openSocialProfile(id);
+    return true;
+  };
+  document.addEventListener('click',e=>{const trigger=e.target.closest('[data-open-user-profile]');if(trigger){e.preventDefault();window.GameTikOpenUserProfile?.(trigger.dataset.openUserProfile);}});
 
   async function searchSocialUsers(){
     const q=$('userSearchInput')?.value.trim()||'';
