@@ -2511,3 +2511,79 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 <script id="gametik-chat-composer-focus-fix-20261021">
 (function(){function init(){const input=document.getElementById('liveChatInput');if(!input||input.dataset.gtFocusFix==='1')return;input.dataset.gtFocusFix='1';input.addEventListener('focus',()=>{setTimeout(()=>{input.scrollIntoView({block:'nearest',behavior:'smooth'});},180);});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();})();
 </script>
+
+
+<style id="gametik-live-chat-duel-real-fix-20261022">
+/* Keep live chat messages visible above the duel panel without changing the right action rail. */
+#liveVideoStage #liveOverlayChat{position:absolute!important;left:8px!important;right:52px!important;bottom:clamp(155px,22%,210px)!important;z-index:45!important;max-height:24%!important;overflow-y:auto!important;pointer-events:auto!important;}
+#liveVideoStage #liveOverlayChat .live-overlay-line{position:relative!important;z-index:46!important;display:block!important;max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#liveChatDock #liveChatMessages{position:relative!important;z-index:4!important;min-height:80px!important;max-height:150px!important;overflow-y:auto!important;scroll-margin-bottom:160px!important;}
+#liveChatDock #liveChatForm{position:relative!important;z-index:8!important;scroll-margin-bottom:180px!important;}
+#liveChatDock #liveChatInput{font-size:16px!important;scroll-margin-bottom:180px!important;}
+#liveVideoStage #gtDuelHud{z-index:30!important;}
+</style>
+<script id="gametik-live-chat-duel-real-fix-20261022">
+(function(){
+ function bind(){
+  const startBtn=document.getElementById('gtDuelStartButton');
+  if(startBtn && startBtn.dataset.gtRealStartFix!=='1'){
+   startBtn.dataset.gtRealStartFix='1';
+   startBtn.addEventListener('click',async function(ev){
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    const result=document.getElementById('liveGameResult');
+    const status=document.getElementById('liveGiftStatus');
+    const nativeStart=document.getElementById('liveGameStart');
+    if(typeof window.GameTikStartLiveDuel!=='function'){
+      if(result) result.textContent='Duell-Funktion wird geladen. Bitte kurz warten und erneut tippen.';
+      return;
+    }
+    startBtn.disabled=true; startBtn.textContent='⏳ DUELL STARTET …';
+    try{
+      if(nativeStart) nativeStart.disabled=false;
+      await window.GameTikStartLiveDuel();
+      setTimeout(()=>{
+       const stop=document.getElementById('liveGameStop');
+       const active=!!(stop && !stop.classList.contains('hidden'));
+       if(active){
+        startBtn.textContent='⏹ DUELL BEENDEN';
+        const hudEnd=document.getElementById('gtDuelEndButton'); if(hudEnd) hudEnd.style.display='block';
+       } else if(result && /Duell konnte nicht gestartet|Nur der Gastgeber|Bitte zuerst|Fehler|nicht gestartet/i.test(result.textContent||'')) {
+        if(status) status.textContent=result.textContent;
+        startBtn.textContent='▶ DUELL STARTEN';
+       } else {
+        startBtn.textContent='▶ DUELL STARTEN';
+       }
+      },350);
+    }catch(err){
+      const msg='Duell konnte nicht gestartet werden: '+(err?.message||'Unbekannter Fehler');
+      if(result)result.textContent=msg; if(status)status.textContent=msg;
+      startBtn.textContent='▶ DUELL STARTEN';
+    }finally{setTimeout(()=>{startBtn.disabled=false;},400);}
+   },true);
+  }
+  const input=document.getElementById('liveChatInput');
+  if(input && input.dataset.gtRealChatFix!=='1'){
+   input.dataset.gtRealChatFix='1';
+   const reveal=()=>setTimeout(()=>{
+    const dock=document.getElementById('liveChatDock');
+    const form=document.getElementById('liveChatForm');
+    (form||dock||input).scrollIntoView({block:'nearest',behavior:'smooth'});
+   },250);
+   input.addEventListener('focus',reveal);
+   input.addEventListener('click',reveal);
+  }
+  const form=document.getElementById('liveChatForm');
+  if(form && form.dataset.gtRealChatSubmitFix!=='1'){
+   form.dataset.gtRealChatSubmitFix='1';
+   form.addEventListener('submit',()=>{
+    const messages=document.getElementById('liveChatMessages');
+    const overlay=document.getElementById('liveOverlayChat');
+    if(messages) messages.style.scrollBehavior='smooth';
+    if(overlay){overlay.style.zIndex='45';overlay.style.bottom='clamp(155px,22%,210px)';}
+   },true);
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+ setTimeout(bind,700); setTimeout(bind,1800);
+})();
+</script>
