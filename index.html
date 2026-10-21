@@ -2065,6 +2065,17 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 })();
 </script>
 
+
+<style id="gametik-live-duel-centered-remove-extra-actions-20261021">
+/* Keep only the core live controls: Chat, Geschenke, Spiel, Einladen, Mixer, Like. */
+#liveVideoStage #gtLiveActionRail #gtLiveShareAction,
+#liveVideoStage #gtLiveActionRail #gtLiveFriendsAction{display:none!important;}
+/* Center the duel/game panel inside the video instead of clipping it off the left edge. */
+#liveVideoStage #liveGamePanel{position:absolute!important;left:50%!important;right:auto!important;top:auto!important;bottom:10px!important;transform:translateX(-50%)!important;width:min( min( calc(100% - 86px), 460px), 88%)!important;max-width:calc(100% - 86px)!important;margin:0!important;box-sizing:border-box!important;z-index:12!important;}
+#liveVideoStage #liveGamePanel>*{max-width:100%!important;box-sizing:border-box!important;}
+#liveVideoStage #liveDuelOverlay{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min( calc(100% - 86px), 460px)!important;max-width:calc(100% - 86px)!important;}
+@media(max-width:600px){#liveVideoStage #liveGamePanel{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:calc(100% - 82px)!important;max-width:calc(100% - 82px)!important;bottom:8px!important;}#liveVideoStage #liveDuelOverlay{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:calc(100% - 82px)!important;max-width:calc(100% - 82px)!important;}}
+</style>
 </body>
 
 
