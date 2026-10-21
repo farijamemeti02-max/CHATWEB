@@ -1272,7 +1272,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const compactStart=document.getElementById('gtDuelStartButton');if(compactStart)compactStart.style.display=isRunning?'none':'block';
     hud.classList.toggle('gt-duel-visible',isRunning);
     stage.classList.toggle('gt-duel-running',isRunning);
-    if(overlayStart){overlayStart.style.display=isRunning?'none':'block';overlayStart.setAttribute('aria-pressed',String(isRunning));}
+    if(overlayStart){const hostCanControl=(!!start&&!start.classList.contains('hidden'))||(!!stop&&!stop.classList.contains('hidden'));overlayStart.style.setProperty('display',hostCanControl?'block':'none','important');overlayStart.textContent=isRunning?'⏹ SPIEL BEENDEN':'▶ SPIEL STARTEN';overlayStart.setAttribute('aria-label',isRunning?'GameTik Duell beenden':'GameTik Duell starten');overlayStart.setAttribute('aria-pressed',String(isRunning));overlayStart.style.background=isRunning?'linear-gradient(115deg,#ff426f 0%,#a735ff 55%,#16cfff 100%)':'';}
     if(!isRunning&&/gewonnen|unentschieden|beendet|abgelaufen/i.test(result?.textContent||'')){
       hud.classList.add('gt-duel-visible');
       const endedHost=document.getElementById('gtDuelHostFill3D');
@@ -1282,7 +1282,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   document.getElementById('gtDuelStartButton')?.addEventListener('click',()=>{if(start&&!start.disabled)start.click();});
   document.getElementById('gtDuelEndButton')?.addEventListener('click',()=>{if(!running)return;if(!confirm('Möchtest du das Duell wirklich beenden?'))return;const r=document.getElementById('liveGameResult');if(stop){stop.classList.remove('hidden');stop.disabled=false;stop.click();}if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';if(start)start.disabled=false;const hud=document.getElementById('gtDuelHud');hud?.classList.remove('gt-duel-visible');stage.classList.remove('gt-duel-running');running=false;const end=document.getElementById('gtDuelEndButton');if(end)end.style.display='none';setTimeout(sync,150);setTimeout(()=>{if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';stage.classList.remove('gt-duel-running');hud?.classList.remove('gt-duel-visible');},500);});
-  overlayStart?.addEventListener('click',()=>{if(!start||start.disabled)return;overlayStart.classList.remove('gt-starting');void overlayStart.offsetWidth;overlayStart.classList.add('gt-starting');start.click();setTimeout(()=>overlayStart?.classList.remove('gt-starting'),1000);});
+  overlayStart?.addEventListener('click',()=>{if(!start)return;const canStop=!!stop&&!stop.classList.contains('hidden');if(running||canStop){if(canStop&&!stop.disabled)stop.click();return;}if(start.classList.contains('hidden')||start.disabled)return;overlayStart.classList.remove('gt-starting');void overlayStart.offsetWidth;overlayStart.classList.add('gt-starting');start.click();setTimeout(()=>overlayStart?.classList.remove('gt-starting'),1000);});
   start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;hud.classList.remove('gt-duel-start-flash');void hud.offsetWidth;hud.classList.add('gt-duel-start-flash');setTimeout(()=>hud.classList.remove('gt-duel-start-flash'),1250);setTimeout(sync,80);setTimeout(sync,350);});
   stop?.addEventListener('click',()=>setTimeout(sync,80));
   [timer,host,community,result,start,stop].forEach(el=>{if(el)new MutationObserver(sync).observe(el,{childList:true,subtree:true,characterData:true,attributes:true});});
@@ -1695,7 +1695,6 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   stage.dataset.gtImmersive='1';
   const rail=document.createElement('div');rail.id='gtLiveActionRail';rail.setAttribute('aria-label','LIVE-Aktionen');
   const make=(id,icon,label,action)=>{const b=document.createElement('button');b.type='button';b.id=id;b.setAttribute('aria-label',label);b.innerHTML='<span aria-hidden="true">'+icon+'</span><small>'+label+'</small>';b.addEventListener('click',action);rail.appendChild(b);return b;};
-  make('gtLiveLikeAction','♥','Like',()=>document.getElementById('liveLikeBtn')?.click()||stage.dispatchEvent(new CustomEvent('gametik-live-like',{bubbles:true})));
   make('gtLiveCommentAction','☰','Chat',()=>{chatInput?.focus({preventScroll:true});document.getElementById('liveChatDock')?.scrollIntoView({behavior:'smooth',block:'nearest'});});
   make('gtLiveGiftAction','🎁','Geschenke',()=>{const drawer=document.getElementById('gtLiveGiftDrawer');const messages=document.getElementById('liveChatMessages');if(drawer){drawer.hidden=!drawer.hidden;const action=document.getElementById('gtLiveGiftAction');action?.setAttribute('aria-expanded',String(!drawer.hidden));if(!drawer.hidden&&messages){messages.scrollTop=messages.scrollHeight;}}});
   make('gtLiveGameAction','<svg viewBox="0 0 64 44" aria-hidden="true" focusable="false"><path d="M14 9h36c6 0 10 4 12 11l2 11c1 6-5 9-10 5L43 27H21L10 36C5 40-1 37 0 31l2-11C4 13 8 9 14 9Z" fill="#e8edf7" stroke="#8fa6d8" stroke-width="2"/><path d="M15 16v12M9 22h12" stroke="#1b2340" stroke-width="3" stroke-linecap="round"/><circle cx="47" cy="18" r="3" fill="#ff3c9e"/><circle cx="53" cy="24" r="3" fill="#20dfff"/><circle cx="43" cy="25" r="3" fill="#b18cff"/></svg>','Spiel',()=>document.getElementById('gtLiveGameToggle')?.click());
@@ -1705,6 +1704,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
   if(profilePill){profilePill.style.setProperty('display','flex','important');profilePill.style.setProperty('z-index','50','important');}
   make('gtLiveInviteAction','＋','Einladen',()=>{if(window.gtOpenInviteModal)window.gtOpenInviteModal();else document.getElementById('liveInviteBtn')?.click();});
   make('gtLiveMixerAction','🎙️','Mixer',()=>{const b=document.getElementById('gtLiveMixerAction');if(b)b.dispatchEvent(new CustomEvent('gametik-mixer-toggle',{bubbles:false,cancelable:true}));});
+  make('gtLiveLikeAction','♥','Like',()=>document.getElementById('liveLikeBtn')?.click()||stage.dispatchEvent(new CustomEvent('gametik-live-like',{bubbles:true})));
   overlay.appendChild(rail);
   const gameToggle=document.createElement('button');gameToggle.type='button';gameToggle.id='gtLiveGameToggle';gameToggle.textContent='🎮 GameTik-Spiel';gameToggle.setAttribute('aria-expanded','false');
   gameToggle.addEventListener('click',()=>{if(!gamePanel)return;const active=gameToggle.getAttribute('aria-expanded')!=='true';gameToggle.setAttribute('aria-expanded',String(active));gameToggle.textContent=active?'✕ Spiel schließen':'🎮 GameTik-Spiel';/* Keep the real video unobstructed: never place the full game controls over the stream. */gamePanel.style.display=active?'block':'none';stage.classList.toggle('gt-game-overlay-active',active);const duelHud=document.getElementById('liveDuelOverlay');if(duelHud)duelHud.style.display=active?'none':'';if(active){gamePanel.scrollIntoView({behavior:'smooth',block:'nearest'});}});
@@ -1814,7 +1814,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #gtLiveDuelStartButton{pointer-events:auto!important;align-self:center!important;position:relative!important;z-index:8!important;display:block!important;margin:7px auto 5px!important;padding:7px 17px!important;border:1px solid #fff!important;border-radius:999px!important;color:#fff!important;font-size:11px!important;font-weight:950!important;letter-spacing:.7px!important;background:linear-gradient(115deg,#ff168e 0%,#a735ff 48%,#16cfff 100%)!important;text-shadow:0 1px 3px #281044!important;box-shadow:inset 0 2px 3px #ffffff8c,inset 0 -4px 7px #29004799,0 4px 0 #27143f,0 6px 12px #0009,0 0 15px #ff28c9,0 0 21px #20dfff88!important;transform:translateY(0);animation:gtBrandStartGlow 1.8s ease-in-out infinite}
 #gtLiveDuelStartButton:active{transform:translateY(3px)!important;box-shadow:inset 0 2px 5px #0008,0 1px 0 #27143f,0 0 16px #ff28c9!important}
 #gtLiveDuelStartButton.gt-starting{animation:gtBrandStartFlash .9s ease-out both!important}
-#liveVideoStage.gt-duel-running #gtLiveDuelStartButton{display:none!important}
+#liveVideoStage.gt-duel-running #gtLiveDuelStartButton{display:block!important}
 @keyframes gtBrandVsPulse{0%,100%{filter:brightness(1);box-shadow:inset 0 2px 2px #ffffffa8,inset 0 -4px 6px #000b,0 4px 0 #080914,0 6px 12px #0009,0 0 10px #ff35c888,0 0 12px #20dfff77}50%{filter:brightness(1.25);box-shadow:inset 0 2px 2px #ffffffa8,inset 0 -4px 6px #000b,0 4px 0 #080914,0 6px 12px #0009,0 0 17px #ff35c8,0 0 22px #20dfff}}
 @keyframes gtBrandStartGlow{0%,100%{filter:brightness(1);transform:translateY(0)}50%{filter:brightness(1.2);transform:translateY(-1px)}}
 @keyframes gtBrandStartFlash{0%{filter:brightness(1);transform:scale(1)}35%{filter:brightness(1.8);transform:scale(1.06);box-shadow:0 0 0 4px #ffffff66,0 0 30px #ff2bc8,0 0 35px #20dfff}100%{filter:brightness(1);transform:scale(1)}}
@@ -1978,7 +1978,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  document.addEventListener('gametik:candy-sent',e=>{countCandy(e.detail?.amount,'community',e.detail?.giftId||'');});
  // Count gifts received from the live socket; one point is awarded for each complete ten candies.
  document.addEventListener('gametik:live-gift-received',e=>{const d=e.detail||{};countCandy(d.quantity,'community',d.giftId||'');});
- document.getElementById('gtLiveDuelStartButton')?.addEventListener('click',()=>{candy=0;points=0;update();flash();});
+ document.getElementById('gtLiveDuelStartButton')?.addEventListener('click',()=>{if(document.getElementById('gtLiveDuelStartButton')?.getAttribute('aria-pressed')==='true')return;candy=0;points=0;update();flash();});
  const candyProgress=document.getElementById('gtDuelCandyProgress');
  const syncCandyVisibility=()=>{const active=document.getElementById('liveVideoStage')?.classList.contains('gt-duel-running')||!!(document.getElementById('liveGameStop')&&!document.getElementById('liveGameStop').classList.contains('hidden'));if(candyProgress)candyProgress.style.display=active?'none':'';};
  ['gtLiveDuelStartButton','liveGameStart','liveGameStop'].forEach(id=>document.getElementById(id)?.addEventListener('click',()=>setTimeout(syncCandyVisibility,100)));
@@ -2406,3 +2406,13 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  new MutationObserver(ensureProfile).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script>
+
+
+<style id="gametik-live-like-under-mixer-and-duel-toggle-fix-20261021">
+/* Guaranteed mobile/live action order: Like is always the final control, immediately below Mixer. */
+#liveVideoStage #gtLiveActionRail{display:flex!important;flex-direction:column!important;align-items:center!important}
+#liveVideoStage #gtLiveActionRail #gtLiveLikeAction{order:9999!important;position:relative!important;flex:0 0 auto!important;margin-top:2px!important;border-color:rgba(255,79,216,.9)!important;box-shadow:inset 0 2px 5px #ffffff30,0 0 14px #ff38c866,0 0 24px #21d4fd22!important}
+#liveVideoStage #gtLiveActionRail #gtLiveMixerAction{order:9998!important}
+#liveVideoStage #gtLiveDuelStartButton{pointer-events:auto!important;touch-action:manipulation!important}
+#liveVideoStage.gt-duel-running #gtLiveDuelStartButton{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
+</style>

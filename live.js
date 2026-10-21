@@ -295,7 +295,21 @@
   async function leaveStream(hide = true) {
     clearInterval(countTimer); countTimer = null; clearInterval(gameUiTimer); gameUiTimer = null;
     if (chatSocket) { chatSocket.disconnect(); chatSocket = null; }
-    if (room) { try { await stopAudioMixer(); room.disconnect(); } catch {} room = null; }
+    if (room) {
+      const activeRoom = room;
+      try {
+        // End capture explicitly for the host; disconnect alone can leave device tracks active in some browsers.
+        if (currentRole === 'host' && activeRoom.localParticipant) {
+          try { await activeRoom.localParticipant.setCameraEnabled(false); } catch {}
+          try { await activeRoom.localParticipant.setMicrophoneEnabled(false); } catch {}
+        }
+        await stopAudioMixer();
+        activeRoom.disconnect();
+      } catch { try { activeRoom.disconnect(); } catch {} }
+      room = null;
+    } else {
+      try { await stopAudioMixer(); } catch {}
+    }
     $('liveVideoGrid').innerHTML = '';
     if (hide) $('liveStage').classList.add('hidden');
     currentStream = null; currentRole = ''; audioMuted = false; hostMicMuted = false;
@@ -392,15 +406,23 @@
     catch (error) { $('liveGiftStatus').textContent = error.message; }
   });
   async function endCurrentLive() {
-    if (!currentStream || currentRole !== 'host') return;
+    if (!currentStream || currentRole !== 'host') {
+      liveStatus('Nur der Gastgeber kann diesen Live-Stream beenden.');
+      return;
+    }
     const streamId = currentStream.id;
     const buttons = [$('liveEndBtn'), $('liveEndTopBtn')].filter(Boolean);
     buttons.forEach(button => { button.disabled = true; button.textContent = '⏳ LIVE wird beendet …'; });
     try {
       await api(`/api/live/${encodeURIComponent(streamId)}/end`, {method:'POST', body:'{}'});
-      liveStatus('LIVE wurde beendet.'); await leaveStream(); await refreshStreams();
+      liveStatus('LIVE wurde beendet. Kamera und Mikrofon werden getrennt …');
+      await leaveStream(true);
+      await refreshStreams();
     } catch (error) {
-      $('liveGiftStatus').textContent = 'Stream konnte nicht beendet werden: ' + error.message;
+      const message = 'Stream konnte nicht beendet werden: ' + error.message;
+      const status = $('liveStageStatus');
+      if (status) status.textContent = message;
+      if ($('liveGiftStatus')) $('liveGiftStatus').textContent = message;
       buttons.forEach(button => { button.disabled = false; button.textContent = '⏹ LIVE BEENDEN'; });
     }
   }
