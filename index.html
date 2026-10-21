@@ -1280,7 +1280,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(endedHost&&endedCommunity){endedHost.style.width='50%';endedCommunity.style.width='50%';}
     }
   }
-  document.getElementById('gtDuelStartButton')?.addEventListener('click',()=>{if(start&&!start.disabled)start.click();});
+  document.getElementById('gtDuelStartButton')?.addEventListener('click',()=>{const button=document.getElementById('gtDuelStartButton');if(button){button.disabled=true;button.textContent='⏳ DUELL STARTET …';}const launch=()=>{if(typeof window.GameTikStartLiveDuel==='function'){Promise.resolve(window.GameTikStartLiveDuel()).finally(()=>{if(button){button.disabled=false;button.textContent='▶ DUELL STARTEN';}});}else if(start&&!start.disabled){start.click();if(button){button.disabled=false;button.textContent='▶ DUELL STARTEN';}}else{if(button){button.disabled=false;button.textContent='▶ DUELL STARTEN';}const r=document.getElementById('liveGameResult');if(r)r.textContent='Duell-Funktion wird noch geladen. Bitte erneut versuchen.';}};launch();});
   document.getElementById('gtDuelEndButton')?.addEventListener('click',()=>{if(!running)return;if(!confirm('Möchtest du das Duell wirklich beenden?'))return;const r=document.getElementById('liveGameResult');if(stop){stop.classList.remove('hidden');stop.disabled=false;stop.click();}if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';if(start)start.disabled=false;const hud=document.getElementById('gtDuelHud');hud?.classList.remove('gt-duel-visible');stage.classList.remove('gt-duel-running');running=false;const end=document.getElementById('gtDuelEndButton');if(end)end.style.display='none';setTimeout(sync,150);setTimeout(()=>{if(timer)timer.textContent='00:00';if(r)r.textContent='Duell beendet';stage.classList.remove('gt-duel-running');hud?.classList.remove('gt-duel-visible');},500);});
   overlayStart?.addEventListener('click',()=>{if(!start)return;const canStop=!!stop&&!stop.classList.contains('hidden');if(running||canStop){if(canStop&&!stop.disabled)stop.click();return;}if(start.classList.contains('hidden')||start.disabled)return;overlayStart.classList.remove('gt-starting');void overlayStart.offsetWidth;overlayStart.classList.add('gt-starting');start.click();setTimeout(()=>overlayStart?.classList.remove('gt-starting'),1000);});
   start?.addEventListener('click',()=>{initial=Number(duration?.value||180);total=initial;hud.classList.remove('gt-duel-start-flash');void hud.offsetWidth;hud.classList.add('gt-duel-start-flash');setTimeout(()=>hud.classList.remove('gt-duel-start-flash'),1250);setTimeout(sync,80);setTimeout(sync,350);});
@@ -2497,3 +2497,17 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
  }
 }
 </style>
+
+
+<style id="gametik-live-chat-duel-visibility-fix-20261021">
+/* Keep sent chat messages visible above the duel score strip on mobile. */
+#liveVideoStage #liveOverlayChat{left:8px!important;right:54px!important;bottom:142px!important;top:auto!important;max-height:22%!important;z-index:34!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;pointer-events:auto!important;}
+#liveVideoStage #liveOverlayChat .live-overlay-line{position:relative!important;z-index:35!important;max-width:100%!important;white-space:normal!important;overflow-wrap:anywhere!important;}
+#liveVideoStage #gtDuelHud{z-index:30!important;}
+#liveChatDock #liveChatForm{position:relative!important;z-index:5!important;scroll-margin-bottom:140px!important;}
+#liveChatDock #liveChatInput{scroll-margin-bottom:150px!important;}
+@media(max-width:600px){#liveVideoStage #liveOverlayChat{left:6px!important;right:48px!important;bottom:136px!important;max-height:21%!important;gap:3px!important;}#liveChatDock #liveChatInput{font-size:16px!important;}}
+</style>
+<script id="gametik-chat-composer-focus-fix-20261021">
+(function(){function init(){const input=document.getElementById('liveChatInput');if(!input||input.dataset.gtFocusFix==='1')return;input.dataset.gtFocusFix='1';input.addEventListener('focus',()=>{setTimeout(()=>{input.scrollIntoView({block:'nearest',behavior:'smooth'});},180);});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();})();
+</script>

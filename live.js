@@ -393,13 +393,30 @@
       alert('Stummschaltung konnte nicht geändert werden: ' + error.message);
     } finally { button.disabled = false; }
   });
-  $('liveGameStart')?.addEventListener('click', async () => {
-    if (!currentStream || currentRole !== 'host') return;
-    const button = $('liveGameStart'); button.disabled = true;
-    try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/start`, {method:'POST', body:JSON.stringify({seconds:Number($('liveGameDuration').value || 180)})}); renderGame(data.game); }
-    catch (error) { $('liveGiftStatus').textContent = error.message; }
-    finally { button.disabled = false; }
-  });
+  async function startLiveDuelFromHud() {
+    const button = $('liveGameStart');
+    const result = $('liveGameResult');
+    if (!currentStream) {
+      if (result) result.textContent = 'Bitte zuerst einen Live-Stream starten.';
+      return;
+    }
+    if (currentRole !== 'host') {
+      if (result) result.textContent = 'Nur der Gastgeber kann das Duell starten.';
+      return;
+    }
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    try {
+      const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/start`, {method:'POST', body:JSON.stringify({seconds:Number($('liveGameDuration')?.value || 180)})});
+      if (data?.game) renderGame(data.game);
+      else throw new Error('Der Server hat keinen Duell-Status zurückgegeben.');
+    } catch (error) {
+      if (result) result.textContent = 'Duell konnte nicht gestartet werden: ' + (error.message || 'Unbekannter Fehler');
+      const status = $('liveGiftStatus'); if (status) status.textContent = error.message || 'Duell konnte nicht gestartet werden.';
+    } finally { button.disabled = false; }
+  }
+  window.GameTikStartLiveDuel = startLiveDuelFromHud;
+  $('liveGameStart')?.addEventListener('click', startLiveDuelFromHud);
   $('liveGameStop')?.addEventListener('click', async () => {
     if (!currentStream || currentRole !== 'host') return;
     try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/stop`, {method:'POST', body:'{}'}); renderGame(data.game); }
