@@ -1236,15 +1236,33 @@ app.post('/api/live/:id/game/stop', auth, (req, res) => {
   res.json({ ok: true, game: room.game });
 });
 
-app.post('/api/live/:id/end', auth, (req, res) => {
+app.post('/api/live/:id/end', auth, asyncRoute(async (req, res) => {
   const room = liveRooms.get(String(req.params.id));
   if (!room) return res.status(404).json({ error: 'Live-Stream nicht gefunden.' });
   if (room.hostId !== String(req.user.id)) return res.status(403).json({ error: 'Nur der Stream-Host kann den Stream beenden.' });
   if (room.status !== 'live') return res.json({ ok: true, alreadyEnded: true });
-  room.status = 'ended'; room.endedAt = new Date().toISOString(); if (room.gameTimer) clearTimeout(room.gameTimer); room.gameTimer = null;
+
+  // Change the app state first, so new viewers can no longer join this stream.
+  room.status = 'ended';
+  room.endedAt = new Date().toISOString();
+  if (room.gameTimer) clearTimeout(room.gameTimer);
+  room.gameTimer = null;
+  if (room.game?.active) {
+    room.game.active = false;
+    room.game.winner = room.game.hostPoints === room.game.communityPoints ? 'draw' : (room.game.hostPoints > room.game.communityPoints ? 'host' : 'community');
+    io.to('live:' + room.id).emit('live:game-state', { roomId: room.id, game: room.game });
+  }
   io.to('live:' + room.id).emit('live:ended', { id: room.id });
-  res.json({ ok: true });
-});
+
+  // Close the LiveKit room as well, not just the GameTik UI record.
+  try {
+    if (livekitConfigured()) await livekitService().deleteRoom(room.roomName);
+  } catch (error) {
+    // The host still disconnects locally; keep the app state ended if LiveKit has already removed the room.
+    console.warn('LiveKit-Raum konnte beim Beenden nicht serverseitig gelöscht werden:', error.message || error);
+  }
+  return res.json({ ok: true });
+}));
 app.get('/api/live/:id/count', asyncRoute(async (req, res) => {
   const room = liveRooms.get(String(req.params.id));
   if (!room || room.status !== 'live') return res.json({ count: 0, likes: 0, status: 'ended' });

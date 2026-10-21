@@ -1,0 +1,12 @@
+GameTik LIVE – Korrektur nach Fehlerbericht (21.10.2026)
+
+Korrigierte Ursachen:
+1. Der Like-Kreis ist im rechten LIVE-Aktionsbereich per CSS-Reihenfolge fest an das Ende gesetzt und liegt damit unter dem Mixer-Button. Das funktioniert unabhängig von früheren Button-Reihenfolgen im Skript.
+2. Der Duell-Button bleibt für den Gastgeber während einer aktiven Runde sichtbar und wechselt zwischen „SPIEL STARTEN“ und „SPIEL BEENDEN“. Beim Beenden wird die vorhandene Stop-Aktion ausgelöst; die laufende Runde wird nicht durch einen erneuten Start zurückgesetzt.
+3. „LIVE BEENDEN“ aktualisiert den Stream-Status serverseitig, stoppt den Duell-Timer, sendet das Ende an die Zuschauer und fordert LiveKit auf, den Raum zu schließen. Beim Verlassen werden Kamera und Mikrofon des Gastgebers zusätzlich ausdrücklich deaktiviert.
+
+Prüfung:
+- npm run check: erfolgreich
+- JavaScript-Syntaxprüfungen: erfolgreich
+- Projektprüfung: 41 Kernprüfungen bestanden
+- Das Verhalten wurde anhand der geänderten Codepfade geprüft; ein Test mit dem tatsächlich bereitgestellten LiveKit-Dienst und einem realen Live-Stream steht noch aus.
