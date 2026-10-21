@@ -2468,3 +2468,32 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 }
 @media(max-height:700px){#liveVideoStage #gtLiveActionRail{gap:3px!important}#liveVideoStage #gtLiveActionRail button{width:31px!important;height:31px!important;min-width:31px!important;min-height:31px!important;flex-basis:31px!important}#liveVideoStage #gtLiveActionRail #gtLiveGameAction{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;flex-basis:34px!important}}
 </style>
+
+<!-- GameTik: center the single duel HUD without changing the action rail -->
+
+
+
+<!-- GameTik: robust center alignment for the actual visible duel panel -->
+<style id="gametik-duel-visible-panel-center-20261021">
+#liveVideoStage{position:relative!important;}
+#liveVideoStage #gtDuelHud,
+#liveVideoStage #liveGamePanel,
+#liveVideoStage #liveGamePanel.gt-duel-controls,
+#liveVideoStage #liveDuelOverlay{
+  left:50%!important; right:auto!important;
+  margin-left:0!important; margin-right:0!important;
+  transform:translateX(-50%)!important;
+  box-sizing:border-box!important;
+}
+#liveVideoStage #gtDuelHud{width:min(420px,calc(100% - 20px))!important;max-width:420px!important;}
+#liveVideoStage #liveGamePanel,
+#liveVideoStage #liveGamePanel.gt-duel-controls{width:min(420px,calc(100% - 20px))!important;max-width:420px!important;}
+#liveVideoStage #liveDuelOverlay{width:min(420px,calc(100% - 20px))!important;max-width:420px!important;}
+@media(max-width:600px){
+ #liveVideoStage #gtDuelHud, #liveVideoStage #liveGamePanel,
+ #liveVideoStage #liveGamePanel.gt-duel-controls, #liveVideoStage #liveDuelOverlay{
+   width:calc(100% - 20px)!important;left:50%!important;right:auto!important;
+   transform:translateX(-50%)!important;
+ }
+}
+</style>
