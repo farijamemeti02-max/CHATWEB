@@ -323,10 +323,53 @@
   }
   $('liveStartBtn').addEventListener('click', async () => {
     if (!localStorage.getItem('gametik_token')) { $('authModal')?.classList.remove('hidden'); return; }
-    const button = $('liveStartBtn'); button.disabled = true;
-    try { const data = await api('/api/live/create', {method:'POST', body:JSON.stringify({title:$('liveTitle').value})}); await connectStream(data, 'host'); await refreshStreams(); }
-    catch (error) { alert(error.message); }
-    finally { button.disabled = false; }
+    const button = $('liveStartBtn');
+    const status = $('liveStageStatus');
+    button.disabled = true;
+    let createdStream = null;
+    let permissionProbe = null;
+    try {
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Kamera/Mikrofon sind in diesem Browser nicht verfügbar. Öffne GameTik über die HTTPS-Adresse in Chrome und erlaube Kamera und Mikrofon.');
+      }
+      // Ask for device permission BEFORE creating the server-side live record. This avoids
+      // ghost streams when Android/Chrome rejects camera or microphone access.
+      try {
+        permissionProbe = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+      } catch (permissionError) {
+        const name = permissionError?.name || '';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || /permission denied|not allowed/i.test(permissionError?.message || '')) {
+          throw new Error('Kamera- oder Mikrofonzugriff wurde verweigert. Tippe in Chrome auf das Symbol links neben der Adresse → Website-Einstellungen → Kamera und Mikrofon → Zulassen. Danach die Seite neu laden und erneut „Live starten“ tippen.');
+        }
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+          throw new Error('Keine Kamera oder kein Mikrofon gefunden. Prüfe die Geräte und versuche es erneut.');
+        }
+        if (name === 'NotReadableError' || name === 'TrackStartError') {
+          throw new Error('Kamera oder Mikrofon wird bereits von einer anderen App verwendet. Schließe diese App und versuche es erneut.');
+        }
+        throw new Error('Kamera/Mikrofon konnte nicht aktiviert werden: ' + (permissionError?.message || name || 'Unbekannter Gerätefehler'));
+      } finally {
+        if (permissionProbe) permissionProbe.getTracks().forEach(track => track.stop());
+        permissionProbe = null;
+      }
+      const data = await api('/api/live/create', {method:'POST', body:JSON.stringify({title:$('liveTitle').value})});
+      createdStream = data?.stream?.id ? data.stream.id : null;
+      await connectStream(data, 'host');
+      await refreshStreams();
+    } catch (error) {
+      // If LiveKit connection or device publishing fails after the server record was created,
+      // close that record so the stream is not incorrectly listed as live.
+      if (createdStream) {
+        try { await api(`/api/live/${encodeURIComponent(createdStream)}/end`, {method:'POST', body:'{}'}); } catch (cleanupError) { console.warn('Fehlerhafter Live-Stream konnte nicht automatisch bereinigt werden:', cleanupError); }
+        try { await leaveStream(true); } catch {}
+        try { await refreshStreams(); } catch {}
+      }
+      const message = error?.message || 'Unbekannter Fehler beim Starten des Live-Streams.';
+      if (status) status.textContent = message;
+      alert(message);
+    } finally {
+      button.disabled = false;
+    }
   });
   $('liveRefreshBtn').addEventListener('click', refreshStreams);
   $('liveStreams').addEventListener('click', async event => {
@@ -393,13 +436,30 @@
       alert('Stummschaltung konnte nicht geändert werden: ' + error.message);
     } finally { button.disabled = false; }
   });
-  $('liveGameStart')?.addEventListener('click', async () => {
-    if (!currentStream || currentRole !== 'host') return;
-    const button = $('liveGameStart'); button.disabled = true;
-    try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/start`, {method:'POST', body:JSON.stringify({seconds:Number($('liveGameDuration').value || 180)})}); renderGame(data.game); }
-    catch (error) { $('liveGiftStatus').textContent = error.message; }
-    finally { button.disabled = false; }
-  });
+  async function startLiveDuelFromHud() {
+    const button = $('liveGameStart');
+    const result = $('liveGameResult');
+    if (!currentStream) {
+      if (result) result.textContent = 'Bitte zuerst einen Live-Stream starten.';
+      return;
+    }
+    if (currentRole !== 'host') {
+      if (result) result.textContent = 'Nur der Gastgeber kann das Duell starten.';
+      return;
+    }
+    if (!button || button.disabled) return;
+    button.disabled = true;
+    try {
+      const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/start`, {method:'POST', body:JSON.stringify({seconds:Number($('liveGameDuration')?.value || 180)})});
+      if (data?.game) renderGame(data.game);
+      else throw new Error('Der Server hat keinen Duell-Status zurückgegeben.');
+    } catch (error) {
+      if (result) result.textContent = 'Duell konnte nicht gestartet werden: ' + (error.message || 'Unbekannter Fehler');
+      const status = $('liveGiftStatus'); if (status) status.textContent = error.message || 'Duell konnte nicht gestartet werden.';
+    } finally { button.disabled = false; }
+  }
+  window.GameTikStartLiveDuel = startLiveDuelFromHud;
+  $('liveGameStart')?.addEventListener('click', startLiveDuelFromHud);
   $('liveGameStop')?.addEventListener('click', async () => {
     if (!currentStream || currentRole !== 'host') return;
     try { const data = await api(`/api/live/${encodeURIComponent(currentStream.id)}/game/stop`, {method:'POST', body:'{}'}); renderGame(data.game); }
