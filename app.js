@@ -416,6 +416,27 @@
   $('storyCameraVideoBtn')?.addEventListener('click',()=> $('storyCameraVideoInput')?.click());
   for(const [sourceId,targetId] of [['storyCameraPhotoInput','storyMedia'],['storyCameraVideoInput','storyMedia']]){const source=$(sourceId);source?.addEventListener('change',()=>{const file=source.files?.[0];if(!file)return;const transfer=new DataTransfer();transfer.items.add(file);$(targetId).files=transfer.files;$('storyType').value=file.type.startsWith('video/')?'video':'photo';syncStoryType();});}
   $('uploadForm').onsubmit=async e=>{e.preventDefault();const f=$('videoFile').files[0];const documentFile=$('documentFile')?.files?.[0];if(!f&&!documentFile){status('uploadStatus','Bitte ein Foto, Video oder Dokument auswählen.');return;}if(f&&f.size>35*1024*1024){status('uploadStatus','Die Datei ist größer als 35 MB. Bitte eine kleinere Datei wählen.');return;}if(documentFile&&documentFile.size>35*1024*1024){status('uploadStatus','Das Dokument ist größer als 35 MB. Bitte eine kleinere Datei wählen.');return;}const music=$('musicFile')?.files?.[0];if(music&&music.size>35*1024*1024){status('uploadStatus','Die Musikdatei ist größer als 35 MB. Bitte eine kleinere Datei wählen.');return;}if(music&&!(['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/aac','audio/ogg','audio/wav','audio/x-wav','audio/webm','audio/flac','audio/x-flac'].includes(music.type)||/\.(mp3|m4a|aac|ogg|wav|webm|flac)$/i.test(music.name))){status('uploadStatus','Bitte MP3, M4A, AAC, OGG, WAV, WebM oder FLAC auswählen.');return;}const fd=new FormData();if(f)fd.append('video',f);if(documentFile)fd.append('document',documentFile);if(music)fd.append('music',music);fd.append('caption',$('videoCaption').value);fd.append('hashtags',$('videoHashtags')?.value||'');fd.append('visibility',$('videoVisibility')?.value||'public');try{if(!token)throw Error('Bitte zuerst einen Nickname wählen.');const d=await api('/api/videos',{method:'POST',body:fd});status('uploadStatus',documentFile&&!f?'Dokument erfolgreich hochgeladen!':documentFile?'Beitrag mit Anhang erfolgreich hochgeladen!':f.type.startsWith('image/')?'Foto erfolgreich hochgeladen!':'Video erfolgreich hochgeladen!',true);$('uploadForm').reset();showView('feed');}catch(err){status('uploadStatus',err.message);}};
+  function showLiveGiftCelebration(data){
+    const gift = String(data.gift || '');
+    const isCrown = gift === 'Krone';
+    const isHeart = gift === 'Herz';
+    const symbol = isCrown ? '👑' : isHeart ? '💖' : gift === 'Feuer' ? '🔥' : gift === 'Stern' ? '⭐' : '🎁';
+    let layer = document.getElementById('gtGiftCelebration');
+    if (!layer) {
+      layer = document.createElement('div'); layer.id = 'gtGiftCelebration';
+      layer.setAttribute('aria-live','polite'); layer.setAttribute('role','status');
+      layer.innerHTML = '<div class="gt-gift-rays"></div><div class="gt-gift-content"><div class="gt-gift-symbol"></div><div class="gt-gift-title"></div><div class="gt-gift-sender"></div></div>';
+      const style = document.createElement('style'); style.id='gtGiftCelebrationStyle';
+      style.textContent = `#gtGiftCelebration{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none;background:radial-gradient(circle,rgba(22,25,70,.68),rgba(2,4,18,.90));animation:gtGiftFade 4.4s ease forwards}#gtGiftCelebration .gt-gift-rays{position:absolute;width:150vmax;height:150vmax;background:repeating-conic-gradient(from 0deg,rgba(55,210,255,.0) 0deg,rgba(55,210,255,.0) 8deg,rgba(255,38,210,.22) 9deg,rgba(55,210,255,.18) 11deg,rgba(55,210,255,0) 14deg);animation:gtGiftSpin 9s linear infinite}#gtGiftCelebration .gt-gift-content{position:relative;display:flex;align-items:center;flex-direction:column;text-align:center;padding:20px;filter:drop-shadow(0 0 22px #ff35d8)}#gtGiftCelebration .gt-gift-symbol{font-size:clamp(130px,38vw,300px);line-height:1.1;animation:gtGiftPop 1s cubic-bezier(.2,1.7,.3,1) both;filter:drop-shadow(0 0 22px #32cfff) drop-shadow(0 0 36px #ff31d2)}#gtGiftCelebration .gt-gift-title{font-size:clamp(25px,6vw,52px);font-weight:900;color:#fff;text-shadow:0 0 12px #ff35d8,0 0 28px #32cfff;letter-spacing:.04em}#gtGiftCelebration .gt-gift-sender{margin-top:12px;font-size:clamp(17px,4vw,26px);font-weight:700;color:#c9f7ff;text-shadow:0 0 12px #258cff}@keyframes gtGiftSpin{to{transform:rotate(360deg)}}@keyframes gtGiftPop{0%{transform:scale(.08) rotate(-30deg);opacity:0}65%{transform:scale(1.18) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0)}}@keyframes gtGiftFade{0%,78%{opacity:1}100%{opacity:0}}`;
+      document.head.appendChild(style); document.body.appendChild(layer);
+    }
+    layer.querySelector('.gt-gift-symbol').textContent = symbol;
+    layer.querySelector('.gt-gift-title').textContent = isCrown ? 'KRONEN-MOMENT!' : isHeart ? 'LIEBE GESENDET!' : `${gift.toUpperCase()} GESENDET!`;
+    layer.querySelector('.gt-gift-sender').textContent = `@${String(data.username || 'GameTik-Community')} sendet ein Geschenk`;
+    layer.style.animation='none'; void layer.offsetWidth; layer.style.animation='gtGiftFade 4.4s ease forwards';
+    clearTimeout(window.__gtGiftCelebrationTimer); window.__gtGiftCelebrationTimer=setTimeout(()=>layer?.remove(),4500);
+  }
+
   function connectChat(){
     if(!token||!window.io)return;
     if(socket){if(socket.connected)return;socket.disconnect();}
@@ -424,6 +445,8 @@
     socket.on('connect',()=>$('chatStatus').textContent='Live verbunden');
     socket.on('connect_error',e=>$('chatStatus').textContent='Chat-Verbindung fehlgeschlagen: '+e.message);
     socket.on('disconnect',()=>$('chatStatus').textContent='Verbindung unterbrochen');
+    // Full-screen gift celebration for every viewer connected to this live room.
+    socket.on('live:gift', giftEvent => { if (giftEvent && giftEvent.gift) showLiveGiftCelebration(giftEvent); });
     socket.on('chat:history',messages=>{if(chatMode==='public'){$('chatMessages').innerHTML='';messages.forEach(addChat);}});
     socket.on('chat:message',m=>{if(chatMode==='public')addChat(m);});
     socket.on('private:message',m=>{
