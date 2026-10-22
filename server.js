@@ -580,6 +580,44 @@ function reqAdminName(req) { return req.admin?.username || ''; }
 app.get('/api/admin/platform-wallet', adminAuth, (_req, res) => {
   res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(platformBalanceCents.get('main') || 0)), transactions: platformTransactions.slice(-100).reverse(), creatorSharePercent: 30, platformSharePercent: 70, note: 'Nur Admin; interne Umbuchungen sind keine PayPal-Zahlungen.' });
 });
+// One-time, admin-authorized correction for a legacy creator wallet that contains exactly
+// 5.98 EUR gross gifts instead of the intended 30% share. Moves 4.19 EUR to the platform
+// account and leaves 1.79 EUR with the selected creator. Strict balance + idempotency checks
+// prevent accidental application to a different balance or duplicate credits.
+app.post('/api/admin/platform-wallet/correct-598', adminAuth, asyncRoute(async (req, res) => {
+  const userId = String(req.body.userId || '').trim();
+  if (!userId || !accountsHasUserId(userId)) return res.status(404).json({ error: 'Nutzerkonto nicht gefunden.' });
+  const alreadyApplied = platformTransactions.some(t => t && t.type === 'manual_legacy_split_598' && String(t.userId) === userId);
+  if (alreadyApplied) return res.status(409).json({ error: 'Diese einmalige 5,98-€-Korrektur wurde für dieses Nutzerkonto bereits durchgeführt.' });
+  const grossCents = 598;
+  const platformShareCents = 419; // 70% of 5.98 EUR, rounded to whole cents.
+  const creatorShareCents = grossCents - platformShareCents;
+  const creatorBefore = Math.max(0, Math.round(Number(creatorBalancesCents.get(userId) || 0)));
+  if (creatorBefore !== grossCents) {
+    return res.status(409).json({ error: `Sicherheitsprüfung: Das ausgewählte Streamer-Guthaben beträgt ${(creatorBefore / 100).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €, erwartet werden exakt 5,98 €. Es wurde nichts geändert.` });
+  }
+  const account = [...accounts.values()].find(a => String(a.id) === userId);
+  const now = new Date().toISOString();
+  const txId = crypto.randomUUID();
+  const platformBefore = Math.max(0, Math.round(Number(platformBalanceCents.get('main') || 0)));
+  creatorBalancesCents.set(userId, creatorShareCents);
+  platformBalanceCents.set('main', platformBefore + platformShareCents);
+  const platformEntry = { id: txId, type: 'manual_legacy_split_598', amountCents: platformShareCents, grossCents, creatorCents: creatorShareCents, userId, username: account?.username || '', admin: reqAdminName(req), created_at: now, note: 'Einmalige Admin-Korrektur der bestätigten 5,98-€-Altgutschrift: 4,19 € Plattformanteil (70 %), 1,79 € Streamer-Anteil (30 %). Nicht automatisch an PayPal überwiesen.' };
+  platformTransactions.push(platformEntry);
+  const walletEntry = { id: crypto.randomUUID(), type: 'wallet_split_correction', userId, amountCents: -platformShareCents, grossCents, platformCents: platformShareCents, created_at: now, note: 'Einmalige Admin-Korrektur: 4,19 € (70 %) aus der zuvor vollständig gutgeschriebenen 5,98-€-Gesamtsumme ins GameTik-Plattformkonto verschoben; 1,79 € verbleiben als Streamer-Guthaben.' };
+  walletTransactions.push(walletEntry);
+  try {
+    await savePersistentState();
+  } catch (error) {
+    creatorBalancesCents.set(userId, creatorBefore);
+    platformBalanceCents.set('main', platformBefore);
+    platformTransactions.splice(platformTransactions.indexOf(platformEntry), 1);
+    walletTransactions.splice(walletTransactions.indexOf(walletEntry), 1);
+    return res.status(503).json({ error: 'Korrektur konnte nicht dauerhaft gespeichert werden. Die Änderung wurde im Arbeitsspeicher zurückgenommen.' });
+  }
+  return res.json({ ok: true, grossCents, platformAddedCents: platformShareCents, creatorBalanceCents: creatorShareCents, platformBalanceCents: Number(platformBalanceCents.get('main') || 0), username: account?.username || '', transaction: platformEntry });
+}));
+
 app.post('/api/admin/platform-wallet/transfer', adminAuth, asyncRoute(async (req, res) => {
   const amountCents = Math.round(Number(req.body.amountCents));
   const direction = String(req.body.direction || '');

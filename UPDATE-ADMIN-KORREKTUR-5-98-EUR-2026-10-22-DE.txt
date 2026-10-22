@@ -1,0 +1,12 @@
+GameTik – einmalige Admin-Korrektur für 5,98 €
+
+- Neuer geschützter Admin-Endpunkt: POST /api/admin/platform-wallet/correct-598
+- Nur Admin-authentifiziert; erfordert ausgewähltes, vorhandenes Nutzerkonto.
+- Sicherheitsbedingung: aktuelles Streamer-Guthaben muss exakt 5,98 € betragen.
+- Die Korrektur bucht 4,19 € zum Plattformkonto und setzt den Streamer-Saldo auf 1,79 €.
+- Pro Nutzerkonto nur einmal möglich; Wiederholungen werden mit 409 abgewiesen.
+- Ein Plattform-Ledger-Eintrag und eine negative Wallet-Korrekturbuchung werden gespeichert.
+- Die Korrektur sendet kein Geld an PayPal. Sie ist eine interne Guthabenumbuchung.
+- Admin-Seite zeigt den Hinweis und das Auswahlformular.
+
+Wichtig: Diese Projektänderung führt die Buchung nicht automatisch auf dem laufenden Render-Server aus. Nach Deployment muss ein berechtigter Admin die Korrektur einmal im Adminbereich starten.
