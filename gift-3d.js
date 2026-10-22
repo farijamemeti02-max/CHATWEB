@@ -173,6 +173,7 @@
     for(const o of active){
       const t=(now-o.start)/4200;
       /* Gifts only: clear, deliberate 3D rise, full turn, and settle. */
+      o.mesh.position.x=o.mesh.userData.giftName==='Krone'?0:o.mesh.position.x;
       o.mesh.position.y=-.55+Math.sin(t*Math.PI)*1.55;
       o.mesh.rotation.y=t*Math.PI*4.2;o.mesh.rotation.x=Math.sin(t*Math.PI*2)*.18;o.mesh.rotation.z=Math.sin(t*Math.PI*4)*.09;
       o.mesh.scale.setScalar((.62+Math.sin(t*Math.PI)*.72)*o.scale);
@@ -185,8 +186,9 @@
     try {
       const T=await loadThree();if(!renderer&&!setup(T))return false;
       const name=normalizeName(rawName), qty=Math.max(1,Math.min(999,Number(quantity)||1));
-      const mesh=makeGift(T,name);mesh.position.set((Math.random()-.5)*1.5,-1.9,0);
-      const scale=Math.min(1.42,1.02+Math.log2(qty)*.08);mesh.scale.setScalar(scale);scene.add(mesh);
+      const mesh=makeGift(T,name);
+      const isCrown=name==='Krone';mesh.position.set(isCrown?0:((Math.random()-.5)*1.5),isCrown?-1.9:-1.9,0);
+      const scale=Math.min(isCrown?2.84:1.42,(isCrown?2.04:1.02)+Math.log2(qty)*.08);mesh.scale.setScalar(scale);scene.add(mesh);
       active.push({mesh,start:performance.now(),scale});
       const label=document.createElement('div');label.className='gt-gift3d-label';
       label.textContent=(sender||'Community')+' sendet '+(qty>1?qty+'× ':'')+String(rawName||name);
