@@ -1,0 +1,23 @@
+GAMETIK – GESCHENKE-KONTO / INVENTAR / 70-30-LEDGER
+Datum: 22.10.2026
+
+Umgesetzt in dieser Arbeitskopie:
+- GameTik-Geschenke-Konto in index.html mit auszahlbarem Creator-Guthaben, Transaktionsliste und Auszahlungsanfrage.
+- Serverseitige, persistierte Creator-Guthaben- und Transaktionsdaten in server.js.
+- Bei einem Inventar-Geschenk an den Live-Stream eines ANDEREN Nutzers wird der 30%-Creator-Anteil verbucht; der 70%-Plattform-Anteil wird im Transaktionseintrag protokolliert.
+- Selbstbeschenken bleibt erlaubt und wird protokolliert, erzeugt aber ausdrücklich kein auszahlbares Guthaben.
+- Auszahlungsanfragen prüfen PayPal-E-Mail, Mindestbetrag 5,00 EUR und verfügbares Guthaben; der angefragte Betrag wird reserviert.
+- Adminbereich/admin.html wurde nicht geändert.
+
+WICHTIGE GRENZE:
+- Die PayPal-Payouts-API ist nicht in diesem Paket aktiviert oder live getestet. Das Formular speichert eine AuszahlungsANFRAGE, es führt noch keine echte PayPal-Auszahlung aus. Dazu sind PayPal-Payouts-Freischaltung, sichere Verarbeitung und ein Admin-/Operator-Prozess nötig. admin.html wurde auf Wunsch nicht verändert.
+- Die 70/30-Aufteilung basiert derzeit auf dem Katalogpreis des versendeten Standardgeschenks und wird vor eventuellen PayPal-/Plattformgebühren dargestellt. Vor echtem Geldbetrieb sind Gebühren, Rückbuchungen, Steuer-/Rechtsanforderungen und eine transaktionssichere Abrechnung zu prüfen.
+- Keine Live-Render-/PayPal-Zahlung wurde aus dieser lokalen Arbeitskopie ausgeführt.
+
+Prüfungen:
+- node --check server.js: bestanden
+- node --check app.js: bestanden
+- node --check live.js: bestanden
+- node --check gift-3d.js: bestanden
+- node --check mini-games-3d.js: bestanden
+- vorhandene Projektprüfung meldet weiterhin bereits bestehende Hinweise: LIVE-Spiel-Punktelogik fehlt und doppelte ID gametik-live-chat-duel-real-fix-20261022 in index.html. Diese fremden Bereiche wurden nicht verändert.

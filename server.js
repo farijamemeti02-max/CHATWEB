@@ -171,6 +171,10 @@ const gifts = [];
 const giftInventory = new Map(); // userId -> { Herz: number, Stern: number, Feuer: number, Krone: number, ... }
 const giftInventoryMigrated = new Set(); // user IDs whose earlier standalone purchases have been migrated once
 const giftInventoryRecoveredPaymentIds = new Set(); // payment IDs credited from legacy LIVE purchases, preventing duplicate recovery
+const creatorBalancesCents = new Map(); // userId -> withdrawable cents earned from gifts received from other users
+const walletTransactions = []; // append-only wallet/gift accounting ledger
+const payoutRequests = []; // payout requests require operator/PayPal Payouts processing
+const processedGiftEarnings = new Set(); // gift record IDs already split, prevents duplicate credit
 const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
@@ -192,6 +196,7 @@ function snapshotPersistentState() {
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
     giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
+    creatorBalancesCents: [...creatorBalancesCents.entries()], walletTransactions, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
@@ -254,6 +259,10 @@ function applyPersistentState(d) {
   for (const [k,v] of d.giftInventory||[]) giftInventory.set(String(k), v && typeof v === 'object' ? v : {});
   for (const id of d.giftInventoryMigrated||[]) giftInventoryMigrated.add(String(id));
   for (const id of d.giftInventoryRecoveredPaymentIds||[]) giftInventoryRecoveredPaymentIds.add(String(id));
+  for (const [k,v] of d.creatorBalancesCents||[]) creatorBalancesCents.set(String(k), Math.max(0, Math.round(Number(v)||0)));
+  walletTransactions.push(...(d.walletTransactions||[]));
+  payoutRequests.push(...(d.payoutRequests||[]));
+  for (const id of d.processedGiftEarnings||[]) processedGiftEarnings.add(String(id));
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
   for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
   for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
@@ -943,8 +952,22 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
   inventory[giftName] = available - 1;
   if (inventory[giftName] <= 0) delete inventory[giftName];
   giftInventory.set(String(req.user.id), inventory);
-  const giftRecord = { id: crypto.randomUUID(), username: req.user.username, gift: giftName, liveRoomId: roomId, inventorySend: true, created_at: new Date().toISOString() };
+  const giftRecord = { id: crypto.randomUUID(), senderId: String(req.user.id), username: req.user.username, gift: giftName, liveRoomId: roomId, recipientId: String(room.hostId), recipientUsername: String(room.hostUsername || ''), inventorySend: true, created_at: new Date().toISOString() };
   gifts.push(giftRecord);
+  // Split the gift's listed value only when it is sent to another user's stream.
+  // Self-gifting remains allowed, but never creates withdrawable earnings.
+  const giftPriceCents = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[giftName] || 0;
+  if (String(req.user.id) !== String(room.hostId) && giftPriceCents > 0 && !processedGiftEarnings.has(giftRecord.id)) {
+    const platformCents = Math.floor(giftPriceCents * 70 / 100);
+    const creatorCents = giftPriceCents - platformCents;
+    const creatorId = String(room.hostId);
+    creatorBalancesCents.set(creatorId, Math.max(0, Number(creatorBalancesCents.get(creatorId) || 0)) + creatorCents);
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'gift_earned', userId: creatorId, amountCents: creatorCents, grossCents: giftPriceCents, platformCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, created_at: giftRecord.created_at, note: '30 % Creator-Anteil; 70 % Plattform-Anteil vor Zahlungsgebühren.' });
+    processedGiftEarnings.add(giftRecord.id);
+    await savePersistentState();
+  } else if (String(req.user.id) === String(room.hostId)) {
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'self_gift', userId: String(req.user.id), amountCents: 0, gift: giftName, giftId: giftRecord.id, created_at: giftRecord.created_at, note: 'Selbstgeschenk: erlaubt, erzeugt kein auszahlbares Guthaben.' });
+  }
   const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[giftName] || 0;
   if (room.game?.active && giftPoints > 0 && Date.now() < room.game.endsAt) {
     room.game.hostPoints = Math.min(1000000000, Number(room.game.hostPoints || 0) + giftPoints);
@@ -953,6 +976,27 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
   io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: giftName, points: giftPoints, inventorySend: true, created_at: giftRecord.created_at });
   await savePersistentState();
   res.json({ ok: true, gift: giftName, remaining: Math.max(0, Number(inventory[giftName]) || 0), inventory: Object.fromEntries(Object.entries(inventory).filter(([,count]) => Number(count) > 0)) });
+}));
+app.get('/api/wallet', auth, (req, res) => {
+  const userId = String(req.user.id);
+  const transactions = walletTransactions.filter(t => String(t.userId) === userId).slice(-100).reverse();
+  const requests = payoutRequests.filter(p => String(p.userId) === userId).slice(-50).reverse();
+  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(creatorBalancesCents.get(userId) || 0)), transactions, payoutRequests: requests, payoutEnabled: String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() === 'true', payoutNote: 'Auszahlungsanfragen werden erst nach Einrichtung und Freigabe von PayPal Payouts tatsächlich ausgezahlt.' });
+});
+app.post('/api/wallet/payout-request', auth, asyncRoute(async (req, res) => {
+  const userId = String(req.user.id);
+  const email = String(req.body.paypalEmail || '').trim().toLowerCase();
+  const amountCents = Math.round(Number(req.body.amount) * 100);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ error: 'Bitte eine gültige PayPal-E-Mail-Adresse eingeben.' });
+  if (!Number.isSafeInteger(amountCents) || amountCents < 500) return res.status(400).json({ error: 'Die Mindestauszahlung beträgt 5,00 €.' });
+  const balance = Math.max(0, Number(creatorBalancesCents.get(userId) || 0));
+  if (amountCents > balance) return res.status(409).json({ error: 'Dein verfügbares Guthaben reicht für diese Auszahlung nicht aus.' });
+  creatorBalancesCents.set(userId, balance - amountCents);
+  const request = { id: crypto.randomUUID(), userId, username: req.user.username, paypalEmail: email, amountCents, status: 'pending', created_at: new Date().toISOString(), note: 'Anfrage gespeichert; noch keine PayPal-Zahlung ausgeführt.' };
+  payoutRequests.push(request);
+  walletTransactions.push({ id: crypto.randomUUID(), type: 'payout_requested', userId, amountCents: -amountCents, payoutRequestId: request.id, created_at: request.created_at, note: 'Betrag für ausstehende Auszahlung reserviert.' });
+  await savePersistentState();
+  res.status(201).json({ ok: true, request: { id: request.id, amountCents, status: request.status, created_at: request.created_at }, balanceCents: balance - amountCents, message: 'Auszahlungsanfrage gespeichert. Dies ist noch keine ausgeführte PayPal-Auszahlung.' });
 }));
 // PayPal Orders API. Secrets are read only from server environment variables.
 function paypalBaseUrl() {
