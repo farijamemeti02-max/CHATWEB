@@ -641,6 +641,36 @@
     } catch (error) { list.innerHTML = '<div class="empty" style="grid-column:1/-1">Inventar konnte nicht geladen werden.</div>'; statusEl.textContent = error.message || 'Serverfehler beim Laden des Inventars.'; }
   }
   $('gtGiftInventoryRefresh')?.addEventListener('click', loadGiftInventory);
+
+  // LIVE drawer inventory: same server-backed stock, but displayed directly beside the stream gifts.
+  async function loadLiveGiftInventory() {
+    const list = $('gtLiveGiftInventoryList');
+    const statusEl = $('gtLiveGiftInventoryStatus');
+    const roomSelect = $('gtLiveGiftLiveRoom');
+    if (!list || !statusEl || !roomSelect) return;
+    if (!token) { list.innerHTML='<div class="empty" style="grid-column:1/-1">Bitte anmelden, um gekaufte Geschenke zu sehen.</div>';statusEl.textContent='';roomSelect.innerHTML='<option value="">Bitte zuerst anmelden</option>';return; }
+    try {
+      const [inventoryData, liveData] = await Promise.all([api('/api/gifts/inventory'), api('/api/live')]);
+      const streams = Array.isArray(liveData.streams) ? liveData.streams : [];
+      const previous = roomSelect.value;
+      roomSelect.innerHTML='<option value="">Live-Stream auswählen …</option>'+streams.map(room=>`<option value="${esc(room.id)}">${esc(room.hostUsername||'Creator')} · ${esc(room.title||'Live')}</option>`).join('');
+      if(streams.some(room=>String(room.id)===previous))roomSelect.value=previous;
+      const entries=Object.entries(inventoryData.inventory||{}).filter(([,count])=>Number(count)>0);
+      if(!entries.length) list.innerHTML='<div class="empty" style="grid-column:1/-1;padding:8px">Noch keine Geschenke im Inventar gefunden. Bereits bezahlte Käufe müssen vom Server korrekt gutgeschrieben sein.</div>';
+      else list.innerHTML=entries.map(([gift,count])=>`<button type="button" class="gift gt-live-inventory-send" data-inventory-gift="${esc(gift)}" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px"><strong>${esc(gtGiftNames[gift]||gift)}</strong><span>Verfügbar: ${Number(count)}</span><small>Ohne erneute Zahlung</small></button>`).join('');
+      statusEl.textContent=streams.length?'Wähle einen aktiven Stream und tippe auf das gekaufte Geschenk.':'Aktuell ist kein Live-Stream aktiv. Der Bestand bleibt gespeichert.';
+      list.querySelectorAll('[data-inventory-gift]').forEach(button=>button.addEventListener('click',async()=>{
+        const roomId=roomSelect.value;
+        if(!roomId){statusEl.textContent='Bitte zuerst einen aktiven Live-Stream auswählen.';return;}
+        const gift=button.dataset.inventoryGift;button.disabled=true;statusEl.textContent=`${gtGiftNames[gift]||gift} wird ohne erneute Zahlung versendet …`;
+        try { const result=await api('/api/gifts/inventory/send',{method:'POST',body:JSON.stringify({gift,liveRoomId:roomId})});statusEl.textContent=`✅ ${gtGiftNames[gift]||gift} versendet. Noch verfügbar: ${result.remaining}.`;await loadLiveGiftInventory();await loadGiftInventory(); }
+        catch(error){statusEl.textContent=error.message||'Geschenk konnte nicht versendet werden.';button.disabled=false;}
+      }));
+    } catch(error){list.innerHTML='<div class="empty" style="grid-column:1/-1">Inventar konnte nicht geladen werden.</div>';statusEl.textContent=error.message||'Serverfehler beim Laden des Inventars.';}
+  }
+  $('gtLiveGiftInventoryRefresh')?.addEventListener('click',loadLiveGiftInventory);
+  // Refresh both inventory views after authentication/PayPal return and whenever the LIVE drawer is opened.
+  document.addEventListener('click',event=>{if(event.target.closest('#gtLiveGiftAction'))setTimeout(loadLiveGiftInventory,0);});
   async function loadConfig(){
     try{
       const d=await api('/api/config');
@@ -651,5 +681,5 @@
     }catch(e){}
   }
 
-  restoreSession().then(()=>{setAuthMode('register');loadConfig();loadStories();loadFeed();loadGiftInventory();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
+  restoreSession().then(()=>{setAuthMode('register');loadConfig();loadStories();loadFeed();loadGiftInventory();loadLiveGiftInventory();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
 })();
