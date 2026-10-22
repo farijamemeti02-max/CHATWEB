@@ -1,0 +1,10 @@
+GameTik Update – Geschenke-Inventar und Vollbildanimation
+
+- Die vorhandene Inventarfunktion zeigt gekaufte Geschenke und erlaubt das kostenlose Versenden aus dem Bestand.
+- Bei einem live:gift-Ereignis wird eine bildschirmfüllende neonblaue/neonpinke Geschenk-Animation für verbundene Live-Zuschauer angezeigt.
+- Krone erhält einen großen, goldenen Emoji-Kronenmoment mit rotierenden Lichtstrahlen; Herz erhält einen Herz-Effekt.
+- Bestand wird serverseitig beim Inventarversand um genau eins reduziert und gespeichert.
+
+Wichtig: Die tatsächliche Gutschrift der konkreten Käufe hängt davon ab, ob die zugehörigen PayPal-Zahlungen bereits in GameTiks Zahlungsdatensätzen vorhanden sind. Diese ZIP kann nicht direkt in die laufende Render-Datenbank schreiben. Nach Deployment Inventar aktualisieren und prüfen; keine Zahlung erneut auslösen.
+
+Prüfungen: node --check app.js und node --check server.js bestanden. Kein echter Render-/PayPal-Live-Test durchgeführt.
