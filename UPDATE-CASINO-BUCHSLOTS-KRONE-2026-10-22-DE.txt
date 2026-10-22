@@ -1,0 +1,15 @@
+GameTik – Buch-Slots und Krone LIVE-Animation – 22.10.2026
+
+Umgesetzt:
+- Im GameTik-Spielemenü drei eigenständige Buch-Slot-Einstiege ergänzt: Temple of Secrets, Book of Shadows und Legends of the Pharaoh.
+- Jede Slot-Variante erhält ein eigenes Symbolset und eine thematische Bonusansicht mit eigenem Text und Bonus-Icon.
+- Bonusansicht wird bei zufälligem Bonusereignis geöffnet; Freispiele werden lokal innerhalb des Spiels verwaltet.
+- Die 3D-Kronen-Geschenkanimation ist gegenüber den anderen Standardgeschenken auf die doppelte Grundgröße skaliert und horizontal mittig ausgerichtet.
+- Bestehender Süßigkeiten-Automat und CyberNinja Battle Arena bleiben erhalten.
+- Slots sind als virtuelle Unterhaltung umgesetzt; es gibt keine Echtgeld-Einsätze oder Auszahlungen.
+
+Prüfung:
+- node --check gift-3d.js: erfolgreich.
+- Inline-JavaScript aus index.html mit node --check geprüft: erfolgreich.
+- npm run check: nicht erfolgreich wegen bereits vorhandener doppelter ID "gametik-live-chat-duel-real-fix-20261022" in index.html; dieser vorhandene Konflikt wurde nicht automatisch verändert.
+- Kein echter Browser-/Render-End-to-End-Test durchgeführt. Insbesondere die visuelle Größe/Position der 3D-Krone muss nach Upload im tatsächlichen Stream geprüft werden.
