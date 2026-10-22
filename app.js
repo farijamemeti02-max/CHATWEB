@@ -683,7 +683,7 @@
       balanceEl.textContent=gtWalletMoney(d.balanceCents);if(purchasedEl)purchasedEl.textContent=gtWalletMoney(d.purchasedGiftTotalCents);
       txEl.innerHTML=(d.transactions||[]).length?(d.transactions).map(t=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16"><strong>${esc(gtWalletTypeLabels[t.type]||t.type||'Transaktion')}</strong> · ${t.amountCents<0?'−':''}${gtWalletMoney(Math.abs(Number(t.amountCents)||0))}<div style="opacity:.75">${esc(t.gift||t.note||'')} · ${esc(new Date(t.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Transaktionen.';
       payoutEl.innerHTML=(d.payoutRequests||[]).length?(d.payoutRequests).map(r=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16">${gtWalletMoney(r.amountCents)} · <strong>${esc(r.status==='pending'?'Ausstehend':r.status)}</strong><div style="opacity:.75">${esc(r.paypalEmail||'')} · ${esc(new Date(r.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Auszahlungsanfragen.';
-      statusEl.textContent=d.payoutEnabled?'Guthaben geladen. PayPal Payouts ist laut Serverkonfiguration aktiviert; Auszahlungen müssen trotzdem geprüft werden.':'Guthaben geladen. PayPal-Auszahlung ist noch nicht automatisch aktiviert; Anfragen werden gespeichert und müssen bearbeitet werden.';
+      statusEl.textContent=d.payoutEnabled?'Guthaben geladen. Mindestauszahlung: 1,00 €. PayPal Payouts ist laut Serverkonfiguration aktiviert; tatsächliche Auszahlungen müssen geprüft werden.':`Guthaben geladen. Mindestauszahlung: 1,00 €. Aufteilung: 70 % GameTik (${esc(d.platformPaypalEmail||'MontenegroReisenCompany@gmail.com')}) / 30 % Streamer. PayPal-Auszahlungen werden erst nach Einrichtung und Freigabe von PayPal Payouts ausgeführt.`;
     }catch(e){statusEl.textContent=e.message||'Geschenke-Konto konnte nicht geladen werden.';}
   }
   $('gtWalletRefresh')?.addEventListener('click',loadGameTikWallet);
@@ -691,7 +691,7 @@
     event.preventDefault();const statusEl=$('gtWalletStatus'),submit=$('gtWalletPayoutSubmit');
     if(!token){statusEl.textContent='Bitte melde dich zuerst an.';return;}
     const paypalEmail=String($('gtWalletPaypalEmail')?.value||'').trim();const amount=Number($('gtWalletPayoutAmount')?.value);
-    if(!paypalEmail||!Number.isFinite(amount)||amount<5){statusEl.textContent='Bitte PayPal-E-Mail und mindestens 5,00 € eingeben.';return;}
+    if(!paypalEmail||!Number.isFinite(amount)||amount<1){statusEl.textContent='Bitte PayPal-E-Mail und mindestens 1,00 € eingeben.';return;}
     submit.disabled=true;statusEl.textContent='Auszahlungsanfrage wird gespeichert …';
     try{const d=await api('/api/wallet/payout-request',{method:'POST',body:JSON.stringify({paypalEmail,amount})});statusEl.textContent=`${d.message} Referenz: ${d.request.id}`;$('gtWalletPayoutAmount').value='';await loadGameTikWallet();}
     catch(e){statusEl.textContent=e.message||'Auszahlungsanfrage fehlgeschlagen.';}
