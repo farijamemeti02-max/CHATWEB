@@ -170,6 +170,7 @@ const gifts = [];
 // Paid gifts are stored as per-account inventory counts and persisted with GameTik state.
 const giftInventory = new Map(); // userId -> { Herz: number, Stern: number, Feuer: number, Krone: number, ... }
 const giftInventoryMigrated = new Set(); // user IDs whose earlier standalone purchases have been migrated once
+const giftInventoryRecoveredPaymentIds = new Set(); // payment IDs credited from legacy LIVE purchases, preventing duplicate recovery
 const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
@@ -190,7 +191,7 @@ function snapshotPersistentState() {
     accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
-    giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated],
+    giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
@@ -252,6 +253,7 @@ function applyPersistentState(d) {
   }
   for (const [k,v] of d.giftInventory||[]) giftInventory.set(String(k), v && typeof v === 'object' ? v : {});
   for (const id of d.giftInventoryMigrated||[]) giftInventoryMigrated.add(String(id));
+  for (const id of d.giftInventoryRecoveredPaymentIds||[]) giftInventoryRecoveredPaymentIds.add(String(id));
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
   for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
   for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
@@ -912,6 +914,21 @@ app.get('/api/gifts/inventory', auth, asyncRoute(async (req, res) => {
     giftInventoryMigrated.add(userId);
     await savePersistentState();
   }
+  // Recover completed legacy purchases made from inside LIVE. Older code emitted these
+  // immediately and skipped the inventory; credit each recorded payment only once.
+  // The user can now send the recovered item later from inventory without paying again.
+  let recoveredAny = false;
+  for (const record of gifts) {
+    const paymentId = String(record?.paymentId || '').trim();
+    if (!paymentId || record.username !== req.user.username || !record.liveRoomId || record.inventorySend || !['Herz', 'Krone'].includes(record.gift) || giftInventoryRecoveredPaymentIds.has(paymentId)) continue;
+    inventory[record.gift] = Math.max(0, Number(inventory[record.gift]) || 0) + 1;
+    giftInventoryRecoveredPaymentIds.add(paymentId);
+    recoveredAny = true;
+  }
+  if (recoveredAny) {
+    giftInventory.set(userId, inventory);
+    await savePersistentState();
+  }
   res.json({ inventory: Object.fromEntries(Object.entries(inventory).map(([name,count]) => [name, Math.max(0, Number(count)||0)]).filter(([,count]) => count > 0)) });
 }));
 app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
@@ -1112,23 +1129,16 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
     created_at: new Date().toISOString()
   };
   gifts.push(giftRecord);
-  if (saved.gift !== 'Spende' && !saved.liveRoomId) {
+  if (saved.gift !== 'Spende') {
     const inventory = giftInventory.get(String(req.user.id)) || {};
     inventory[saved.gift] = Math.max(0, Number(inventory[saved.gift]) || 0) + 1;
     giftInventory.set(String(req.user.id), inventory);
   }
-  if (saved.liveRoomId) {
-    const liveRoom = liveRooms.get(saved.liveRoomId);
-    const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[saved.gift] || 0;
-    if (liveRoom?.game?.active && giftPoints > 0 && Date.now() < liveRoom.game.endsAt) {
-      liveRoom.game.hostPoints = Math.min(1000000000, Number(liveRoom.game.hostPoints || 0) + giftPoints);
-      io.to('live:' + saved.liveRoomId).emit('live:game-state', { roomId: saved.liveRoomId, game: liveRoom.game });
-    }
-    io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, username: req.user.username, gift: saved.gift, points: giftPoints, paymentId: capture.id, created_at: giftRecord.created_at });
-  }
+  // Paid gifts are inventory items first, even if the checkout began in LIVE.
+  // They are only broadcast to viewers when the user explicitly sends them from inventory.
 
   await savePersistentState();
-  res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id, inventoryAdded: saved.gift !== 'Spende' && !saved.liveRoomId });
+  res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id, inventoryAdded: saved.gift !== 'Spende' });
 }));
 // Virtual candy wallet: free-only credits, no cash value, no purchase or cash-out.
 function candyBalance(userId) { return Math.max(0, Number(candyBalances.get(String(userId)) || 0)); }

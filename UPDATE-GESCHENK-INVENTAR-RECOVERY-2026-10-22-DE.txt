@@ -1,0 +1,17 @@
+GAMETIK – GESCHENK-INVENTAR-RECOVERY
+
+Änderungen:
+- Bereits gespeicherte, bezahlte Herz- und Kronen-Käufe aus älteren LIVE-Käufen werden beim nächsten Abruf des Inventars einmalig wiederhergestellt, sofern die Zahlungsdatensätze in GameTik noch vorhanden sind.
+- Die Wiederherstellung wird anhand der PayPal-Capture-ID idempotent gespeichert, damit dieselbe Zahlung nicht bei jedem Abruf erneut gutgeschrieben wird.
+- Neue bezahlte Geschenke werden nach bestätigtem PayPal-Capture zuerst dem Inventar gutgeschrieben, auch wenn der Kauf über einen LIVE-Geschenke-Button begonnen wurde.
+- Das Versenden aus dem Inventar bleibt eine separate Aktion und löst keine neue PayPal-Zahlung aus.
+
+Wichtig:
+- Dieser Patch ändert nicht direkt die laufende Render-Datenbank. Er muss auf Render bereitgestellt werden.
+- Historische Geschenke können nur wiederhergestellt werden, wenn ihre Zahlungsdatensätze im GameTik-Zustand noch vorhanden sind.
+- Vor einem Deployment bitte vorhandenen persistenten Zustand / Datenbank sichern.
+
+Prüfungen:
+- node --check server.js: erfolgreich
+- node --check app.js: erfolgreich
+- Kein echter PayPal- oder Render-Live-Test in dieser Umgebung durchgeführt.
