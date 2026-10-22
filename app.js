@@ -663,7 +663,7 @@
         const roomId=roomSelect.value;
         if(!roomId){statusEl.textContent='Bitte zuerst einen aktiven Live-Stream auswählen.';return;}
         const gift=button.dataset.inventoryGift;button.disabled=true;statusEl.textContent=`${gtGiftNames[gift]||gift} wird ohne erneute Zahlung versendet …`;
-        try { const result=await api('/api/gifts/inventory/send',{method:'POST',body:JSON.stringify({gift,liveRoomId:roomId})});statusEl.textContent=`✅ ${gtGiftNames[gift]||gift} versendet. Noch verfügbar: ${result.remaining}.`;await loadLiveGiftInventory();await loadGiftInventory(); }
+        try { const result=await api('/api/gifts/inventory/send',{method:'POST',body:JSON.stringify({gift,liveRoomId:roomId})});statusEl.textContent=`✅ ${gtGiftNames[gift]||gift} versendet. Noch verfügbar: ${result.remaining}.`;await loadLiveGiftInventory();await loadGiftInventory();await loadGameTikWallet(); }
         catch(error){statusEl.textContent=error.message||'Geschenk konnte nicht versendet werden.';button.disabled=false;}
       }));
     } catch(error){list.innerHTML='<div class="empty" style="grid-column:1/-1">Inventar konnte nicht geladen werden.</div>';statusEl.textContent=error.message||'Serverfehler beim Laden des Inventars.';}
@@ -671,6 +671,32 @@
   $('gtLiveGiftInventoryRefresh')?.addEventListener('click',loadLiveGiftInventory);
   // Refresh both inventory views after authentication/PayPal return and whenever the LIVE drawer is opened.
   document.addEventListener('click',event=>{if(event.target.closest('#gtLiveGiftAction'))setTimeout(loadLiveGiftInventory,0);});
+  const gtWalletMoney = cents => (Math.max(0, Number(cents)||0)/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+  const gtWalletTypeLabels = { gift_earned:'Geschenk erhalten', payout_requested:'Auszahlung angefragt', self_gift:'Selbstgeschenk' };
+  async function loadGameTikWallet(){
+    const balanceEl=$('gtWalletBalance'), txEl=$('gtWalletTransactions'), payoutEl=$('gtWalletPayoutRequests'), statusEl=$('gtWalletStatus'), submit=$('gtWalletPayoutSubmit');
+    if(!balanceEl||!txEl||!payoutEl||!statusEl)return;
+    if(!token){balanceEl.textContent='—';txEl.textContent='Bitte anmelden.';payoutEl.textContent='Bitte anmelden.';statusEl.textContent='Melde dich an, um dein Geschenke-Konto zu sehen.';if(submit)submit.disabled=true;return;}
+    if(submit)submit.disabled=false;
+    try{
+      const d=await api('/api/wallet');
+      balanceEl.textContent=gtWalletMoney(d.balanceCents);
+      txEl.innerHTML=(d.transactions||[]).length?(d.transactions).map(t=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16"><strong>${esc(gtWalletTypeLabels[t.type]||t.type||'Transaktion')}</strong> · ${t.amountCents<0?'−':''}${gtWalletMoney(Math.abs(Number(t.amountCents)||0))}<div style="opacity:.75">${esc(t.gift||t.note||'')} · ${esc(new Date(t.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Transaktionen.';
+      payoutEl.innerHTML=(d.payoutRequests||[]).length?(d.payoutRequests).map(r=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16">${gtWalletMoney(r.amountCents)} · <strong>${esc(r.status==='pending'?'Ausstehend':r.status)}</strong><div style="opacity:.75">${esc(r.paypalEmail||'')} · ${esc(new Date(r.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Auszahlungsanfragen.';
+      statusEl.textContent=d.payoutEnabled?'Guthaben geladen. PayPal Payouts ist laut Serverkonfiguration aktiviert; Auszahlungen müssen trotzdem geprüft werden.':'Guthaben geladen. PayPal-Auszahlung ist noch nicht automatisch aktiviert; Anfragen werden gespeichert und müssen bearbeitet werden.';
+    }catch(e){statusEl.textContent=e.message||'Geschenke-Konto konnte nicht geladen werden.';}
+  }
+  $('gtWalletRefresh')?.addEventListener('click',loadGameTikWallet);
+  $('gtWalletPayoutForm')?.addEventListener('submit',async event=>{
+    event.preventDefault();const statusEl=$('gtWalletStatus'),submit=$('gtWalletPayoutSubmit');
+    if(!token){statusEl.textContent='Bitte melde dich zuerst an.';return;}
+    const paypalEmail=String($('gtWalletPaypalEmail')?.value||'').trim();const amount=Number($('gtWalletPayoutAmount')?.value);
+    if(!paypalEmail||!Number.isFinite(amount)||amount<5){statusEl.textContent='Bitte PayPal-E-Mail und mindestens 5,00 € eingeben.';return;}
+    submit.disabled=true;statusEl.textContent='Auszahlungsanfrage wird gespeichert …';
+    try{const d=await api('/api/wallet/payout-request',{method:'POST',body:JSON.stringify({paypalEmail,amount})});statusEl.textContent=`${d.message} Referenz: ${d.request.id}`;$('gtWalletPayoutAmount').value='';await loadGameTikWallet();}
+    catch(e){statusEl.textContent=e.message||'Auszahlungsanfrage fehlgeschlagen.';}
+    finally{submit.disabled=false;}
+  });
   async function loadConfig(){
     try{
       const d=await api('/api/config');
@@ -681,5 +707,5 @@
     }catch(e){}
   }
 
-  restoreSession().then(()=>{setAuthMode('register');loadConfig();loadStories();loadFeed();loadGiftInventory();loadLiveGiftInventory();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
+  restoreSession().then(()=>{setAuthMode('register');loadConfig();loadStories();loadFeed();loadGiftInventory();loadLiveGiftInventory();loadGameTikWallet();if(token)connectChat();else $('authModal').classList.remove('hidden');return handlePayPalReturn();}).catch(e=>{if($('giftStatus'))$('giftStatus').textContent='Initialisierung fehlgeschlagen: '+e.message;});
 })();
