@@ -962,7 +962,7 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
     const creatorCents = giftPriceCents - platformCents;
     const creatorId = String(room.hostId);
     creatorBalancesCents.set(creatorId, Math.max(0, Number(creatorBalancesCents.get(creatorId) || 0)) + creatorCents);
-    walletTransactions.push({ id: crypto.randomUUID(), type: 'gift_earned', userId: creatorId, amountCents: creatorCents, grossCents: giftPriceCents, platformCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, created_at: giftRecord.created_at, note: '30 % Creator-Anteil; 70 % Plattform-Anteil vor Zahlungsgebühren.' });
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'gift_earned', userId: creatorId, amountCents: creatorCents, grossCents: giftPriceCents, platformCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, created_at: giftRecord.created_at, note: `30 % Streamer-Anteil (${(creatorCents/100).toFixed(2)} €); 70 % GameTik-Plattformanteil (${(platformCents/100).toFixed(2)} €) vor Zahlungsgebühren. Plattform-Zielkonto: ${process.env.GAMETIK_PLATFORM_PAYPAL_EMAIL || 'MontenegroReisenCompany@gmail.com'}. Der Plattformanteil ist hier bilanziert; eine separate PayPal-Auszahlung ist nur mit aktivierter PayPal-Payouts-Integration möglich.` });
     processedGiftEarnings.add(giftRecord.id);
     await savePersistentState();
   } else if (String(req.user.id) === String(room.hostId)) {
@@ -994,22 +994,54 @@ app.get('/api/wallet', auth, (req, res) => {
   const transactions = activity.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0,100);
   const purchasedGiftTotalCents = paidGiftTransactions.reduce((sum, t) => sum + (Number(t.amountCents) || 0), 0);
   const requests = payoutRequests.filter(p => String(p.userId) === userId).slice(-50).reverse();
-  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(creatorBalancesCents.get(userId) || 0)), purchasedGiftTotalCents, transactions, payoutRequests: requests, payoutEnabled: String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() === 'true', payoutNote: 'Auszahlungsanfragen werden erst nach Einrichtung und Freigabe von PayPal Payouts tatsächlich ausgezahlt.' });
+  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(creatorBalancesCents.get(userId) || 0)), purchasedGiftTotalCents, transactions, payoutRequests: requests, payoutEnabled: String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() === 'true', payoutNote: 'Mindestauszahlung 1,00 €. Auszahlungsanfragen werden erst nach Einrichtung und Freigabe von PayPal Payouts tatsächlich ausgezahlt.', platformSharePercent: 70, creatorSharePercent: 30, platformPaypalEmail: process.env.GAMETIK_PLATFORM_PAYPAL_EMAIL || 'MontenegroReisenCompany@gmail.com' });
 });
 app.post('/api/wallet/payout-request', auth, asyncRoute(async (req, res) => {
   const userId = String(req.user.id);
   const email = String(req.body.paypalEmail || '').trim().toLowerCase();
-  const amountCents = Math.round(Number(req.body.amount) * 100);
+  const amount = Number(req.body.amount);
+  const amountCents = Math.round(amount * 100);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ error: 'Bitte eine gültige PayPal-E-Mail-Adresse eingeben.' });
-  if (!Number.isSafeInteger(amountCents) || amountCents < 500) return res.status(400).json({ error: 'Die Mindestauszahlung beträgt 5,00 €.' });
+  if (!Number.isFinite(amount) || !Number.isSafeInteger(amountCents) || amountCents < 100) return res.status(400).json({ error: 'Die Mindestauszahlung beträgt 1,00 €.' });
+  if (String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() !== 'true') {
+    return res.status(503).json({ error: 'PayPal-Auszahlungen sind serverseitig noch nicht aktiviert. In Render muss PAYPAL_PAYOUTS_ENABLED=true gesetzt sein; das PayPal-Konto muss Payouts für Live-Zahlungen freigeschaltet haben.' });
+  }
   const balance = Math.max(0, Number(creatorBalancesCents.get(userId) || 0));
   if (amountCents > balance) return res.status(409).json({ error: 'Dein verfügbares Guthaben reicht für diese Auszahlung nicht aus.' });
+
+  const request = { id: crypto.randomUUID(), userId, username: req.user.username, paypalEmail: email, amountCents, status: 'processing', created_at: new Date().toISOString(), note: 'PayPal-Payout wird angefordert.' };
+  // Reserve balance before the external call, then restore it if PayPal rejects the request.
   creatorBalancesCents.set(userId, balance - amountCents);
-  const request = { id: crypto.randomUUID(), userId, username: req.user.username, paypalEmail: email, amountCents, status: 'pending', created_at: new Date().toISOString(), note: 'Anfrage gespeichert; noch keine PayPal-Zahlung ausgeführt.' };
   payoutRequests.push(request);
-  walletTransactions.push({ id: crypto.randomUUID(), type: 'payout_requested', userId, amountCents: -amountCents, payoutRequestId: request.id, created_at: request.created_at, note: 'Betrag für ausstehende Auszahlung reserviert.' });
+  walletTransactions.push({ id: crypto.randomUUID(), type: 'payout_requested', userId, amountCents: -amountCents, payoutRequestId: request.id, created_at: request.created_at, note: 'Betrag für PayPal-Auszahlung reserviert.' });
   await savePersistentState();
-  res.status(201).json({ ok: true, request: { id: request.id, amountCents, status: request.status, created_at: request.created_at }, balanceCents: balance - amountCents, message: 'Auszahlungsanfrage gespeichert. Dies ist noch keine ausgeführte PayPal-Auszahlung.' });
+
+  try {
+    const value = (amountCents / 100).toFixed(2);
+    const payout = await paypalRequest('/v1/payments/payouts', {
+      method: 'POST',
+      headers: { 'PayPal-Request-Id': request.id },
+      body: JSON.stringify({
+        sender_batch_header: { sender_batch_id: `gt-${request.id}`, email_subject: 'Deine GameTik-Auszahlung', email_message: 'Deine GameTik-Streamer-Auszahlung wurde gesendet.' },
+        items: [{ recipient_type: 'EMAIL', amount: { value, currency: String(process.env.PAYPAL_CURRENCY || 'EUR').toUpperCase() }, receiver: email, note: `GameTik Streamer-Auszahlung ${request.id}`, sender_item_id: request.id }]
+      })
+    });
+    request.status = 'submitted';
+    request.paypalBatchId = payout.batch_header?.payout_batch_id || null;
+    request.note = 'PayPal hat die Auszahlung angenommen; endgültiger Status kann noch ausstehen.';
+    request.updated_at = new Date().toISOString();
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'payout_submitted', userId, amountCents: 0, payoutRequestId: request.id, paypalBatchId: request.paypalBatchId, created_at: request.updated_at, note: `PayPal-Payout angenommen (${request.paypalBatchId || 'Batch-ID nicht zurückgegeben'}).` });
+    await savePersistentState();
+    return res.status(201).json({ ok: true, request: { id: request.id, amountCents, status: request.status, paypalBatchId: request.paypalBatchId, created_at: request.created_at }, balanceCents: balance - amountCents, message: 'PayPal hat die Auszahlung angenommen. Die endgültige Zustellung kann noch ausstehen.' });
+  } catch (error) {
+    creatorBalancesCents.set(userId, balance);
+    request.status = 'failed';
+    request.note = error.message || 'PayPal-Auszahlung fehlgeschlagen; Guthaben wurde zurückgebucht.';
+    request.updated_at = new Date().toISOString();
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'payout_failed_refund', userId, amountCents, payoutRequestId: request.id, created_at: request.updated_at, note: 'PayPal hat die Auszahlung abgelehnt oder nicht bestätigt; reserviertes Guthaben wurde zurückgebucht.' });
+    await savePersistentState();
+    return res.status(error.status || 502).json({ error: request.note, requestId: request.id });
+  }
 }));
 // PayPal Orders API. Secrets are read only from server environment variables.
 function paypalBaseUrl() {
@@ -1036,9 +1068,11 @@ async function paypalRequest(endpoint, options = {}) {
   });
   const tokenData = await tokenResponse.json().catch(() => ({}));
   if (!tokenResponse.ok || !tokenData.access_token) {
-    console.error('PayPal OAuth failed with status:', tokenResponse.status);
-    const error = new Error('PayPal konnte den Server nicht authentifizieren. Bitte Sandbox-Zugangsdaten prüfen.');
-    error.status = 502;
+    console.error('PayPal OAuth failed with status:', tokenResponse.status, 'issue:', tokenData.error || tokenData.error_description || 'unknown');
+    const error = new Error(tokenResponse.status === 401 || tokenResponse.status === 403
+      ? `PayPal-Anmeldung abgelehnt (HTTP ${tokenResponse.status}). Prüfe, dass Client ID und Secret aus derselben Live-App stammen und PAYPAL_MODE=live gesetzt ist.`
+      : `PayPal konnte den Server nicht authentifizieren (HTTP ${tokenResponse.status}).`);
+    error.status = tokenResponse.status === 401 || tokenResponse.status === 403 ? 502 : 502;
     throw error;
   }
 
@@ -1052,9 +1086,16 @@ async function paypalRequest(endpoint, options = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error('PayPal API request failed with status:', response.status);
-    const error = new Error('PayPal konnte die Anfrage nicht verarbeiten. Bitte Zugangsdaten und Konto prüfen.');
+    const issues = Array.isArray(data.details) ? data.details.map(item => item.issue || item.description).filter(Boolean).join('; ') : '';
+    const issue = data.name || data.message || issues || 'unknown';
+    console.error('PayPal API request failed with status:', response.status, 'issue:', issue);
+    let message = `PayPal hat die Anfrage mit HTTP ${response.status} abgelehnt.`;
+    if (response.status === 401) message += ' Client ID/Secret oder Live-/Sandbox-Modus passen nicht zusammen.';
+    else if (response.status === 403) message += ' Die App oder das PayPal-Geschäftskonto hat vermutlich keine Berechtigung für Payouts. PayPal muss die Payouts-Funktion für das Live-Konto freischalten.';
+    if (issues) message += ` PayPal-Hinweis: ${issues}`;
+    const error = new Error(message);
     error.status = 502;
+    error.paypalStatus = response.status;
     throw error;
   }
   return data;

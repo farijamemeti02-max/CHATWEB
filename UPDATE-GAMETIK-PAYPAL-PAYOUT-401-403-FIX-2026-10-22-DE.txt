@@ -1,0 +1,20 @@
+GameTik – PayPal Payouts Fehlerkorrektur
+Datum: 22.10.2026
+
+Änderungen:
+- Die Route /api/wallet/payout-request ruft bei PAYPAL_PAYOUTS_ENABLED=true jetzt tatsächlich die PayPal Payouts API (/v1/payments/payouts) auf.
+- PAYPAL_MODE=live verwendet die Live-API; PAYPAL_CLIENT_ID und PAYPAL_CLIENT_SECRET müssen aus derselben Live-App stammen.
+- HTTP 401 und 403 werden im Server-Log mit Status und bereinigtem PayPal-Hinweis protokolliert. Die UI erhält eine verständliche Fehlermeldung.
+- Bei abgelehnter/fehlgeschlagener Auszahlung wird der reservierte Creator-Betrag zurückgebucht und die Anfrage als fehlgeschlagen protokolliert.
+- Bei angenommener Auszahlung wird die PayPal-Batch-ID gespeichert. 'submitted' bedeutet angenommen, nicht zwingend bereits zugestellt.
+- Bestehende 70/30-Geschenkaufteilung und Selbstgeschenk-Schutz bleiben erhalten.
+- admin.html wurde nicht geändert.
+
+Render-Variablen:
+PAYPAL_MODE=live
+PAYPAL_PAYOUTS_ENABLED=true
+PAYPAL_CLIENT_ID=<Client ID aus der Live-App GameTik>
+PAYPAL_CLIENT_SECRET=<Secret aus derselben Live-App GameTik>
+PAYPAL_CURRENCY=EUR
+
+Hinweis: PayPal muss Payouts für das Live-Geschäftskonto tatsächlich freigeschaltet haben. Ein aktiviertes Häkchen in der App-Konfiguration allein garantiert keine API-Berechtigung. Bei HTTP 403 muss PayPal die Berechtigung freischalten; Code kann eine Kontosperre nicht umgehen.

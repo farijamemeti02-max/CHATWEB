@@ -1143,17 +1143,17 @@ header.top{position:relative!important;padding-right:12px!important;padding-bott
   <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0">
     <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #38bdf855"><div class="tiny muted">Auszahlbares Guthaben</div><strong id="gtWalletBalance" style="font-size:24px;color:#67e8f9">0,00 €</strong></div>
     <div style="grid-column:1/-1;padding:12px;border-radius:12px;background:#0b1020;border:1px solid #f472b655"><div class="tiny muted">Bezahlte Geschenke insgesamt (keine Auszahlung)</div><strong id="gtWalletPurchasedTotal" style="font-size:22px;color:#f9a8d4">0,00 €</strong><div class="tiny muted">Herz, Krone und weitere bestätigte Käufe werden hier und in den Transaktionen angezeigt.</div></div>
-    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #c084fc55"><div class="tiny muted">Aufteilung bei Geschenken anderer</div><strong style="font-size:18px">70 % / 30 %</strong><div class="tiny muted">GameTik / Streamer</div></div>
+    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #c084fc55"><div class="tiny muted">Aufteilung bei Geschenken anderer</div><strong style="font-size:18px">70 % / 30 %</strong><div class="tiny muted">70 % GameTik · PayPal MontenegroReisenCompany@gmail.com</div><div class="tiny muted">30 % Streamer-Guthaben</div></div>
   </div>
   <form id="gtWalletPayoutForm" style="display:grid;gap:8px">
     <label for="gtWalletPaypalEmail">PayPal-E-Mail für Auszahlungen</label><input id="gtWalletPaypalEmail" type="email" maxlength="254" required placeholder="dein-paypal@example.com" autocomplete="email" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
-    <label for="gtWalletPayoutAmount">Auszahlungsbetrag in Euro (mindestens 5,00 €)</label><input id="gtWalletPayoutAmount" type="number" min="5" step="0.01" required placeholder="5,00" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
+    <label for="gtWalletPayoutAmount">Auszahlungsbetrag in Euro (mindestens 1,00 €)</label><input id="gtWalletPayoutAmount" type="number" min="1" step="0.01" required placeholder="1,00" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
     <button type="submit" id="gtWalletPayoutSubmit">PayPal-Auszahlung anfragen</button>
   </form>
   <div id="gtWalletStatus" class="tiny muted" role="status" style="margin-top:8px">Bitte anmelden, um dein Guthaben zu laden.</div>
   <h4 style="margin:14px 0 6px">Letzte Transaktionen</h4><div id="gtWalletTransactions" class="tiny muted">Noch keine Transaktionen geladen.</div>
   <h4 style="margin:14px 0 6px">Auszahlungsanfragen</h4><div id="gtWalletPayoutRequests" class="tiny muted">Noch keine Anfragen.</div>
-  <p class="tiny muted">Wichtig: Eine Anfrage reserviert den Betrag. Eine tatsächliche Auszahlung erfolgt erst, wenn PayPal Payouts für GameTik eingerichtet, freigegeben und die Anfrage bearbeitet wurde.</p>
+  <p class="tiny muted">Wichtig: Mindestauszahlung: 1,00 €. Die 70 % sind der Plattformanteil von GameTik; 30 % werden dem Streamer-Guthaben gutgeschrieben. Tatsächliche PayPal-Auszahlungen an Streamer benötigen eine eingerichtete und freigegebene PayPal-Payouts-Integration.</p>
   <button type="button" id="gtWalletRefresh" class="secondary" style="width:100%">Guthaben aktualisieren</button>
 </section>
       <form id="profileEditForm" class="panel profile-edit-form hidden">
