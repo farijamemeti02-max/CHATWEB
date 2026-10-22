@@ -672,15 +672,15 @@
   // Refresh both inventory views after authentication/PayPal return and whenever the LIVE drawer is opened.
   document.addEventListener('click',event=>{if(event.target.closest('#gtLiveGiftAction'))setTimeout(loadLiveGiftInventory,0);});
   const gtWalletMoney = cents => (Math.max(0, Number(cents)||0)/100).toLocaleString('de-DE',{style:'currency',currency:'EUR'});
-  const gtWalletTypeLabels = { gift_earned:'Geschenk erhalten', payout_requested:'Auszahlung angefragt', self_gift:'Selbstgeschenk' };
+  const gtWalletTypeLabels = { gift_earned:'Geschenk erhalten', payout_requested:'Auszahlung angefragt', self_gift:'Selbstgeschenk', gift_purchased:'Geschenk gekauft', gift_sent:'Geschenk versendet' };
   async function loadGameTikWallet(){
-    const balanceEl=$('gtWalletBalance'), txEl=$('gtWalletTransactions'), payoutEl=$('gtWalletPayoutRequests'), statusEl=$('gtWalletStatus'), submit=$('gtWalletPayoutSubmit');
+    const balanceEl=$('gtWalletBalance'), purchasedEl=$('gtWalletPurchasedTotal'), txEl=$('gtWalletTransactions'), payoutEl=$('gtWalletPayoutRequests'), statusEl=$('gtWalletStatus'), submit=$('gtWalletPayoutSubmit');
     if(!balanceEl||!txEl||!payoutEl||!statusEl)return;
     if(!token){balanceEl.textContent='—';txEl.textContent='Bitte anmelden.';payoutEl.textContent='Bitte anmelden.';statusEl.textContent='Melde dich an, um dein Geschenke-Konto zu sehen.';if(submit)submit.disabled=true;return;}
     if(submit)submit.disabled=false;
     try{
       const d=await api('/api/wallet');
-      balanceEl.textContent=gtWalletMoney(d.balanceCents);
+      balanceEl.textContent=gtWalletMoney(d.balanceCents);if(purchasedEl)purchasedEl.textContent=gtWalletMoney(d.purchasedGiftTotalCents);
       txEl.innerHTML=(d.transactions||[]).length?(d.transactions).map(t=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16"><strong>${esc(gtWalletTypeLabels[t.type]||t.type||'Transaktion')}</strong> · ${t.amountCents<0?'−':''}${gtWalletMoney(Math.abs(Number(t.amountCents)||0))}<div style="opacity:.75">${esc(t.gift||t.note||'')} · ${esc(new Date(t.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Transaktionen.';
       payoutEl.innerHTML=(d.payoutRequests||[]).length?(d.payoutRequests).map(r=>`<div style="padding:7px 0;border-bottom:1px solid #ffffff16">${gtWalletMoney(r.amountCents)} · <strong>${esc(r.status==='pending'?'Ausstehend':r.status)}</strong><div style="opacity:.75">${esc(r.paypalEmail||'')} · ${esc(new Date(r.created_at).toLocaleString('de-DE'))}</div></div>`).join(''):'Noch keine Auszahlungsanfragen.';
       statusEl.textContent=d.payoutEnabled?'Guthaben geladen. PayPal Payouts ist laut Serverkonfiguration aktiviert; Auszahlungen müssen trotzdem geprüft werden.':'Guthaben geladen. PayPal-Auszahlung ist noch nicht automatisch aktiviert; Anfragen werden gespeichert und müssen bearbeitet werden.';
