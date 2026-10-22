@@ -266,13 +266,18 @@ function applyPersistentState(d) {
   platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main')||0)));
   platformTransactions.push(...(d.platformTransactions||[]));
   walletTransactions.push(...(d.walletTransactions||[]));
-  // One-time recovery for older snapshots that already recorded the 70% split in gift_earned ledger rows.
-  if (!Array.isArray(d.platformBalanceCents) || d.platformBalanceCents.length === 0) {
+  // Recover historical platform shares when the platform balance is missing OR still zero.
+  // Older snapshots may already contain an initialized [['main', 0]] balance, which must not
+  // suppress recovery of platformCents stored on prior gift_earned wallet ledger entries.
+  const currentPlatformCents = Math.max(0, Math.round(Number(platformBalanceCents.get('main') || 0)));
+  const hasRecoveredLedger = platformTransactions.some(t => t && String(t.type || '').includes('recovered'));
+  if (currentPlatformCents === 0 && !hasRecoveredLedger) {
     const legacyRows = walletTransactions.filter(t => t && t.type === 'gift_earned' && Number(t.platformCents) > 0);
     const legacyTotal = legacyRows.reduce((sum, t) => sum + Math.max(0, Math.round(Number(t.platformCents) || 0)), 0);
     if (legacyTotal > 0) {
       platformBalanceCents.set('main', legacyTotal);
       for (const t of legacyRows) platformTransactions.push({ id: `recovered-${t.id}`, type: 'gift_platform_share_recovered', amountCents: Math.max(0, Math.round(Number(t.platformCents)||0)), grossCents: Number(t.grossCents)||0, gift: t.gift || '', giftId: t.giftId || '', fromUsername: t.fromUsername || '', created_at: t.created_at || new Date().toISOString(), note: 'Aus älterer 70-%-Buchung wiederhergestellt; tatsächlicher Zahlungseingang/PayPal-Saldo muss separat abgeglichen werden.' });
+      savePersistentState();
     }
   }
   payoutRequests.push(...(d.payoutRequests||[]));
