@@ -172,6 +172,8 @@ const giftInventory = new Map(); // userId -> { Herz: number, Stern: number, Feu
 const giftInventoryMigrated = new Set(); // user IDs whose earlier standalone purchases have been migrated once
 const giftInventoryRecoveredPaymentIds = new Set(); // payment IDs credited from legacy LIVE purchases, preventing duplicate recovery
 const creatorBalancesCents = new Map(); // userId -> withdrawable cents earned from gifts received from other users
+const platformBalanceCents = new Map([['main', 0]]); // admin-only platform account, EUR cents
+const platformTransactions = []; // append-only admin ledger for platform share and manual transfers
 const walletTransactions = []; // append-only wallet/gift accounting ledger
 const payoutRequests = []; // payout requests require operator/PayPal Payouts processing
 const processedGiftEarnings = new Set(); // gift record IDs already split, prevents duplicate credit
@@ -196,7 +198,7 @@ function snapshotPersistentState() {
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
     giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
-    creatorBalancesCents: [...creatorBalancesCents.entries()], walletTransactions, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
+    creatorBalancesCents: [...creatorBalancesCents.entries()], platformBalanceCents: [...platformBalanceCents.entries()], platformTransactions, walletTransactions, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
@@ -260,7 +262,19 @@ function applyPersistentState(d) {
   for (const id of d.giftInventoryMigrated||[]) giftInventoryMigrated.add(String(id));
   for (const id of d.giftInventoryRecoveredPaymentIds||[]) giftInventoryRecoveredPaymentIds.add(String(id));
   for (const [k,v] of d.creatorBalancesCents||[]) creatorBalancesCents.set(String(k), Math.max(0, Math.round(Number(v)||0)));
+  for (const [k,v] of d.platformBalanceCents||[]) platformBalanceCents.set(String(k), Math.max(0, Math.round(Number(v)||0)));
+  platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main')||0)));
+  platformTransactions.push(...(d.platformTransactions||[]));
   walletTransactions.push(...(d.walletTransactions||[]));
+  // One-time recovery for older snapshots that already recorded the 70% split in gift_earned ledger rows.
+  if (!Array.isArray(d.platformBalanceCents) || d.platformBalanceCents.length === 0) {
+    const legacyRows = walletTransactions.filter(t => t && t.type === 'gift_earned' && Number(t.platformCents) > 0);
+    const legacyTotal = legacyRows.reduce((sum, t) => sum + Math.max(0, Math.round(Number(t.platformCents) || 0)), 0);
+    if (legacyTotal > 0) {
+      platformBalanceCents.set('main', legacyTotal);
+      for (const t of legacyRows) platformTransactions.push({ id: `recovered-${t.id}`, type: 'gift_platform_share_recovered', amountCents: Math.max(0, Math.round(Number(t.platformCents)||0)), grossCents: Number(t.grossCents)||0, gift: t.gift || '', giftId: t.giftId || '', fromUsername: t.fromUsername || '', created_at: t.created_at || new Date().toISOString(), note: 'Aus älterer 70-%-Buchung wiederhergestellt; tatsächlicher Zahlungseingang/PayPal-Saldo muss separat abgeglichen werden.' });
+    }
+  }
   payoutRequests.push(...(d.payoutRequests||[]));
   for (const id of d.processedGiftEarnings||[]) processedGiftEarnings.add(String(id));
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
@@ -452,6 +466,32 @@ app.get('/api/admin/overview', adminAuth, (_req, res) => {
   });
 });
 function reqAdminName(req) { return req.admin?.username || ''; }
+app.get('/api/admin/platform-wallet', adminAuth, (_req, res) => {
+  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(platformBalanceCents.get('main') || 0)), transactions: platformTransactions.slice(-100).reverse(), creatorSharePercent: 30, platformSharePercent: 70, note: 'Nur Admin; interne Umbuchungen sind keine PayPal-Zahlungen.' });
+});
+app.post('/api/admin/platform-wallet/transfer', adminAuth, asyncRoute(async (req, res) => {
+  const amountCents = Math.round(Number(req.body.amountCents));
+  const direction = String(req.body.direction || '');
+  const userId = String(req.body.userId || '').trim();
+  const note = String(req.body.note || '').trim().slice(0, 240);
+  if (!Number.isSafeInteger(amountCents) || amountCents < 1) return res.status(400).json({ error: 'Betrag muss mindestens 0,01 € sein.' });
+  if (!['platform_to_user', 'user_to_platform'].includes(direction)) return res.status(400).json({ error: 'Ungültige Umbuchungsrichtung.' });
+  if (!userId || !accountsHasUserId(userId)) return res.status(404).json({ error: 'Nutzerkonto nicht gefunden.' });
+  const platform = Math.max(0, Number(platformBalanceCents.get('main') || 0));
+  const creator = Math.max(0, Number(creatorBalancesCents.get(userId) || 0));
+  if (direction === 'platform_to_user' && amountCents > platform) return res.status(409).json({ error: 'Das Plattformkonto hat nicht genügend verfügbares Guthaben.' });
+  if (direction === 'user_to_platform' && amountCents > creator) return res.status(409).json({ error: 'Das Streamer-Guthaben reicht für diese Umbuchung nicht aus.' });
+  if (direction === 'platform_to_user') { platformBalanceCents.set('main', platform - amountCents); creatorBalancesCents.set(userId, creator + amountCents); }
+  else { creatorBalancesCents.set(userId, creator - amountCents); platformBalanceCents.set('main', platform + amountCents); }
+  const user = [...accounts.values()].find(a => String(a.id) === userId);
+  const entry = { id: crypto.randomUUID(), type: direction, amountCents, userId, username: user?.username || '', note, admin: reqAdminName(req), created_at: new Date().toISOString() };
+  platformTransactions.push(entry);
+  walletTransactions.push({ id: crypto.randomUUID(), type: 'admin_transfer', userId, amountCents: direction === 'platform_to_user' ? amountCents : -amountCents, created_at: entry.created_at, note: `Admin-Umbuchung: ${direction === 'platform_to_user' ? 'Plattform → Nutzer' : 'Nutzer → Plattform'}. ${note}` });
+  try { await savePersistentState(); } catch (e) { return res.status(503).json({ error: 'Umbuchung konnte nicht dauerhaft gespeichert werden.' }); }
+  res.json({ ok: true, balanceCents: Number(platformBalanceCents.get('main') || 0), userBalanceCents: Number(creatorBalancesCents.get(userId) || 0), transaction: entry });
+}));
+function accountsHasUserId(id) { return [...accounts.values()].some(a => String(a.id) === String(id)); }
+
 app.delete('/api/admin/videos/:id', adminAuth, (req, res) => {
   const index = videos.findIndex(v => v.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Video nicht gefunden.' });
@@ -962,8 +1002,11 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
     const creatorCents = giftPriceCents - platformCents;
     const creatorId = String(room.hostId);
     creatorBalancesCents.set(creatorId, Math.max(0, Number(creatorBalancesCents.get(creatorId) || 0)) + creatorCents);
-    walletTransactions.push({ id: crypto.randomUUID(), type: 'gift_earned', userId: creatorId, amountCents: creatorCents, grossCents: giftPriceCents, platformCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, created_at: giftRecord.created_at, note: `30 % Streamer-Anteil (${(creatorCents/100).toFixed(2)} €); 70 % GameTik-Plattformanteil (${(platformCents/100).toFixed(2)} €) vor Zahlungsgebühren. Plattform-Zielkonto: ${process.env.GAMETIK_PLATFORM_PAYPAL_EMAIL || 'MontenegroReisenCompany@gmail.com'}. Der Plattformanteil ist hier bilanziert; eine separate PayPal-Auszahlung ist nur mit aktivierter PayPal-Payouts-Integration möglich.` });
+    platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main') || 0)) + platformCents);
+    platformTransactions.push({ id: crypto.randomUUID(), type: 'gift_platform_share', amountCents: platformCents, grossCents: giftPriceCents, creatorCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, toUsername: String(room.hostUsername || ''), created_at: giftRecord.created_at, note: 'Automatische 70-%-Plattformbuchung; keine automatische PayPal-Überweisung.' });
+    walletTransactions.push({ id: crypto.randomUUID(), type: 'gift_earned', userId: creatorId, amountCents: creatorCents, grossCents: giftPriceCents, platformCents, gift: giftName, giftId: giftRecord.id, fromUsername: req.user.username, created_at: giftRecord.created_at, note: `30 % Streamer-Anteil (${(creatorCents/100).toFixed(2)} €); 70 % separat im geschützten GameTik-Plattformkonto verbucht.` });
     processedGiftEarnings.add(giftRecord.id);
+    savePersistentState();
     await savePersistentState();
   } else if (String(req.user.id) === String(room.hostId)) {
     walletTransactions.push({ id: crypto.randomUUID(), type: 'self_gift', userId: String(req.user.id), amountCents: 0, gift: giftName, giftId: giftRecord.id, created_at: giftRecord.created_at, note: 'Selbstgeschenk: erlaubt, erzeugt kein auszahlbares Guthaben.' });
