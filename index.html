@@ -1016,7 +1016,7 @@ header.top{position:relative!important;padding-right:12px!important;padding-bott
   </aside>
   <section class="gt-access-shortcuts" aria-label="Einstellungen und Verwaltung">
     <button type="button" id="gtSettingsToggle" class="gt-access-btn gt-settings-toggle" aria-expanded="false" aria-controls="gtSettingsMenu"><span aria-hidden="true">⚙</span><span><strong>Einstellungen</strong></span></button>
-    <div id="gtSettingsMenu" class="gt-settings-menu hidden"><a class="gt-access-btn gt-paypal-shortcut" href="/paypal.html"><span aria-hidden="true">💎</span><span><strong>PayPal & Geschenke</strong></span></a><a class="gt-access-btn gt-admin-shortcut" href="/admin.html"><span aria-hidden="true">🛡️</span><span><strong>Admin Login</strong></span></a></div>
+    <div id="gtSettingsMenu" class="gt-settings-menu hidden"><a class="gt-access-btn gt-paypal-shortcut" href="/paypal.html"><span aria-hidden="true">💎</span><span><strong>PayPal & Geschenke</strong></span></a><a class="gt-access-btn gt-admin-shortcut" href="/admin.html"><span aria-hidden="true">🛡️</span><span><strong>Admin Login</strong></span></a><button type="button" id="gtWalletShortcut" class="gt-access-btn gt-wallet-shortcut"><span aria-hidden="true">👛</span><span><strong>Geschenke-Konto</strong></span></button></div>
   </section>
   <main class="main">
     <section id="exploreView" class="panel hidden">
@@ -1137,6 +1137,24 @@ header.top{position:relative!important;padding-right:12px!important;padding-bott
         <div class="stat-card"><span class="stat-icon pink">♥</span><strong id="statLikes">0</strong><span>Likes gesamt</span></div>
         <div class="stat-card"><span class="stat-icon gold">★</span><strong id="statRating">—</strong><span>Gesamtbewertung</span><small>Bewertungen folgen</small></div>
       </div>
+      <section id="gtWalletPanel" class="panel hidden" style="margin-top:14px;border:1px solid #38bdf866;background:linear-gradient(145deg,#101426,#17112b);">
+  <div class="row" style="align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h3 class="section-title" style="margin:0">👛 GameTik Geschenke-Konto</h3><button type="button" id="gtWalletClose" class="secondary" style="width:auto;padding:8px 11px">Schließen ✕</button></div>
+  <p class="muted tiny">Gekaufte Geschenke und verdientes Geld sind getrennt. Nur Geschenke von anderen Nutzern erzeugen Creator-Guthaben. Selbstgeschenke bleiben erlaubt, bringen aber kein auszahlbares Guthaben.</p>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0">
+    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #38bdf855"><div class="tiny muted">Auszahlbares Guthaben</div><strong id="gtWalletBalance" style="font-size:24px;color:#67e8f9">0,00 €</strong></div>
+    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #c084fc55"><div class="tiny muted">Aufteilung bei Geschenken anderer</div><strong style="font-size:18px">70 % / 30 %</strong><div class="tiny muted">GameTik / Streamer</div></div>
+  </div>
+  <form id="gtWalletPayoutForm" style="display:grid;gap:8px">
+    <label for="gtWalletPaypalEmail">PayPal-E-Mail für Auszahlungen</label><input id="gtWalletPaypalEmail" type="email" maxlength="254" required placeholder="dein-paypal@example.com" autocomplete="email" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
+    <label for="gtWalletPayoutAmount">Auszahlungsbetrag in Euro (mindestens 5,00 €)</label><input id="gtWalletPayoutAmount" type="number" min="5" step="0.01" required placeholder="5,00" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
+    <button type="submit" id="gtWalletPayoutSubmit">PayPal-Auszahlung anfragen</button>
+  </form>
+  <div id="gtWalletStatus" class="tiny muted" role="status" style="margin-top:8px">Bitte anmelden, um dein Guthaben zu laden.</div>
+  <h4 style="margin:14px 0 6px">Letzte Transaktionen</h4><div id="gtWalletTransactions" class="tiny muted">Noch keine Transaktionen geladen.</div>
+  <h4 style="margin:14px 0 6px">Auszahlungsanfragen</h4><div id="gtWalletPayoutRequests" class="tiny muted">Noch keine Anfragen.</div>
+  <p class="tiny muted">Wichtig: Eine Anfrage reserviert den Betrag. Eine tatsächliche Auszahlung erfolgt erst, wenn PayPal Payouts für GameTik eingerichtet, freigegeben und die Anfrage bearbeitet wurde.</p>
+  <button type="button" id="gtWalletRefresh" class="secondary" style="width:100%">Guthaben aktualisieren</button>
+</section>
       <form id="profileEditForm" class="panel profile-edit-form hidden">
         <h3 class="section-title">Persönliches Profil bearbeiten</h3>
         <label for="profileGender">Geschlecht</label><select id="profileGender"><option value="">Keine Angabe</option><option value="Mann">Mann</option><option value="Frau">Frau</option><option value="Divers">Divers</option></select>
@@ -1178,24 +1196,7 @@ header.top{position:relative!important;padding-right:12px!important;padding-bott
   <aside class="right">
     <section class="panel"><h2 class="section-title">Unterstütze GAMETIK</h2><p class="muted tiny">Wenn du die Community unterstützen möchtest, kannst du freiwillig spenden.</p><button id="paypalBtn" class="secondary" data-gift="Spende" style="width:100%">♥ 5 € mit PayPal spenden</button><p class="muted tiny">PayPal-Spendenlink muss vom Betreiber eingerichtet werden.</p></section>
     <section class="panel"><h2 class="section-title">Virtuelle Geschenke</h2><p class="muted tiny">Wähle ein virtuelles Geschenk. Die Zahlung wird erst nach erfolgreicher Bestätigung durch PayPal verbucht.</p><div class="gift-grid"><button class="gift" data-gift="Herz"><img class="gt-real-gift-icon" src="/gift-heart.svg" alt="" aria-hidden="true"><span>Herz · 0,99 €</span></button><button class="gift" data-gift="Stern"><img class="gt-real-gift-icon" src="/gift-star.svg" alt="" aria-hidden="true"><span>Stern · 1,99 €</span></button><button class="gift" data-gift="Feuer"><img class="gt-real-gift-icon" src="/gift-fire.svg" alt="" aria-hidden="true"><span>Feuer · 2,99 €</span></button><button class="gift" data-gift="Krone"><img class="gt-real-gift-icon" src="/gift-crown.svg" alt="" aria-hidden="true"><span>Krone · 4,99 €</span></button></div><div id="giftStatus" class="tiny muted" style="margin-top:8px"></div><section id="gtGiftInventoryPanel" class="panel" style="margin-top:12px;border-color:#8b5cf6"><h3 class="section-title">🎒 Mein Geschenk-Inventar</h3><p class="muted tiny">Hier erscheinen Geschenke nach bestätigter PayPal-Zahlung. Du kannst sie in einem aktiven Live-Stream versenden, ohne erneut zu bezahlen.</p><label for="gtGiftLiveRoom">Aktiven Live-Stream auswählen</label><select id="gtGiftLiveRoom" style="width:100%;padding:10px;border-radius:10px;background:#0b0b13;color:white;border:1px solid #39394f"><option value="">Live-Streams werden geladen …</option></select><div id="gtGiftInventoryList" class="gift-grid" style="margin-top:10px"></div><div id="gtGiftInventoryStatus" class="tiny muted" role="status" style="margin-top:8px"></div><button type="button" id="gtGiftInventoryRefresh" class="secondary" style="margin-top:8px;width:100%">Inventar aktualisieren</button></section><p class="muted tiny">Hinweis: Die Inventarbestände werden im GameTik-Serverzustand gespeichert. Für zuverlässige Speicherung bei Deployments muss DATABASE_URL in Render korrekt eingerichtet sein.</p></section>
-<section id="gtWalletPanel" class="panel" style="margin-top:14px;border:1px solid #38bdf866;background:linear-gradient(145deg,#101426,#17112b);">
-  <h3 class="section-title">👛 GameTik Geschenke-Konto</h3>
-  <p class="muted tiny">Gekaufte Geschenke und verdientes Geld sind getrennt. Nur Geschenke von anderen Nutzern erzeugen Creator-Guthaben. Selbstgeschenke bleiben erlaubt, bringen aber kein auszahlbares Guthaben.</p>
-  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0">
-    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #38bdf855"><div class="tiny muted">Auszahlbares Guthaben</div><strong id="gtWalletBalance" style="font-size:24px;color:#67e8f9">0,00 €</strong></div>
-    <div style="padding:12px;border-radius:12px;background:#0b1020;border:1px solid #c084fc55"><div class="tiny muted">Aufteilung bei Geschenken anderer</div><strong style="font-size:18px">70 % / 30 %</strong><div class="tiny muted">GameTik / Streamer</div></div>
-  </div>
-  <form id="gtWalletPayoutForm" style="display:grid;gap:8px">
-    <label for="gtWalletPaypalEmail">PayPal-E-Mail für Auszahlungen</label><input id="gtWalletPaypalEmail" type="email" maxlength="254" required placeholder="dein-paypal@example.com" autocomplete="email" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
-    <label for="gtWalletPayoutAmount">Auszahlungsbetrag in Euro (mindestens 5,00 €)</label><input id="gtWalletPayoutAmount" type="number" min="5" step="0.01" required placeholder="5,00" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:#090b16;color:white;border:1px solid #42425d">
-    <button type="submit" id="gtWalletPayoutSubmit">PayPal-Auszahlung anfragen</button>
-  </form>
-  <div id="gtWalletStatus" class="tiny muted" role="status" style="margin-top:8px">Bitte anmelden, um dein Guthaben zu laden.</div>
-  <h4 style="margin:14px 0 6px">Letzte Transaktionen</h4><div id="gtWalletTransactions" class="tiny muted">Noch keine Transaktionen geladen.</div>
-  <h4 style="margin:14px 0 6px">Auszahlungsanfragen</h4><div id="gtWalletPayoutRequests" class="tiny muted">Noch keine Anfragen.</div>
-  <p class="tiny muted">Wichtig: Eine Anfrage reserviert den Betrag. Eine tatsächliche Auszahlung erfolgt erst, wenn PayPal Payouts für GameTik eingerichtet, freigegeben und die Anfrage bearbeitet wurde.</p>
-  <button type="button" id="gtWalletRefresh" class="secondary" style="width:100%">Guthaben aktualisieren</button>
-</section>
+
     <section class="panel"><h2 class="section-title">Community-Regeln</h2><p class="tiny muted">Respektvoll bleiben. Keine illegalen Inhalte, Belästigung oder fremden privaten Daten. Melde problematische Inhalte dem Betreiber.</p></section>
   </aside>
 </div>
@@ -1916,6 +1917,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 .gt-settings-toggle{display:flex!important;align-items:center;gap:8px;min-height:39px!important;padding:7px 12px!important;border:1px solid #24dfff88!important;border-radius:13px!important;background:linear-gradient(135deg,#11172aee,#171126ee)!important;color:#fff!important;box-shadow:0 0 15px #24dfff22!important}
 .gt-settings-menu{position:absolute;right:0;top:46px;min-width:190px;display:grid;gap:7px;padding:10px;border-radius:15px;border:1px solid #24dfff66;background:linear-gradient(145deg,#10172aF5,#160f25F5);box-shadow:0 12px 30px #0009;backdrop-filter:blur(14px)}
 .gt-settings-menu .gt-access-btn{display:flex;align-items:center;gap:8px;min-height:40px;padding:9px 11px;border:1px solid #7c69b988;border-radius:11px;background:#13172a;color:#fff;text-decoration:none;white-space:nowrap}
+.gt-access-shortcuts .gt-settings-menu .gt-access-btn{width:100%!important;min-width:0!important;justify-content:flex-start!important;white-space:normal!important;min-height:42px!important;text-align:left!important;cursor:pointer!important}.gt-access-shortcuts .gt-settings-menu .gt-access-btn>span:first-child{flex:0 0 28px!important;width:28px!important;height:28px!important;font-size:18px!important}.gt-access-shortcuts .gt-settings-menu .gt-access-btn>span:nth-child(2){display:block!important;flex:1 1 auto!important;min-width:0!important}.gt-access-shortcuts .gt-settings-menu .gt-access-btn strong{font-size:13px!important;white-space:normal!important}.gt-wallet-shortcut{font:inherit!important}
 @media(max-width:700px){.gt-access-shortcuts{top:8px!important;right:8px!important}.gt-settings-toggle{min-height:35px!important;padding:6px 9px!important}.gt-settings-menu{top:41px}}
 /* Kleine Profil-Brandmarke im bestehenden Profilnamen – der Name selbst bleibt erhalten. */
 .profile-name-row .section-title{letter-spacing:.025em;text-shadow:0 0 10px #24dfff35}.profile-identity #profileDetails b{font-weight:950;letter-spacing:.035em;color:#f5f8ff;text-shadow:0 0 7px #24dfff66,0 0 11px #ff28d244}.profile-identity #profileDetails b:after{content:"  ♛";color:#24dfff;text-shadow:0 0 8px #ff28d2;font-size:.92em}.gt-account-near-profile{font-size:12px!important;padding:8px 9px!important;border:1px solid #24dfff33!important;border-radius:10px!important}header.top #authOpen{display:none!important}
@@ -1946,8 +1948,16 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 (()=>{
  const $=id=>document.getElementById(id);
  const settings=$('gtSettingsToggle'),menu=$('gtSettingsMenu');
+ const walletShortcut=$('gtWalletShortcut'),walletPanel=$('gtWalletPanel');
  $('gtAccountQuick')?.addEventListener('click',()=>{$('authOpen')?.click();if(!$('authOpen'))$('authModal')?.classList.remove('hidden')});
  settings?.addEventListener('click',()=>{const open=menu.classList.toggle('hidden')===false;settings.setAttribute('aria-expanded',String(open));});
+ walletShortcut?.addEventListener('click',()=>{
+  menu?.classList.add('hidden');settings?.setAttribute('aria-expanded','false');
+  document.querySelector('[data-view="profile"]')?.click();
+  walletPanel?.classList.remove('hidden');
+  window.setTimeout(()=>{walletPanel?.scrollIntoView({behavior:'smooth',block:'start'});$('gtWalletRefresh')?.click();},120);
+ });
+ $('gtWalletClose')?.addEventListener('click',()=>{walletPanel?.classList.add('hidden');});
  document.addEventListener('click',e=>{if(menu&&!menu.classList.contains('hidden')&&!e.target.closest('.gt-access-shortcuts')){menu.classList.add('hidden');settings?.setAttribute('aria-expanded','false')}});
  // Premium gifts are also selectable inside LIVE; the existing PayPal route carries the active room ID.
  const liveGiftGrid=$('gtLivePremiumGiftGrid');
