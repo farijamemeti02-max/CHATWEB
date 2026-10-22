@@ -175,6 +175,8 @@ const creatorBalancesCents = new Map(); // userId -> withdrawable cents earned f
 const platformBalanceCents = new Map([['main', 0]]); // admin-only platform account, EUR cents
 const platformTransactions = []; // append-only admin ledger for platform share and manual transfers
 const walletTransactions = []; // append-only wallet/gift accounting ledger
+let platformAccountingMigrationVersion = 0; // one-time migration of legacy gift balances
+let stateNeedsSave = false;
 const payoutRequests = []; // payout requests require operator/PayPal Payouts processing
 const processedGiftEarnings = new Set(); // gift record IDs already split, prevents duplicate credit
 const candyBalances = new Map();
@@ -198,7 +200,7 @@ function snapshotPersistentState() {
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
     giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
-    creatorBalancesCents: [...creatorBalancesCents.entries()], platformBalanceCents: [...platformBalanceCents.entries()], platformTransactions, walletTransactions, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
+    creatorBalancesCents: [...creatorBalancesCents.entries()], platformBalanceCents: [...platformBalanceCents.entries()], platformTransactions, walletTransactions, platformAccountingMigrationVersion, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
@@ -266,20 +268,7 @@ function applyPersistentState(d) {
   platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main')||0)));
   platformTransactions.push(...(d.platformTransactions||[]));
   walletTransactions.push(...(d.walletTransactions||[]));
-  // Recover historical platform shares when the platform balance is missing OR still zero.
-  // Older snapshots may already contain an initialized [['main', 0]] balance, which must not
-  // suppress recovery of platformCents stored on prior gift_earned wallet ledger entries.
-  const currentPlatformCents = Math.max(0, Math.round(Number(platformBalanceCents.get('main') || 0)));
-  const hasRecoveredLedger = platformTransactions.some(t => t && String(t.type || '').includes('recovered'));
-  if (currentPlatformCents === 0 && !hasRecoveredLedger) {
-    const legacyRows = walletTransactions.filter(t => t && t.type === 'gift_earned' && Number(t.platformCents) > 0);
-    const legacyTotal = legacyRows.reduce((sum, t) => sum + Math.max(0, Math.round(Number(t.platformCents) || 0)), 0);
-    if (legacyTotal > 0) {
-      platformBalanceCents.set('main', legacyTotal);
-      for (const t of legacyRows) platformTransactions.push({ id: `recovered-${t.id}`, type: 'gift_platform_share_recovered', amountCents: Math.max(0, Math.round(Number(t.platformCents)||0)), grossCents: Number(t.grossCents)||0, gift: t.gift || '', giftId: t.giftId || '', fromUsername: t.fromUsername || '', created_at: t.created_at || new Date().toISOString(), note: 'Aus älterer 70-%-Buchung wiederhergestellt; tatsächlicher Zahlungseingang/PayPal-Saldo muss separat abgeglichen werden.' });
-      savePersistentState();
-    }
-  }
+  platformAccountingMigrationVersion = Math.max(0, Number(d.platformAccountingMigrationVersion) || 0);
   payoutRequests.push(...(d.payoutRequests||[]));
   for (const id of d.processedGiftEarnings||[]) processedGiftEarnings.add(String(id));
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
@@ -290,6 +279,119 @@ function applyPersistentState(d) {
   for (const [k,v] of d.friendships||[]) friendships.set(k,new Set(v||[]));
   for (const id of d.adminBlockedUsers||[]) adminBlockedUsers.add(id);
   nextStoryId=d.nextStoryId||1; nextVideoId=d.nextVideoId||1; nextCommentId=d.nextCommentId||1;
+  if (migrateHistoricalGiftAccounting()) {
+    stateNeedsSave = true;
+    // Persist only after every collection has been restored; saving earlier can overwrite
+    // a partially restored snapshot during startup.
+    savePersistentState();
+  }
+}
+function normalizedGiftPriceCents(gift) {
+  const raw = String(gift || '').trim();
+  const clean = raw.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '').trim().toLowerCase();
+  const prices = { herz: 99, stern: 199, feuer: 299, krone: 499 };
+  return prices[clean] || prices[raw.toLowerCase()] || 0;
+}
+function giftShareCents(grossCents) {
+  const gross = Math.max(0, Math.round(Number(grossCents) || 0));
+  const platform = Math.floor(gross * 70 / 100);
+  return { grossCents: gross, platformCents: platform, creatorCents: gross - platform };
+}
+function hasPlatformGiftEntry(giftId, walletTransactionId) {
+  return platformTransactions.some(t => {
+    if (!t) return false;
+    const type = String(t.type || '');
+    if (!['gift_platform_share', 'gift_platform_share_recovered', 'gift_platform_share_migrated'].includes(type)) return false;
+    if (giftId && t.giftId && String(t.giftId) === String(giftId)) return true;
+    return walletTransactionId && String(t.sourceWalletTransactionId || '') === String(walletTransactionId);
+  });
+}
+function migrateHistoricalGiftAccounting() {
+  // Run exactly once for legacy snapshots. New gifts use the live split code below.
+  if (platformAccountingMigrationVersion >= 2) return false;
+  let changed = false;
+  const beforePlatform = Math.max(0, Math.round(Number(platformBalanceCents.get('main') || 0)));
+
+  // First, repair existing earning-ledger rows. Some older snapshots credited 100% to the
+  // creator wallet and did not store platformCents; use the original gift value to split it.
+  for (const row of walletTransactions) {
+    if (!row || row.type !== 'gift_earned') continue;
+    const amount = Math.max(0, Math.round(Number(row.amountCents) || 0));
+    const gross = Math.max(0, Math.round(Number(row.grossCents) || normalizedGiftPriceCents(row.gift)));
+    if (!gross) continue;
+    const share = giftShareCents(gross);
+    const hadPlatformShare = Math.max(0, Math.round(Number(row.platformCents) || 0));
+    const platformShare = hadPlatformShare || share.platformCents;
+
+    // Only lower an existing wallet balance where the row proves that the old code credited
+    // the full gross amount (not just the intended 30% creator share).
+    if (!hadPlatformShare && row.userId && amount === gross) {
+      const current = Math.max(0, Math.round(Number(creatorBalancesCents.get(String(row.userId)) || 0)));
+      creatorBalancesCents.set(String(row.userId), Math.max(0, current - share.platformCents));
+      row.amountCents = share.creatorCents;
+      row.note = `${(share.creatorCents / 100).toFixed(2)} EUR Creator-Anteil nach 70/30-Migration; ${ (share.platformCents / 100).toFixed(2)} EUR Plattformanteil separat verbucht.`;
+      changed = true;
+    }
+    row.grossCents = gross;
+    row.platformCents = platformShare;
+    if (!hasPlatformGiftEntry(row.giftId, row.id)) {
+      platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main') || 0)) + platformShare);
+      platformTransactions.push({
+        id: `migrated-${row.id || crypto.randomUUID()}`, type: 'gift_platform_share_migrated', amountCents: platformShare,
+        grossCents: gross, creatorCents: share.creatorCents, gift: row.gift || '', giftId: row.giftId || '',
+        sourceWalletTransactionId: row.id || '', fromUsername: row.fromUsername || '', toUsername: row.toUsername || '',
+        created_at: row.created_at || new Date().toISOString(),
+        note: 'Historischer 70-%-Plattformanteil aus vorhandener gift_earned-Buchung rekonstruiert. Bitte mit PayPal-Zahlungseingängen abgleichen.'
+      });
+      changed = true;
+    }
+  }
+
+  // Second, recover sent live gifts that were persisted in the gift list but missed their
+  // accounting ledger. A paid inventory purchase alone does not qualify; inventorySend=true
+  // means the gift was actually sent to a different creator.
+  const rowsByGiftId = new Set(walletTransactions.filter(t => t && t.type === 'gift_earned' && t.giftId).map(t => String(t.giftId)));
+  for (const gift of gifts) {
+    if (!gift || gift.inventorySend !== true || !gift.id || !gift.recipientId || !gift.senderId || String(gift.senderId) === String(gift.recipientId)) continue;
+    const giftId = String(gift.id);
+    if (rowsByGiftId.has(giftId)) continue;
+    const gross = normalizedGiftPriceCents(gift.gift);
+    if (!gross) continue;
+    const share = giftShareCents(gross);
+    const alreadyProcessed = processedGiftEarnings.has(giftId);
+    if (!alreadyProcessed) {
+      creatorBalancesCents.set(String(gift.recipientId), Math.max(0, Number(creatorBalancesCents.get(String(gift.recipientId)) || 0)) + share.creatorCents);
+      processedGiftEarnings.add(giftId);
+    }
+    const tx = { id: `migrated-gift-${giftId}`, type: 'gift_earned', userId: String(gift.recipientId), amountCents: share.creatorCents, grossCents: gross, platformCents: share.platformCents, gift: gift.gift, giftId, fromUsername: gift.username || '', created_at: gift.created_at || new Date().toISOString(), note: `Wiederhergestellte Geschenkbuchung: 30 % Streamer-Anteil, 70 % Plattformanteil.` };
+    walletTransactions.push(tx);
+    rowsByGiftId.add(giftId);
+    if (!hasPlatformGiftEntry(giftId, tx.id)) {
+      platformBalanceCents.set('main', Math.max(0, Number(platformBalanceCents.get('main') || 0)) + share.platformCents);
+      platformTransactions.push({ id: `migrated-platform-${giftId}`, type: 'gift_platform_share_migrated', amountCents: share.platformCents, grossCents: gross, creatorCents: share.creatorCents, gift: gift.gift, giftId, fromUsername: gift.username || '', toUsername: gift.recipientUsername || '', created_at: gift.created_at || new Date().toISOString(), note: 'Fehlende historische Buchung des 70-%-Plattformanteils rekonstruiert; PayPal-Zahlungseingang separat abgleichen.' });
+    }
+    changed = true;
+  }
+
+  // If a previous deployment retained platform-ledger rows but lost/reset the aggregate
+  // balance, rebuild the zero balance from that ledger (including admin transfer direction).
+  if (beforePlatform === 0) {
+    const ledgerBalance = platformTransactions.reduce((sum, t) => {
+      if (!t) return sum;
+      const amount = Math.max(0, Math.round(Number(t.amountCents) || 0));
+      if (['gift_platform_share', 'gift_platform_share_recovered', 'gift_platform_share_migrated', 'user_to_platform'].includes(String(t.type || ''))) return sum + amount;
+      if (String(t.type || '') === 'platform_to_user') return sum - amount;
+      return sum;
+    }, 0);
+    platformBalanceCents.set('main', Math.max(0, Math.round(ledgerBalance)));
+  }
+
+  platformAccountingMigrationVersion = 2;
+  if (Math.max(0, Math.round(Number(platformBalanceCents.get('main') || 0))) !== beforePlatform) changed = true;
+  // Save the migration version even when the old dataset has no eligible ledger rows so we
+  // do not repeatedly reinterpret later manual/admin transfers as historic revenue.
+  stateNeedsSave = true;
+  return true;
 }
 function loadLocalPersistentState() {
   try { if (fs.existsSync(stateFile)) applyPersistentState(JSON.parse(fs.readFileSync(stateFile, 'utf8'), (_key, value) => value && value.__gametikType === 'Set' ? new Set(value.values || []) : value)); }
@@ -312,6 +414,10 @@ async function initializePersistence() {
     console.log('GameTik PostgreSQL state table initialized.');
   }
   databaseReady = true;
+  if (stateNeedsSave) {
+    await savePersistentState();
+    stateNeedsSave = false;
+  }
 }
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -1001,7 +1107,7 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
   gifts.push(giftRecord);
   // Split the gift's listed value only when it is sent to another user's stream.
   // Self-gifting remains allowed, but never creates withdrawable earnings.
-  const giftPriceCents = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[giftName] || 0;
+  const giftPriceCents = normalizedGiftPriceCents(giftName);
   if (String(req.user.id) !== String(room.hostId) && giftPriceCents > 0 && !processedGiftEarnings.has(giftRecord.id)) {
     const platformCents = Math.floor(giftPriceCents * 70 / 100);
     const creatorCents = giftPriceCents - platformCents;

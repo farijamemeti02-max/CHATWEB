@@ -1,0 +1,27 @@
+GAMETIK – KORREKTUR DES 70/30-PLATTFORMKONTOS
+Datum: 22.10.2026
+
+Problem
+Das Admin-Plattformkonto zeigte 0,00 EUR und keine Buchungen, obwohl der ältere Wallet-Stand bereits Geschenk-Einnahmen enthalten konnte. Die bisherige Wiederherstellung berücksichtigte nur alte gift_earned-Zeilen, die bereits ein platformCents-Feld hatten.
+
+Änderung
+- Serverseitige, einmalige Migration für bestehende persistierte Daten beim Start.
+- Ältere gift_earned-Ledger-Zeilen werden auf ihren bekannten Geschenkwert geprüft.
+- Wenn eine Altbuchung nachweislich den vollen Geschenkwert im Streamer-Guthaben verbucht hatte, wird dieser Guthabenstand um den 70-%-Plattformanteil korrigiert; die 30 % verbleiben beim Streamer.
+- Fehlende Plattformbuchungen werden aus bestehenden gift_earned-Zeilen rekonstruiert.
+- Tatsächlich versendete Live-Geschenke (inventorySend=true) werden nur dann nachgetragen, wenn die Buchung im Wallet-Ledger fehlt. Ein bloßer Kauf im Inventar gilt ausdrücklich noch nicht als an einen Streamer versendetes Geschenk.
+- Migration ist versioniert und wird nicht bei jedem Neustart erneut auf dieselben historischen Geschenke angewendet.
+- Speichern während des Zustandsladens erfolgt erst nach Wiederherstellung der gesamten Datenstruktur.
+- Neue qualifizierte Live-Geschenke bleiben 70 % Plattformkonto / 30 % Streamer-Guthaben.
+
+Wichtige Grenze
+Der Server kann nur Daten rekonstruieren, die im gespeicherten Neon-/JSON-Zustand vorhanden sind. Falls frühere Geschenke oder Buchungen vollständig fehlen, kann keine Zahlung erfunden oder verlässlich nachgebildet werden. Die rekonstruierte interne Plattformbuchung muss mit echten PayPal-Zahlungseingängen abgeglichen werden; die interne Buchung löst keine PayPal-Überweisung aus.
+
+Test
+- node --check server.js: bestanden
+- Migrationstest: alter 100-%-Wallet-Eintrag, fehlende Buchung für versendetes Geschenk und bereits vorhandene 30/70-Buchung: bestanden
+- Live-Test gegen Render/Neon/PayPal: nicht möglich in dieser lokalen Prüfung.
+
+Dateien
+- server.js geändert
+- admin.html unverändert
