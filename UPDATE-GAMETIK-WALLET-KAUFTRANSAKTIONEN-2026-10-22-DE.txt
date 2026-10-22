@@ -1,0 +1,13 @@
+GameTik – Korrektur Geschenke-Konto / Kaufhistorie
+Datum: 22.10.2026
+
+Änderungen:
+- Das Konto zeigt jetzt separat die Summe bestätigter bezahlter Geschenkkäufe.
+- Verifizierte, bereits gespeicherte Herz-/Kronen-Käufe erscheinen in den Transaktionen, auch wenn sie vor Einführung des Wallet-Ledgers gekauft wurden.
+- Versendete Inventar-Geschenke erscheinen als Aktivität.
+- Käufe werden ausdrücklich nicht als auszahlbares Creator-Guthaben verbucht.
+- Das echte auszahlbare Guthaben bleibt ausschließlich aus Einnahmen durch Geschenke anderer Nutzer berechnet.
+- admin.html wurde nicht bearbeitet.
+
+Hinweis:
+Die Anzeige kann nur Zahlungen rekonstruieren, deren bestätigte Kaufdatensätze bereits im gespeicherten GameTik-Zustand vorhanden sind. Dieser Patch kann keine PayPal-Zahlung aus einer externen PayPal-Ansicht eigenständig importieren. Auf Render muss die ZIP ausgerollt werden, damit die Änderung live ist.

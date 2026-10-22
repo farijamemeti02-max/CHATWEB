@@ -979,9 +979,22 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
 }));
 app.get('/api/wallet', auth, (req, res) => {
   const userId = String(req.user.id);
-  const transactions = walletTransactions.filter(t => String(t.userId) === userId).slice(-100).reverse();
+  const priceCents = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 });
+  // Include verified legacy PayPal purchases and later inventory sends in the wallet activity.
+  // Purchases are shown as spending/history, never as withdrawable creator earnings.
+  const paidGiftTransactions = gifts
+    .filter(g => g && g.username === req.user.username && g.paymentId && Object.prototype.hasOwnProperty.call(priceCents, g.gift))
+    .map(g => ({ id: `purchase-${g.paymentId}`, type: 'gift_purchased', userId, amountCents: priceCents[g.gift], gift: g.gift, paymentId: g.paymentId, created_at: g.created_at || new Date().toISOString(), note: 'Bezahlter Geschenkkauf; kein auszahlbares Guthaben.' }));
+  const sentGiftTransactions = gifts
+    .filter(g => g && String(g.senderId || '') === userId && g.inventorySend)
+    .map(g => ({ id: `sent-${g.id}`, type: 'gift_sent', userId, amountCents: priceCents[g.gift] || 0, gift: g.gift, created_at: g.created_at || new Date().toISOString(), note: String(g.recipientId || '') === userId ? 'Selbstgeschenk versendet; erzeugt kein auszahlbares Guthaben.' : 'Geschenk aus dem Inventar versendet; kein erneuter Kauf.' }));
+  const ledger = walletTransactions.filter(t => String(t.userId) === userId);
+  const knownIds = new Set(ledger.map(t => String(t.id)));
+  const activity = [...ledger, ...paidGiftTransactions.filter(t => !knownIds.has(String(t.id))), ...sentGiftTransactions.filter(t => !knownIds.has(String(t.id)))];
+  const transactions = activity.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0,100);
+  const purchasedGiftTotalCents = paidGiftTransactions.reduce((sum, t) => sum + (Number(t.amountCents) || 0), 0);
   const requests = payoutRequests.filter(p => String(p.userId) === userId).slice(-50).reverse();
-  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(creatorBalancesCents.get(userId) || 0)), transactions, payoutRequests: requests, payoutEnabled: String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() === 'true', payoutNote: 'Auszahlungsanfragen werden erst nach Einrichtung und Freigabe von PayPal Payouts tatsächlich ausgezahlt.' });
+  res.json({ currency: 'EUR', balanceCents: Math.max(0, Number(creatorBalancesCents.get(userId) || 0)), purchasedGiftTotalCents, transactions, payoutRequests: requests, payoutEnabled: String(process.env.PAYPAL_PAYOUTS_ENABLED || '').toLowerCase() === 'true', payoutNote: 'Auszahlungsanfragen werden erst nach Einrichtung und Freigabe von PayPal Payouts tatsächlich ausgezahlt.' });
 });
 app.post('/api/wallet/payout-request', auth, asyncRoute(async (req, res) => {
   const userId = String(req.user.id);
