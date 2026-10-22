@@ -167,6 +167,9 @@ const videos = [];
 const chatMessages = [];
 const privateMessages = [];
 const gifts = [];
+// Paid gifts are stored as per-account inventory counts and persisted with GameTik state.
+const giftInventory = new Map(); // userId -> { Herz: number, Stern: number, Feuer: number, Krone: number, ... }
+const giftInventoryMigrated = new Set(); // user IDs whose earlier standalone purchases have been migrated once
 const candyBalances = new Map();
 const candyDailyClaims = new Map();
 const candySpinCooldowns = new Map();
@@ -187,6 +190,7 @@ function snapshotPersistentState() {
     accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
+    giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
     nextStoryId, nextVideoId, nextCommentId
@@ -246,6 +250,8 @@ function applyPersistentState(d) {
     if (!video.reactions || typeof video.reactions !== 'object') video.reactions = {};
     for (const [kind, value] of Object.entries(video.reactions)) if (!(value instanceof Set)) video.reactions[kind] = new Set(Array.isArray(value) ? value : []);
   }
+  for (const [k,v] of d.giftInventory||[]) giftInventory.set(String(k), v && typeof v === 'object' ? v : {});
+  for (const id of d.giftInventoryMigrated||[]) giftInventoryMigrated.add(String(id));
   for (const [k,v] of d.candyBalances||[]) candyBalances.set(k, v);
   for (const [k,v] of d.candyDailyClaims||[]) candyDailyClaims.set(k,v);
   for (const [k,v] of d.candySpinCooldowns||[]) candySpinCooldowns.set(k,v);
@@ -892,6 +898,45 @@ app.post('/api/gifts', auth, (req,res) => {
   gifts.push(record);
   res.status(201).json({ gift: record, note: 'Demo-Geschenk gespeichert; keine Zahlung ausgelöst.' });
 });
+app.get('/api/gifts/inventory', auth, asyncRoute(async (req, res) => {
+  const userId = String(req.user.id);
+  const inventory = giftInventory.get(userId) || {};
+  // One-time recovery for standalone purchases recorded by the older version before inventory existed.
+  if (!giftInventoryMigrated.has(userId)) {
+    for (const record of gifts) {
+      if (record && record.username === req.user.username && record.paymentId && !record.liveRoomId && !record.inventorySend && record.gift && record.gift !== 'Spende') {
+        inventory[record.gift] = Math.max(0, Number(inventory[record.gift]) || 0) + 1;
+      }
+    }
+    giftInventory.set(userId, inventory);
+    giftInventoryMigrated.add(userId);
+    await savePersistentState();
+  }
+  res.json({ inventory: Object.fromEntries(Object.entries(inventory).map(([name,count]) => [name, Math.max(0, Number(count)||0)]).filter(([,count]) => count > 0)) });
+}));
+app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
+  const giftName = String(req.body.gift || '').trim();
+  const roomId = String(req.body.liveRoomId || '').trim();
+  const room = liveRooms.get(roomId);
+  if (!room || room.status !== 'live') return res.status(404).json({ error: 'Bitte wähle einen aktuell aktiven Live-Stream.' });
+  if (!giftName || giftName === 'Spende') return res.status(400).json({ error: 'Dieses Geschenk kann nicht aus dem Inventar versendet werden.' });
+  const inventory = giftInventory.get(String(req.user.id)) || {};
+  const available = Math.max(0, Number(inventory[giftName]) || 0);
+  if (available < 1) return res.status(409).json({ error: 'Dieses Geschenk ist nicht in deinem Inventar vorhanden. Bitte kaufe es zuerst.' });
+  inventory[giftName] = available - 1;
+  if (inventory[giftName] <= 0) delete inventory[giftName];
+  giftInventory.set(String(req.user.id), inventory);
+  const giftRecord = { id: crypto.randomUUID(), username: req.user.username, gift: giftName, liveRoomId: roomId, inventorySend: true, created_at: new Date().toISOString() };
+  gifts.push(giftRecord);
+  const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[giftName] || 0;
+  if (room.game?.active && giftPoints > 0 && Date.now() < room.game.endsAt) {
+    room.game.hostPoints = Math.min(1000000000, Number(room.game.hostPoints || 0) + giftPoints);
+    io.to('live:' + roomId).emit('live:game-state', { roomId, game: room.game });
+  }
+  io.to('live:' + roomId).emit('live:gift', { roomId, username: req.user.username, gift: giftName, points: giftPoints, inventorySend: true, created_at: giftRecord.created_at });
+  await savePersistentState();
+  res.json({ ok: true, gift: giftName, remaining: Math.max(0, Number(inventory[giftName]) || 0), inventory: Object.fromEntries(Object.entries(inventory).filter(([,count]) => Number(count) > 0)) });
+}));
 // PayPal Orders API. Secrets are read only from server environment variables.
 function paypalBaseUrl() {
   return String(process.env.PAYPAL_MODE || 'sandbox').toLowerCase() === 'live'
@@ -1067,6 +1112,11 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
     created_at: new Date().toISOString()
   };
   gifts.push(giftRecord);
+  if (saved.gift !== 'Spende' && !saved.liveRoomId) {
+    const inventory = giftInventory.get(String(req.user.id)) || {};
+    inventory[saved.gift] = Math.max(0, Number(inventory[saved.gift]) || 0) + 1;
+    giftInventory.set(String(req.user.id), inventory);
+  }
   if (saved.liveRoomId) {
     const liveRoom = liveRooms.get(saved.liveRoomId);
     const giftPoints = ({ Herz: 99, Stern: 199, Feuer: 299, Krone: 499 })[saved.gift] || 0;
@@ -1077,7 +1127,8 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
     io.to('live:' + saved.liveRoomId).emit('live:gift', { roomId: saved.liveRoomId, username: req.user.username, gift: saved.gift, points: giftPoints, paymentId: capture.id, created_at: giftRecord.created_at });
   }
 
-  res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id });
+  await savePersistentState();
+  res.json({ ok: true, status: 'COMPLETED', gift: saved.gift, paymentId: capture.id, inventoryAdded: saved.gift !== 'Spende' && !saved.liveRoomId });
 }));
 // Virtual candy wallet: free-only credits, no cash value, no purchase or cash-out.
 function candyBalance(userId) { return Math.max(0, Number(candyBalances.get(String(userId)) || 0)); }

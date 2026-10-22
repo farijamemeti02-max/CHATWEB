@@ -1,0 +1,22 @@
+GAMETIK – GESCHENKE-INVENTAR UPDATE
+Datum: 22.10.2026
+
+Umsetzung:
+- Nach erfolgreicher PayPal-Capture-Bestätigung wird ein separat gekauftes Geschenk dem Konto-Inventar hinzugefügt.
+- Neue API: GET /api/gifts/inventory
+- Neue API: POST /api/gifts/inventory/send
+- Geschenke aus dem Inventar können an einen aktiven Live-Stream gesendet werden, ohne eine zweite PayPal-Zahlung auszulösen.
+- Beim Versand wird serverseitig genau ein Stück abgezogen und live:gift an den Stream gesendet.
+- Inventar und einmalige Migration älterer, separat bezahlter Geschenke werden in GameTik persistentem Zustand gespeichert.
+- Bereits direkt im Live-Stream gekaufte und direkt versendete Geschenke werden nicht zusätzlich ins Inventar gelegt.
+- Nach PayPal-Rückkehr wird das Inventar aktualisiert.
+
+Prüfung:
+- node --check server.js: bestanden
+- node --check app.js: bestanden
+- Projektprüfung: weiterhin blockiert durch bereits vorhandene doppelte ID in index.html:
+  gametik-live-chat-duel-real-fix-20261022
+- Kein echter PayPal-Kauf oder Render-Live-Test wurde hier ausgeführt.
+
+Hinweis:
+Die Wiederherstellung alter Käufe funktioniert nur, wenn deren Zahlungsbelege noch im gespeicherten GameTik-Zustand vorhanden sind (Gift-Eintrag mit paymentId und ohne liveRoomId). Zahlungen, deren Datensatz nicht gespeichert wurde, können nicht automatisch rekonstruiert werden.
