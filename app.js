@@ -283,16 +283,10 @@
       if(!activeStories.length){list.innerHTML=createButton + (includeCreate ? '' : '<span class="muted tiny">Noch keine aktiven Storys. Veröffentliche die erste!</span>');return;}
       list.innerHTML = createButton + activeStories.map((st,i)=>{
         const preview = st.media_url
-          ? (st.type==='video' ? `<video data-story-preview src="${esc(mediaUrl(st.media_url))}" muted playsinline preload="metadata"></video>` : `<img data-story-preview src="${esc(mediaUrl(st.media_url))}" alt="Story-Vorschau" loading="lazy">`)
-          : '<span class="story-text-preview">Aa</span>';
+          ? (st.type==='video' ? `<video src="${esc(mediaUrl(st.media_url))}" muted playsinline preload="metadata"></video>` : `<img src="${esc(mediaUrl(st.media_url))}" alt="">`)
+          : '<span style="font-size:1.5rem;color:#fff;text-shadow:0 0 8px #ff28d2,0 0 12px #24dfff">Aa</span>';
         return `<button class="story-item" type="button" data-story-index="${i}"><span class="story-ring"><span class="story-ring-inner">${preview}</span></span><span class="tiny">${esc(st.username||'Mitglied')}</span></button>`;
       }).join('');
-      // A deleted/expired server-side file must not leave the browser's broken-image icon on screen.
-      list.querySelectorAll('[data-story-preview]').forEach(el=>el.addEventListener('error',()=>{
-        const inner=el.closest('.story-ring-inner');
-        if(!inner)return;
-        inner.innerHTML='<span class="story-media-fallback"><b>♛</b><small>Vorschau nicht verfügbar</small></span>';
-      },{once:true}));
     };
     renderList($('storyList'));
     renderList($('feedStoryList'), true);
@@ -311,9 +305,7 @@
     if(st.type==='text'){
       const text=document.createElement('div');text.className='story-viewer-text';text.textContent=st.caption||'';media.appendChild(text);
     }else if(st.media_url){
-      const el=document.createElement(st.type==='video'?'video':'img');el.src=mediaUrl(st.media_url);el.alt=st.type==='photo'?'Story-Foto':'';
-      el.onerror=()=>{media.replaceChildren();const fallback=document.createElement('div');fallback.className='story-viewer-missing';fallback.innerHTML='<b>♛</b><span>Dieses Story-Medium ist nicht erreichbar.</span><small>Bitte lade die Story erneut hoch.</small>';media.appendChild(fallback);};
-      if(st.type==='video'){el.controls=true;el.autoplay=true;el.playsInline=true;}media.appendChild(el);
+      const el=document.createElement(st.type==='video'?'video':'img');el.src=mediaUrl(st.media_url);el.alt=st.type==='photo'?'Story-Foto':'';if(st.type==='video'){el.controls=true;el.autoplay=true;el.playsInline=true;}media.appendChild(el);
     }
     const foot=$('storyViewerFoot');foot.textContent=st.caption||'';
     if(st.user_id && (!me || String(st.user_id)!==String(me.id))){
