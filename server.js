@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
-const { S3Client, PutObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { Server } = require('socket.io');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
 const { Pool } = require('pg');
@@ -474,7 +474,8 @@ const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSiz
   cb(allowed ? null : Object.assign(new Error('Erlaubt sind JPG, PNG und WebP.'), { status: 400 }), allowed);
 }});
 const storyUpload = multer({
-  storage: multer.diskStorage({
+  // Keep Story media in R2 when configured, so images/videos do not break after a Render deploy.
+  storage: r2Ready ? multer.memoryStorage() : multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, videoDir),
     filename: (_req, file, cb) => cb(null, crypto.randomUUID() + safeExtension(file.mimetype, file.originalname))
   }),
@@ -484,14 +485,53 @@ const storyUpload = multer({
     cb(allowed.includes(file.mimetype) ? null : Object.assign(new Error('Storys erlauben gängige Bildformate sowie MP4, WebM, MOV, OGV oder M4V.'), { status: 400 }), allowed.includes(file.mimetype));
   }
 });
+function getStoryR2Key(mediaUrl) {
+  const prefix = r2PublicUrl ? `${r2PublicUrl}/` : '';
+  if (!prefix || !mediaUrl || !mediaUrl.startsWith(prefix)) return null;
+  const key = mediaUrl.slice(prefix.length).split(/[?#]/, 1)[0];
+  return key.startsWith('stories/') ? key : null;
+}
+function deleteStoryMedia(story) {
+  if (!story?.media_url) return;
+  if (story.media_url.startsWith('/uploads/videos/')) {
+    fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+    return;
+  }
+  const key = getStoryR2Key(story.media_url);
+  if (key && r2Ready && r2) {
+    r2.send(new DeleteObjectCommand({ Bucket: r2Bucket, Key: key }))
+      .catch(error => console.error('Could not remove expired/deleted Story media from R2:', error.message));
+  }
+}
+async function migrateLocalStoriesToR2() {
+  if (!r2Ready || !r2 || !stories.length) return;
+  let changed = false;
+  for (const story of stories) {
+    if (!story?.media_url || !story.media_url.startsWith('/uploads/videos/') || Date.parse(story.expires_at) <= Date.now()) continue;
+    const localPath = path.join(videoDir, path.basename(story.media_url));
+    if (!fs.existsSync(localPath)) continue; // The old local file is already gone; the UI will show a clean fallback.
+    const ext = path.extname(localPath).toLowerCase();
+    const typeByExt = {'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.gif':'image/gif','.avif':'image/avif','.bmp':'image/bmp','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime','.ogv':'video/ogg','.m4v':'video/x-m4v'};
+    const contentType = typeByExt[ext] || (story.type === 'video' ? 'video/mp4' : 'image/jpeg');
+    const userPart = String(story.user_id || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '');
+    const key = `stories/${userPart}/${path.basename(localPath)}`;
+    try {
+      await r2.send(new PutObjectCommand({ Bucket: r2Bucket, Key: key, Body: fs.createReadStream(localPath), ContentType: contentType, CacheControl: 'public, max-age=86400' }));
+      story.media_url = `${r2PublicUrl}/${key}`;
+      fs.unlink(localPath, () => {});
+      changed = true;
+    } catch (error) {
+      console.error('Could not migrate existing Story media to R2:', error.message);
+    }
+  }
+  if (changed) await savePersistentState();
+}
 function purgeExpiredStories() {
   const now = Date.now();
   for (let i = stories.length - 1; i >= 0; i--) {
     const story = stories[i];
     if (Date.parse(story.expires_at) <= now) {
-      if (story.media_url && story.media_url.startsWith('/uploads/videos/')) {
-        fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
-      }
+      deleteStoryMedia(story);
       stories.splice(i, 1);
     }
   }
@@ -645,11 +685,12 @@ app.delete('/api/admin/videos/:id', adminAuth, (req, res) => {
   for (const user of sessions.values()) user.likes?.delete(video.id);
   res.json({ ok: true });
 });
-app.delete('/api/admin/stories/:id', adminAuth, (req, res) => {
+app.delete('/api/admin/stories/:id', adminAuth, async (req, res) => {
   const index = stories.findIndex(story => story.id === Number(req.params.id));
   if (index < 0) return res.status(404).json({ error: 'Story nicht gefunden.' });
   const [story] = stories.splice(index, 1);
-  if (story.media_url) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+  deleteStoryMedia(story);
+  await savePersistentState();
   res.json({ ok: true });
 });
 app.patch('/api/admin/users/:id/block', adminAuth, (req, res) => {
@@ -673,7 +714,7 @@ app.delete('/api/admin/users/:id', adminAuth, (req, res) => {
   for (const set of friendships.values()) set.delete(id);
   for (const other of sessions.values()) { other.following?.delete(id); other.blockedUsers?.delete(id); }
   for (let i = videos.length - 1; i >= 0; i--) if (String(videos[i].user_id) === id) { const [v] = videos.splice(i,1); if (v.video_url) fs.unlink(path.join(videoDir,path.basename(v.video_url)),()=>{}); }
-  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); if (st.media_url) fs.unlink(path.join(videoDir,path.basename(st.media_url)),()=>{}); }
+  for (let i = stories.length - 1; i >= 0; i--) if (String(stories[i].user_id) === id) { const [st] = stories.splice(i,1); deleteStoryMedia(st); }
   savePersistentState();
   res.json({ ok: true });
 });
@@ -943,7 +984,7 @@ app.get('/api/stories', (req, res) => {
   const viewer = getSession(req);
   res.json({ stories: stories.slice().reverse().filter(story => !isBlockedBetween(viewer, story.user_id)).map(story => ({ ...story, following: viewer ? viewer.following.has(String(story.user_id)) : false, remaining_ms: Math.max(0, Date.parse(story.expires_at) - Date.now()) })) });
 });
-app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(req, res, err => {
+app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(req, res, async err => {
   if (err) return next(err);
   const type = String(req.body.type || '').toLowerCase();
   const caption = String(req.body.caption || '').trim().slice(0, 300);
@@ -956,25 +997,49 @@ app.post('/api/stories', auth, (req, res, next) => storyUpload.single('media')(r
   if (type !== 'text' && !req.file) return res.status(400).json({ error: 'Bitte eine Foto- oder Videodatei auswählen.' });
   if (type === 'photo' && !req.file.mimetype.startsWith('image/')) return rejectStory('Für eine Foto-Story bitte ein Bild auswählen.');
   if (type === 'video' && !req.file.mimetype.startsWith('video/')) return rejectStory('Für eine Video-Story bitte ein Video auswählen.');
+  let mediaUrl = null;
+  if (req.file) {
+    if (r2Ready && r2) {
+      const userPart = String(req.user.id || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '');
+      const key = `stories/${userPart}/${crypto.randomUUID()}${safeExtension(req.file.mimetype, req.file.originalname)}`;
+      try {
+        await r2.send(new PutObjectCommand({ Bucket: r2Bucket, Key: key, Body: req.file.buffer, ContentType: req.file.mimetype, CacheControl: 'public, max-age=86400' }));
+        mediaUrl = `${r2PublicUrl}/${key}`;
+      } catch (uploadError) {
+        if (req.file.path) fs.unlink(req.file.path, () => {});
+        console.error('Cloudflare R2 Story upload failed:', uploadError.message);
+        return res.status(502).json({ error: 'Story-Medium konnte nicht dauerhaft gespeichert werden. Bitte R2-Konfiguration und Berechtigungen in Render prüfen.' });
+      }
+    } else {
+      mediaUrl = '/uploads/videos/' + req.file.filename;
+    }
+  }
   const created = new Date();
   const story = {
     id: nextStoryId++, user_id: req.user.id, username: req.user.username,
     avatar_url: req.user.avatar_url || null, type, caption,
-    media_url: req.file ? '/uploads/videos/' + req.file.filename : null,
+    media_url: mediaUrl,
     created_at: created.toISOString(), expires_at: new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString()
   };
   stories.push(story);
-  savePersistentState();
+  try { await savePersistentState(); }
+  catch (saveError) {
+    stories.splice(stories.indexOf(story), 1);
+    deleteStoryMedia(story);
+    console.error('Story state save failed:', saveError.message);
+    return res.status(503).json({ error: 'Story konnte nicht dauerhaft gespeichert werden. Bitte erneut versuchen.' });
+  }
   res.status(201).json({ story });
 }));
-app.delete('/api/stories/:id', auth, (req, res) => {
+app.delete('/api/stories/:id', auth, async (req, res) => {
   purgeExpiredStories();
   const idx = stories.findIndex(story => story.id === Number(req.params.id));
   if (idx < 0) return res.status(404).json({ error: 'Story nicht gefunden oder abgelaufen.' });
   if (stories[idx].user_id !== req.user.id) return res.status(403).json({ error: 'Du kannst nur deine eigenen Storys löschen.' });
   const story = stories[idx];
   stories.splice(idx, 1);
-  if (story.media_url && story.media_url.startsWith('/uploads/videos/')) fs.unlink(path.join(videoDir, path.basename(story.media_url)), () => {});
+  deleteStoryMedia(story);
+  await savePersistentState();
   res.json({ ok: true });
 });
 
@@ -1719,7 +1784,8 @@ app.use((err,_req,res,_next) => {
   const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : (err.status || (err instanceof multer.MulterError ? 400 : 500));
   res.status(status).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Datei zu groß. Videos maximal 35 MB, Profilbilder maximal 3 MB.' : (err.message || 'Interner Fehler.') });
 });
-initializePersistence().then(() => {
+initializePersistence().then(async () => {
+  await migrateLocalStoriesToR2();
   httpServer.listen(PORT, '0.0.0.0', () => console.log(`GAMETIK läuft auf Port ${PORT}; Speicherung: ${dbPool && databaseReady ? 'Neon PostgreSQL' : 'lokale JSON-Datei (nicht dauerhaft auf Render)'}.`));
 }).catch(error => {
   console.error('GameTik konnte die Datenbank nicht initialisieren:', error.message);

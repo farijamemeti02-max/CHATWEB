@@ -1,0 +1,18 @@
+GAMETIK – STORY-VORSCHAU UND MEDIEN-SPEICHERUNG
+Datum: 23.10.2026
+
+Korrekturen:
+- Story-Vorschaubilder im Profil erhalten feste, runde Abmessungen auf Mobilgeräten.
+- Fehlerhafte oder nicht mehr erreichbare Story-Dateien hinterlassen kein gebrochenes Browser-Bildsymbol, sondern eine verständliche Ersatzanzeige.
+- Story-Bilder und -Videos werden bei vorhandener Cloudflare-R2-Konfiguration dauerhaft in R2 gespeichert.
+- Vorhandene, noch vorhandene lokale Story-Dateien werden beim Start nach R2 übernommen und die Story-URL wird in Neon/der aktuellen Persistenz aktualisiert.
+- Beim Löschen oder Ablauf einer Story werden lokale Dateien beziehungsweise passende R2-Objekte entfernt.
+- Die bestehende Story-Erstellung für Foto, Video und Text sowie Admin-Oberfläche und andere Bereiche wurden nicht absichtlich geändert.
+
+Prüfung:
+- JavaScript-Syntaxprüfung für server.js und app.js erfolgreich.
+- scripts/check-project.js erfolgreich.
+- Die umfassende npm-Prüfung meldet weiterhin bereits projektweite Probleme außerhalb dieses Story-Fixes: fehlende LIVE-Spiel-Punktelogik sowie die doppelte ID gametik-live-chat-duel-real-fix-20261022. Diese Bereiche wurden für diesen Auftrag nicht geändert.
+
+Hinweis:
+Wenn ein altes Story-Medium bereits vom Server gelöscht wurde, kann es nicht aus der Datenbank wiederhergestellt werden. Das Story-Element zeigt dann eine Ersatzanzeige; dieses Medium muss erneut hochgeladen werden. Neue Medien werden bei korrekt eingerichteter R2-Konfiguration dauerhaft in Cloudflare R2 gespeichert.
