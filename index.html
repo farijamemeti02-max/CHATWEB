@@ -2185,6 +2185,25 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(max-width:600px){#liveVideoStage #gtDuelCandyProgress{top:98px!important;left:4px!important;width:174px!important;max-width:calc(100% - 82px)!important}}
 @media(prefers-reduced-motion:reduce){#liveVideoStage #gtDuelCandyProgress .gt-level-logo{animation:none!important}}
 </style>
+
+<!-- GAMETIK FINAL PROFILE + LEVEL PLACEMENT FIX 2026-10-24 -->
+<style id="gametik-profile-level-placement-final-20261024">
+/* Keep the avatar only: the user explicitly asked to remove the username text inside the live video. */
+#liveVideoStage #gtLiveProfilePill{left:10px!important;top:10px!important;right:auto!important;width:52px!important;max-width:52px!important;min-width:52px!important;height:52px!important;padding:3px!important;gap:0!important;box-sizing:border-box!important;border-radius:50%!important;overflow:visible!important;background:rgba(5,7,18,.82)!important;border:1px solid #24dfff!important;box-shadow:0 0 0 1px #ff35c9,0 0 13px #24dfff55!important}
+#liveVideoStage #gtLiveProfilePill .gt-live-profile-copy,
+#liveVideoStage #gtLiveProfilePill #gtLiveProfileName,
+#liveVideoStage #gtLiveProfilePill #gtLiveFollowButton{display:none!important;visibility:hidden!important}
+#liveVideoStage #gtLiveProfilePill .gt-live-profile-avatar{width:44px!important;height:44px!important;min-width:44px!important;flex:0 0 44px!important;margin:0!important}
+/* Use the original wide GameTik LEVEL-1 artwork; hide the extra plain-text LEVEL 1 label. */
+#liveVideoStage #gtDuelCandyProgress{position:absolute!important;top:205px!important;left:12px!important;right:auto!important;bottom:auto!important;transform:none!important;width:100px!important;max-width:100px!important;height:auto!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;z-index:45!important;pointer-events:none!important;display:block!important}
+#liveVideoStage #gtDuelCandyProgress .gt-level-logo{display:block!important;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;background:transparent!important;mix-blend-mode:normal!important;filter:drop-shadow(0 1px 3px #000b) drop-shadow(0 0 4px #24dfff88) drop-shadow(0 0 4px #ff35c977)!important;animation:none!important}
+#liveVideoStage #gtDuelCandyProgress .gt-level-number{display:none!important}
+#liveVideoStage #gtDuelCandyProgress .gt-level-data{display:none!important}
+@media(max-width:600px){#liveVideoStage #gtLiveProfilePill{left:10px!important;top:10px!important;width:52px!important;min-width:52px!important;max-width:52px!important;height:52px!important;padding:3px!important}#liveVideoStage #gtLiveProfilePill .gt-live-profile-avatar{width:44px!important;height:44px!important;flex-basis:44px!important}#liveVideoStage #gtDuelCandyProgress{top:205px!important;left:12px!important;width:100px!important;max-width:100px!important}}
+</style>
+<script id="gametik-profile-level-placement-final-js-20261024">
+(()=>{function apply(){const stage=document.getElementById('liveVideoStage');const pill=document.getElementById('gtLiveProfilePill');if(pill){pill.querySelector('.gt-live-profile-copy')?.remove();pill.querySelector('#gtLiveProfileName')?.remove();pill.querySelector('#gtLiveFollowButton')?.remove();}if(stage){const p=stage.querySelector('#gtDuelCandyProgress');if(p){p.querySelector('.gt-level-number')?.remove();p.querySelector('.gt-level-data')?.setAttribute('aria-hidden','true');}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();setTimeout(apply,500);setTimeout(apply,1500);})();
+</script>
 </body>
 
 
