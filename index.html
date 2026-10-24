@@ -2980,3 +2980,48 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 })();
 </script>
 
+
+
+<!-- GameTik: LIVE BEENDEN als kompakter Graffiti-Chrom-Button direkt im Stream -->
+<style id="gametik-live-end-in-stream-graffiti-20261024">
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  position:absolute!important;top:48px!important;right:54px!important;z-index:30!important;
+  min-height:34px!important;height:auto!important;max-width:calc(100% - 112px)!important;
+  padding:7px 11px!important;margin:0!important;gap:5px!important;white-space:nowrap!important;
+  border:1px solid transparent!important;border-radius:10px!important;
+  background:linear-gradient(135deg,#eaffff 0%,#22dfff 13%,#3144b8 32%,#8e2be2 55%,#ff2fcf 78%,#eaffff 100%) padding-box,
+             linear-gradient(135deg,#ffffff,#20e7ff 30%,#c62cff 63%,#ff37d1 82%,#ffffff) border-box!important;
+  color:#fff!important;font-size:11px!important;line-height:1.15!important;font-weight:950!important;
+  letter-spacing:.035em!important;text-shadow:0 1px 2px #080818,0 0 5px #111!important;
+  box-shadow:inset 0 1px 0 #ffffffb8,inset 0 -3px 5px #09091caa,0 0 7px #20dfff99,0 0 14px #ef2bce66!important;
+  pointer-events:auto!important;cursor:pointer!important;transform:none!important;
+}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::before{
+  content:"";position:absolute;inset:2px;border-radius:7px;z-index:-1;
+  background:linear-gradient(135deg,#12172e 0%,#14112b 55%,#251037 100%);
+  box-shadow:inset 0 1px 0 #ffffff35,inset 0 -2px 0 #0009;
+}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button:hover{filter:brightness(1.15)!important;box-shadow:inset 0 1px 0 #ffffffb8,0 0 10px #20dfffcc,0 0 17px #ef2bce88!important}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button:active{transform:scale(.97)!important}
+@media(max-width:520px){
+ #liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{top:48px!important;right:45px!important;min-height:31px!important;padding:6px 8px!important;font-size:9px!important;max-width:calc(100% - 92px)!important}
+}
+</style>
+<script id="gametik-live-end-in-stream-graffiti-js-20261024">
+(()=>{
+ function placeLiveEndButton(){
+  const stage=document.getElementById('liveVideoStage');
+  const btn=document.getElementById('liveEndTopBtn');
+  if(!stage||!btn)return;
+  if(btn.parentElement!==stage)stage.appendChild(btn);
+  btn.classList.add('gt-live-end-stream-button');
+  btn.setAttribute('aria-label','LIVE beenden');
+  btn.title='LIVE beenden';
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',placeLiveEndButton,{once:true});else placeLiveEndButton();
+ const obs=new MutationObserver(placeLiveEndButton);obs.observe(document.documentElement,{childList:true,subtree:true});
+ setTimeout(()=>obs.disconnect(),12000);
+})();
+</script>
+
