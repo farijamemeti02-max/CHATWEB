@@ -3047,3 +3047,23 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 #liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{content:"⏻";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:Arial,sans-serif;font-size:27px;font-weight:700;line-height:1;color:#f8ffff;text-shadow:0 0 4px #20e7ff,0 0 8px #e82bd9;pointer-events:none;}
 @media(max-width:520px){#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{top:48px!important;right:52px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important;padding:0!important;}#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{font-size:24px!important;}}
 </style>
+
+<!-- Final user-requested alignment: edge-aligned power button and slightly larger avatar -->
+<style id="gametik-power-edge-avatar-tune-20261024">
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{
+  top:58px!important;right:4px!important;
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+  max-width:38px!important;max-height:38px!important;padding:0!important;border-radius:50%!important;
+}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::before{inset:2px!important;border-radius:50%!important;}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{content:"⏻"!important;font-family:Arial,sans-serif!important;font-size:23px!important;font-weight:700!important;}
+#liveVideoStage #gtLiveProfilePill .gt-live-profile-avatar{width:43px!important;height:43px!important;flex-basis:43px!important;}
+#liveVideoStage #gtLiveProfilePill{min-height:43px!important;}
+#liveVideoStage #gtDuelCandyProgress{top:58px!important;left:2px!important;width:68px!important;max-width:68px!important;}
+@media(max-width:600px){
+ #liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{top:58px!important;right:4px!important;width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important;max-width:36px!important;max-height:36px!important;}
+ #liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{font-size:22px!important;}
+ #liveVideoStage #gtLiveProfilePill .gt-live-profile-avatar{width:43px!important;height:43px!important;flex-basis:43px!important;}
+ #liveVideoStage #gtDuelCandyProgress{top:58px!important;left:2px!important;width:68px!important;max-width:68px!important;}
+}
+</style>
