@@ -2205,11 +2205,16 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 (()=>{function apply(){const stage=document.getElementById('liveVideoStage');const pill=document.getElementById('gtLiveProfilePill');if(pill){pill.querySelector('.gt-live-profile-copy')?.remove();pill.querySelector('#gtLiveProfileName')?.remove();pill.querySelector('#gtLiveFollowButton')?.remove();}if(stage){const p=stage.querySelector('#gtDuelCandyProgress');if(p){p.querySelector('.gt-level-number')?.remove();p.querySelector('.gt-level-data')?.setAttribute('aria-hidden','true');}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();setTimeout(apply,500);setTimeout(apply,1500);})();
 </script>
 
-<style id="gametik-original-level-logo-studio-20261024">
-/* Original vom Nutzer geliefertes LEVEL 1 Artwork, unverändert eingebunden. */
-#gtLiveExperienceModal .gt-studio-level-logo-wrap{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;margin:12px auto 18px!important;font-size:0!important;line-height:0!important;text-shadow:none!important}
-#gtLiveExperienceModal .gt-studio-level-logo{display:block!important;width:min(100%,620px)!important;max-height:190px!important;height:auto!important;object-fit:contain!important;filter:drop-shadow(0 0 8px #24dfff66) drop-shadow(0 0 12px #ff27d255)!important}
-@media(max-width:600px){#gtLiveExperienceModal .gt-studio-level-logo{width:100%!important;max-height:150px!important}}
+
+
+<style id="gametik-studio-wordmark-correction-20261024">
+/* Correction: use the LEVEL-logo's chrome/neon graffiti lettering style for the words GameTik Studio; do not display LEVEL 1 artwork here. */
+#gtLiveExperienceModal .gt-exp-head h2.gt-studio-title-accessible{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#gtLiveExperienceModal .gt-exp-head{display:flex!important;justify-content:flex-end!important;align-items:flex-start!important;min-height:0!important;margin-bottom:0!important}
+#gtLiveExperienceModal .gt-studio-main-wordmark{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;width:100%!important;min-height:clamp(112px,25vw,190px)!important;margin:0 auto 18px!important;padding:12px 4px 8px!important;text-align:center!important;line-height:1!important;letter-spacing:normal!important;background:none!important;filter:none!important}
+#gtLiveExperienceModal .gt-studio-main-wordmark .gt-studio-word{display:block!important;font-family:Impact,'Arial Black',system-ui,sans-serif!important;font-size:clamp(56px,15vw,100px)!important;font-weight:1000!important;font-style:italic!important;line-height:.88!important;letter-spacing:-.065em!important;white-space:nowrap!important;background:linear-gradient(180deg,#ffffff 0%,#d8e8ff 16%,#ffffff 28%,#a7b8d8 42%,#f8ffff 52%,#24e8ff 68%,#8e92ff 80%,#ff35d4 94%,#ffffff 100%)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;-webkit-text-stroke:1px #11152d!important;text-shadow:3px 4px 0 #07091b,0 0 5px #24e7ff,0 0 14px #ff27d4!important;filter:drop-shadow(0 0 5px #24e7ff88) drop-shadow(0 0 12px #ff27d488)!important}
+#gtLiveExperienceModal .gt-studio-main-wordmark small{display:block!important;margin-top:8px!important;font-family:Impact,'Arial Black',system-ui,sans-serif!important;font-size:clamp(15px,4vw,23px)!important;font-weight:1000!important;font-style:italic!important;letter-spacing:.52em!important;padding-left:.52em!important;line-height:1!important;color:#45eaff!important;-webkit-text-fill-color:#45eaff!important;text-shadow:1px 2px 0 #08091b,0 0 7px #24e7ff,0 0 12px #ff27d4!important}
+@media(max-width:600px){#gtLiveExperienceModal .gt-studio-main-wordmark{min-height:clamp(104px,25vw,150px)!important;margin-bottom:14px!important}#gtLiveExperienceModal .gt-studio-main-wordmark .gt-studio-word{font-size:clamp(54px,15vw,84px)!important}}
 </style>
 
 </body>
@@ -2834,7 +2839,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(min-width:650px){#gtLiveExperienceModal .gt-exp-card:has(.gt-call-screen){max-width:560px!important;border-radius:26px!important;height:94dvh!important;max-height:94dvh!important;margin:auto!important;padding-bottom:18px!important}#gtLiveExperienceModal .gt-call-screen .gt-call-bottom{position:static;margin:22px -16px -18px}}
 </style>
 <div id="gtLiveExperienceModal" hidden aria-modal="true" role="dialog" aria-labelledby="gtExpTitle">
- <section class="gt-exp-card"><div class="gt-exp-head"><h2 id="gtExpTitle">GameTik Studio</h2><button type="button" class="secondary" id="gtExpClose" aria-label="Schließen">✕</button></div><div class="gt-studio-graffiti-mark gt-studio-level-logo-wrap"><img class="gt-studio-level-logo" src="/gametik-level-1.png" alt="Originales GameTik LEVEL 1 Logo"></div>
+ <section class="gt-exp-card"><div class="gt-exp-head"><h2 id="gtExpTitle" class="gt-studio-title-accessible">GameTik Studio</h2><button type="button" class="secondary" id="gtExpClose" aria-label="Schließen">✕</button></div><div class="gt-studio-graffiti-mark gt-studio-main-wordmark" aria-label="GameTik Studio"><span class="gt-studio-word">GameTik</span><small>STUDIO</small></div>
  <div class="gt-exp-tabs"><button type="button" data-gt-exp-tab="effects">✨ Effekte</button><button type="button" data-gt-exp-tab="calls">📞 Anrufen</button><button type="button" data-gt-exp-tab="rank">✦ Rangliste</button><button type="button" data-gt-exp-tab="music">🎵 Musik</button></div>
  <div id="gtExpBody"></div><div id="gtExpStatus" class="gt-exp-status" aria-live="polite"></div>
  </section>
