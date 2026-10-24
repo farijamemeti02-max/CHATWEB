@@ -2204,6 +2204,14 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 <script id="gametik-profile-level-placement-final-js-20261024">
 (()=>{function apply(){const stage=document.getElementById('liveVideoStage');const pill=document.getElementById('gtLiveProfilePill');if(pill){pill.querySelector('.gt-live-profile-copy')?.remove();pill.querySelector('#gtLiveProfileName')?.remove();pill.querySelector('#gtLiveFollowButton')?.remove();}if(stage){const p=stage.querySelector('#gtDuelCandyProgress');if(p){p.querySelector('.gt-level-number')?.remove();p.querySelector('.gt-level-data')?.setAttribute('aria-hidden','true');}}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();setTimeout(apply,500);setTimeout(apply,1500);})();
 </script>
+
+<style id="gametik-original-level-logo-studio-20261024">
+/* Original vom Nutzer geliefertes LEVEL 1 Artwork, unverändert eingebunden. */
+#gtLiveExperienceModal .gt-studio-level-logo-wrap{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;margin:12px auto 18px!important;font-size:0!important;line-height:0!important;text-shadow:none!important}
+#gtLiveExperienceModal .gt-studio-level-logo{display:block!important;width:min(100%,620px)!important;max-height:190px!important;height:auto!important;object-fit:contain!important;filter:drop-shadow(0 0 8px #24dfff66) drop-shadow(0 0 12px #ff27d255)!important}
+@media(max-width:600px){#gtLiveExperienceModal .gt-studio-level-logo{width:100%!important;max-height:150px!important}}
+</style>
+
 </body>
 
 
@@ -2826,7 +2834,7 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 @media(min-width:650px){#gtLiveExperienceModal .gt-exp-card:has(.gt-call-screen){max-width:560px!important;border-radius:26px!important;height:94dvh!important;max-height:94dvh!important;margin:auto!important;padding-bottom:18px!important}#gtLiveExperienceModal .gt-call-screen .gt-call-bottom{position:static;margin:22px -16px -18px}}
 </style>
 <div id="gtLiveExperienceModal" hidden aria-modal="true" role="dialog" aria-labelledby="gtExpTitle">
- <section class="gt-exp-card"><div class="gt-exp-head"><h2 id="gtExpTitle">GameTik Studio</h2><button type="button" class="secondary" id="gtExpClose" aria-label="Schließen">✕</button></div><div class="gt-studio-graffiti-mark">♛ GameTik<small>STUDIO</small></div>
+ <section class="gt-exp-card"><div class="gt-exp-head"><h2 id="gtExpTitle">GameTik Studio</h2><button type="button" class="secondary" id="gtExpClose" aria-label="Schließen">✕</button></div><div class="gt-studio-graffiti-mark gt-studio-level-logo-wrap"><img class="gt-studio-level-logo" src="/gametik-level-1.png" alt="Originales GameTik LEVEL 1 Logo"></div>
  <div class="gt-exp-tabs"><button type="button" data-gt-exp-tab="effects">✨ Effekte</button><button type="button" data-gt-exp-tab="calls">📞 Anrufen</button><button type="button" data-gt-exp-tab="rank">✦ Rangliste</button><button type="button" data-gt-exp-tab="music">🎵 Musik</button></div>
  <div id="gtExpBody"></div><div id="gtExpStatus" class="gt-exp-status" aria-live="polite"></div>
  </section>
