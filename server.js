@@ -169,6 +169,7 @@ const privateMessages = [];
 const gifts = [];
 // Paid gifts are stored as per-account inventory counts and persisted with GameTik state.
 const giftInventory = new Map(); // userId -> { Herz: number, Stern: number, Feuer: number, Krone: number, ... }
+const levelProgress = new Map(); // userId -> cumulative XP points; 2,500 XP per level
 const giftInventoryMigrated = new Set(); // user IDs whose earlier standalone purchases have been migrated once
 const giftInventoryRecoveredPaymentIds = new Set(); // payment IDs credited from legacy LIVE purchases, preventing duplicate recovery
 const creatorBalancesCents = new Map(); // userId -> withdrawable cents earned from gifts received from other users
@@ -199,7 +200,7 @@ function snapshotPersistentState() {
     accounts: [...accounts.entries()], passwordResetTokens: [...passwordResetTokens.entries()],
     sessions: [...sessions.entries()].map(([token,u]) => [token, { ...u, likes:[...(u.likes||[])], following:[...(u.following||[])], blockedUsers:[...(u.blockedUsers||[])] }]),
     videos, chatMessages, privateMessages, gifts, stories,
-    giftInventory: [...giftInventory.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
+    giftInventory: [...giftInventory.entries()], levelProgress: [...levelProgress.entries()], giftInventoryMigrated: [...giftInventoryMigrated], giftInventoryRecoveredPaymentIds: [...giftInventoryRecoveredPaymentIds],
     creatorBalancesCents: [...creatorBalancesCents.entries()], platformBalanceCents: [...platformBalanceCents.entries()], platformTransactions, walletTransactions, platformAccountingMigrationVersion, payoutRequests, processedGiftEarnings: [...processedGiftEarnings],
     candyBalances: [...candyBalances.entries()], candyDailyClaims: [...candyDailyClaims.entries()], candySpinCooldowns: [...candySpinCooldowns.entries()], candyFreeSpins: [...candyFreeSpins.entries()],
     friendRequests: [...friendRequests.entries()], friendships: serializeMapOfSets(friendships), adminBlockedUsers:[...adminBlockedUsers],
@@ -261,6 +262,7 @@ function applyPersistentState(d) {
     for (const [kind, value] of Object.entries(video.reactions)) if (!(value instanceof Set)) video.reactions[kind] = new Set(Array.isArray(value) ? value : []);
   }
   for (const [k,v] of d.giftInventory||[]) giftInventory.set(String(k), v && typeof v === 'object' ? v : {});
+  for (const [k,v] of d.levelProgress||[]) levelProgress.set(String(k), Math.max(0, Math.floor(Number(v)||0)));
   for (const id of d.giftInventoryMigrated||[]) giftInventoryMigrated.add(String(id));
   for (const id of d.giftInventoryRecoveredPaymentIds||[]) giftInventoryRecoveredPaymentIds.add(String(id));
   for (const [k,v] of d.creatorBalancesCents||[]) creatorBalancesCents.set(String(k), Math.max(0, Math.round(Number(v)||0)));
@@ -1087,6 +1089,19 @@ app.post('/api/users/:id/follow', auth, (req,res) => {
   if (isFollowing) req.user.following.delete(targetId); else req.user.following.add(targetId);
   res.json({ following: !isFollowing });
 });
+function awardLevelXp(userId, xp, reason='activity') {
+  const id=String(userId||''); if(!id) return 1;
+  const add=Math.max(0,Math.floor(Number(xp)||0));
+  if(add){ levelProgress.set(id,Math.min(247500,Math.max(0,Number(levelProgress.get(id)||0))+add)); savePersistentState(); }
+  return Math.min(100,Math.floor(Math.max(0,Number(levelProgress.get(id)||0))/2500)+1);
+}
+function levelInfo(userId) {
+  const xp=Math.max(0,Math.floor(Number(levelProgress.get(String(userId))||0)));
+  const level=Math.min(100,Math.floor(xp/2500)+1);
+  return {level, xp, xpIntoLevel: level>=100 ? 0 : xp%2500, xpForNextLevel: level>=100 ? 0 : 2500, maxLevel:100};
+}
+app.get('/api/level/me', auth, (req,res)=>res.json(levelInfo(req.user.id)));
+
 app.post('/api/gifts', auth, (req,res) => {
   const gift = String(req.body.gift || '').slice(0,40);
   if (!gift) return res.status(400).json({ error: 'Geschenk fehlt.' });
@@ -1139,6 +1154,8 @@ app.post('/api/gifts/inventory/send', auth, asyncRoute(async (req, res) => {
   giftInventory.set(String(req.user.id), inventory);
   const giftRecord = { id: crypto.randomUUID(), senderId: String(req.user.id), username: req.user.username, gift: giftName, liveRoomId: roomId, recipientId: String(room.hostId), recipientUsername: String(room.hostUsername || ''), inventorySend: true, created_at: new Date().toISOString() };
   gifts.push(giftRecord);
+  // Receiver levels progress only for gifts sent by another account; self-gifts never count.
+  if (String(req.user.id) !== String(room.hostId)) awardLevelXp(room.hostId, normalizedGiftPriceCents(giftName), 'gift-received');
   // Split the gift's listed value only when it is sent to another user's stream.
   // Self-gifting remains allowed, but never creates withdrawable earnings.
   const giftPriceCents = normalizedGiftPriceCents(giftName);
@@ -1415,6 +1432,8 @@ app.post('/api/payments/paypal/capture-order', auth, asyncRoute(async (req, res)
     created_at: new Date().toISOString()
   };
   gifts.push(giftRecord);
+  // Only a completed, PayPal-verified purchase awards buyer XP.
+  if (saved.gift !== 'Spende') awardLevelXp(req.user.id, Math.round(Number(saved.price)*100), 'gift-purchase');
   if (saved.gift !== 'Spende') {
     const inventory = giftInventory.get(String(req.user.id)) || {};
     inventory[saved.gift] = Math.max(0, Number(inventory[saved.gift]) || 0) + 1;
@@ -1432,7 +1451,7 @@ app.get('/api/candy/balance', auth, (req, res) => res.json({ balance: candyBalan
 app.post('/api/candy/claim', auth, (req, res) => {
   const id = String(req.user.id), today = new Date().toISOString().slice(0,10);
   if (candyDailyClaims.get(id) === today) return res.status(429).json({ error: 'Deine täglichen kostenlosen Süßigkeiten hast du bereits abgeholt.', balance: candyBalance(id) });
-  candyDailyClaims.set(id, today); candyBalances.set(id, candyBalance(id) + 10);
+  candyDailyClaims.set(id, today); candyBalances.set(id, candyBalance(id) + 10); awardLevelXp(id, 10, 'daily-play');
   res.json({ ok: true, awarded: 10, balance: candyBalance(id) });
 });
 app.post('/api/candy/spin', auth, (req, res) => {
@@ -1442,6 +1461,7 @@ app.post('/api/candy/spin', auth, (req, res) => {
   const balance = candyBalance(id);
   if (freeSpins <= 0 && balance < 1) return res.status(400).json({ error: 'Du brauchst 1 kostenlose Süßigkeit pro Runde. Hole zuerst deine Gratis-Süßigkeiten ab.', balance, freeSpins });
   candySpinCooldowns.set(id, now);
+  awardLevelXp(id, 10, 'slot-play');
   if (freeSpins > 0) candyFreeSpins.set(id, freeSpins - 1);
   else candyBalances.set(id, balance - 1);
   // Five reels × three rows. GameTik logo scatters anywhere; 3+ award 10 free spins.
