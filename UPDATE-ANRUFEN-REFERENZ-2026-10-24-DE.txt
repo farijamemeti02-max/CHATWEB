@@ -1,0 +1,18 @@
+GameTik – Anrufbereich nach Referenz umgesetzt – 24.10.2026
+
+Umgesetzt in index.html:
+- Die vereinfachte Schaltfläche unter dem Live-Video wurde entfernt.
+- Anrufbereich als mobilfreundliche Vollbildansicht im GameTik-Neonstil mit Original-Logo aus dem bestehenden Header.
+- Suchfeld, Tabs Freunde/Anrufverlauf/Kontakte, Kontaktzeilen mit Online-Status und Video-/Audio-Schaltflächen.
+- Ziffernfeld 0–9, * und # sowie große Audio- und Videoanruf-Schaltflächen.
+- Die Kontaktaktionen verwenden die bereits vorhandenen GameTik-Anrufbuttons und die WebRTC-/Socket.IO-Anruffunktion in app.js/server.js.
+- Anrufverlauf wird lokal auf diesem Gerät gespeichert; keine Telefonnummern werden extern gewählt.
+- Doppelte HTML-ID gametik-live-chat-duel-real-fix-20261022 bereinigt, Script-ID eindeutig benannt.
+- admin.html, paypal.html, server.js, app.js und live.js unverändert gegenüber der vorherigen Update-ZIP.
+
+Prüfung:
+- 21 eingebettete JavaScript-Blöcke bestehen node --check.
+- Keine doppelten HTML-IDs in index.html gefunden.
+- ZIP-Integrität nach Erstellung prüfen.
+- npm run check meldet weiterhin den vorhandenen Fehler „LIVE-Spiel-Punktelogik fehlt“; keine weiteren Fehler.
+- Kein Browser-/Render-End-to-End-Test durchgeführt.
