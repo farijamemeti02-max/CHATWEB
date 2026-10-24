@@ -3025,3 +3025,25 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 })();
 </script>
 
+
+
+<!-- Final targeted adjustments from user's 2026-10-24 screenshot -->
+<style id="gametik-final-avatar-level-power-adjust-20261024">
+/* Move the original LEVEL-1 artwork closer to the profile avatar. */
+#liveVideoStage #gtDuelCandyProgress{top:67px!important;left:2px!important;width:68px!important;max-width:68px!important;height:auto!important;}
+@media(max-width:600px){#liveVideoStage #gtDuelCandyProgress{top:67px!important;left:2px!important;width:68px!important;max-width:68px!important;}}
+/* Hide the unwanted floating red heart/round decoration behind the profile avatar. */
+#liveVideoStage #liveFloatingHearts{display:none!important;visibility:hidden!important;}
+/* Turn LIVE END into a compact circular GameTik power button while preserving the original button and click handler. */
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{
+  top:48px!important;right:52px!important;width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;max-width:44px!important;max-height:44px!important;
+  padding:0!important;margin:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  font-size:0!important;line-height:0!important;gap:0!important;white-space:normal!important;
+  background:linear-gradient(145deg,#dffaff 0%,#22dfff 14%,#203a92 31%,#15132f 48%,#9b28df 69%,#ff31d2 85%,#f6ffff 100%) padding-box,
+             linear-gradient(135deg,#fff,#20e7ff 30%,#b62cff 60%,#ff37d1 82%,#fff) border-box!important;
+  box-shadow:inset 0 2px 2px #ffffff85,inset 0 -3px 5px #08091c,0 0 8px #20dfffcc,0 0 16px #ef2bce99!important;
+}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::before{inset:3px!important;border-radius:50%!important;background:radial-gradient(circle at 35% 25%,#28345b,#090b1b 72%)!important;box-shadow:inset 0 1px 1px #ffffff55,inset 0 -2px 4px #000!important;}
+#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{content:"⏻";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;font-family:Arial,sans-serif;font-size:27px;font-weight:700;line-height:1;color:#f8ffff;text-shadow:0 0 4px #20e7ff,0 0 8px #e82bd9;pointer-events:none;}
+@media(max-width:520px){#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button{top:48px!important;right:52px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;max-width:40px!important;max-height:40px!important;padding:0!important;}#liveVideoStage #liveEndTopBtn.gt-live-end-stream-button::after{font-size:24px!important;}}
+</style>
