@@ -2890,3 +2890,93 @@ document.addEventListener('DOMContentLoaded',()=>{const quick=document.getElemen
 }
 @media(max-width:380px){#liveVideoStage .gt-live-metric-label{display:none!important}#liveVideoStage .gt-live-metrics{max-width:calc(100% - 165px)!important}#liveVideoStage #gtLiveProfilePill{max-width:calc(100% - 165px)!important}}
 </style>
+
+
+<!-- TARGETED PROFILE/LEVEL CLEANUP FROM USER SCREENSHOT 2026-10-24 -->
+<style id="gametik-profile-level-hint-cleanup-20261024">
+/* Keep the existing GameTik avatar; place the original LEVEL-1 artwork immediately underneath it. */
+#liveVideoStage #gtLiveProfilePill{left:10px!important;top:10px!important;}
+#liveVideoStage #gtDuelCandyProgress{
+  position:absolute!important;top:76px!important;left:2px!important;right:auto!important;bottom:auto!important;
+  transform:none!important;width:68px!important;max-width:68px!important;height:auto!important;min-height:0!important;
+  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;overflow:visible!important;z-index:60!important;pointer-events:none!important;display:block!important;
+}
+#liveVideoStage #gtDuelCandyProgress .gt-level-logo{display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;}
+#liveVideoStage #gtDuelCandyProgress .gt-level-number,
+#liveVideoStage #gtDuelCandyProgress .gt-level-data{display:none!important;visibility:hidden!important;}
+/* Remove the unwanted “Tippe auf das Video für Herz”-text and heart only; keep the LIVE indicator. */
+#liveVideoStage #liveOverlayHint{display:none!important;visibility:hidden!important;}
+@media(max-width:600px){
+  #liveVideoStage #gtDuelCandyProgress{top:76px!important;left:2px!important;width:68px!important;max-width:68px!important;height:auto!important;}
+}
+</style>
+
+
+<!-- GameTik graffiti/chrome action rail: Anrufen + Retusche, matched to the original cyan/pink/purple logo -->
+<style id="gametik-graffiti-live-actions-20261024">
+#liveVideoStage #gtLiveActionRail{
+  top:34%!important;bottom:auto!important;transform:translateY(0)!important;
+  gap:6px!important;max-height:calc(100% - 112px)!important;overflow:visible!important;
+}
+#liveVideoStage #gtLiveActionRail button{
+  position:relative!important;isolation:isolate!important;overflow:visible!important;
+  border:1px solid transparent!important;border-radius:50%!important;
+  background:linear-gradient(145deg,#dffaff 0%,#36dcff 13%,#152b68 29%,#111127 48%,#a62cff 70%,#ff38d2 84%,#dffaff 100%) padding-box,
+             linear-gradient(135deg,#f7ffff,#25e8ff 25%,#a64cff 55%,#ff35d3 78%,#f8ffff) border-box!important;
+  box-shadow:inset 0 2px 2px #ffffff75,inset 0 -3px 5px #000b,0 0 5px #23dfffaa,0 0 12px #d72dff77!important;
+  color:#fff!important;text-shadow:0 1px 2px #000,0 0 5px #a83dff!important;
+}
+#liveVideoStage #gtLiveActionRail button::after{
+  content:"";position:absolute;inset:2px;border-radius:inherit;z-index:-1;
+  background:linear-gradient(145deg,rgba(18,25,56,.96),rgba(5,8,24,.98) 58%,rgba(33,8,54,.97));
+  box-shadow:inset 0 1px 0 #ffffff42,inset 0 -2px 0 #000a;
+}
+#liveVideoStage #gtLiveActionRail button span{filter:drop-shadow(0 0 3px #20dfff) drop-shadow(0 0 4px #ff31d5)!important}
+#liveVideoStage #gtLiveActionRail button small{font-weight:900!important;letter-spacing:-.2px!important;color:#fff!important;text-shadow:0 1px 2px #000,0 0 5px #2adfff!important}
+#liveVideoStage #gtLiveActionRail #gtLiveCallAction,
+#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction{
+  border-radius:14px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;flex-basis:40px!important;
+}
+#liveVideoStage #gtLiveActionRail #gtLiveCallAction::after,
+#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction::after{border-radius:11px!important}
+#liveVideoStage #gtLiveActionRail #gtLiveCallAction svg,
+#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction svg{width:21px;height:21px;display:block;margin:0 auto;filter:drop-shadow(0 0 3px #28dfff) drop-shadow(0 0 4px #ff2cd2)}
+#liveVideoStage #gtLiveActionRail #gtLiveCallAction{order:7!important}
+#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction{order:6!important}
+#liveVideoStage #gtLiveActionRail #gtLiveLikeAction{order:9!important}
+#gtLiveExperienceModal .gt-exp-card,
+#gtLiveExperienceModal .gt-call-screen .gt-call-list{border-color:#32ddff!important;box-shadow:0 0 0 1px #ff35d833,0 0 24px #762cff55,inset 0 0 18px #22cfff0b!important}
+#gtLiveExperienceModal .gt-exp-card button,
+#gtLiveExperienceModal .gt-call-screen .gt-call-tabs button.active,
+#gtLiveExperienceModal .gt-call-screen .gt-call-main-actions button{
+  background:linear-gradient(135deg,#dffaff 0%,#28dfff 12%,#3150c7 30%,#7026ce 52%,#f32dc8 78%,#dffaff 100%) padding-box!important;
+  border:1px solid #f0fdff!important;box-shadow:inset 0 1px 0 #fff9,0 0 9px #22dfff88,0 0 15px #f12bd955!important;text-shadow:0 1px 2px #000!important;
+}
+@media(max-width:600px){
+ #liveVideoStage #gtLiveActionRail{top:33%!important;right:4px!important;transform:none!important;gap:5px!important;max-height:calc(100% - 104px)!important}
+ #liveVideoStage #gtLiveActionRail button{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;flex-basis:34px!important}
+ #liveVideoStage #gtLiveActionRail #gtLiveCallAction,#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction{width:37px!important;height:37px!important;min-width:37px!important;min-height:37px!important;flex-basis:37px!important}
+ #liveVideoStage #gtLiveActionRail button small{font-size:7px!important;line-height:1!important}
+}
+@media(max-height:700px){#liveVideoStage #gtLiveActionRail{top:31%!important;gap:3px!important}#liveVideoStage #gtLiveActionRail button{width:31px!important;height:31px!important;min-width:31px!important;min-height:31px!important;flex-basis:31px!important}#liveVideoStage #gtLiveActionRail #gtLiveCallAction,#liveVideoStage #gtLiveActionRail #gtLiveEffectsAction{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;flex-basis:34px!important}}
+</style>
+<script id="gametik-graffiti-live-actions-js-20261024">
+(()=>{
+ const addActions=()=>{
+  const rail=document.getElementById('gtLiveActionRail');
+  if(!rail)return;
+  if(!document.getElementById('gtLiveCallAction')){
+   const b=document.createElement('button');b.type='button';b.id='gtLiveCallAction';b.setAttribute('aria-label','Anrufen');b.title='GameTik Anrufen';
+   b.innerHTML='<span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 1-1 2-2 2C10 21 3 14 3 5c0-1 1-2 2-2Z"/></svg></span><small>Anrufen</small>';
+   rail.appendChild(b);
+  }
+  const fx=document.getElementById('gtLiveEffectsAction');
+  if(fx&&!fx.dataset.gtGraffitiStyled){fx.dataset.gtGraffitiStyled='1';fx.setAttribute('aria-label','Retusche und Filter');fx.title='Retusche, Glätten, Zähne, Filter';fx.innerHTML='<span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg></span><small>Retusche</small>';}
+ };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addActions,{once:true});else addActions();
+ const observer=new MutationObserver(addActions);observer.observe(document.documentElement,{childList:true,subtree:true});
+ setTimeout(()=>observer.disconnect(),10000);
+})();
+</script>
+
